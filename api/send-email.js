@@ -15,7 +15,7 @@ export default async function handler(req, res) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "10IQ Recruiting <recruiting@10iq.app>",
+        from: "10IQ Recruiting <recruiting@mail.netset.pro>",
         to,
         subject,
         text,
