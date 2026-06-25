@@ -54,6 +54,6 @@ export default async function handler(req, res) {
     res.status(200).json({ text });
   } catch (err) {
     console.error(`${provider} API error:`, err);
-    res.status(500).json({ error: `${provider} API failed`, text: "" });
+    res.status(500).json({ error: err.message || `${provider} API failed`, text: "" });
   }
 }
