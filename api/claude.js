@@ -14,6 +14,7 @@ async function callClaude(system, messages) {
     }),
   });
   const data = await response.json();
+  if (!response.ok) throw new Error(data.error?.message || JSON.stringify(data));
   return data.content?.[0]?.text || "";
 }
 
@@ -38,6 +39,7 @@ async function callGemini(system, messages) {
     }
   );
   const data = await response.json();
+  if (!response.ok) throw new Error(data.error?.message || JSON.stringify(data));
   return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 }
 
