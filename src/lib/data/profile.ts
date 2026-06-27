@@ -39,6 +39,7 @@ export function getSampleProfile(): AthleteProfile {
     region: "West",
     video_link: "https://youtube.com/watch?v=sample",
     profile_complete: true,
+    stripe_customer_id: null,
     created_at: new Date().toISOString(),
   };
 }

@@ -33,12 +33,21 @@ export async function POST(request: Request) {
   }
 
   if (event.type === "payment_intent.succeeded") {
-    const paymentIntent = event.data.object as { metadata: Record<string, string> };
+    const paymentIntent = event.data.object as {
+      metadata: Record<string, string>;
+      customer: string | null;
+    };
     const { userId, plan } = paymentIntent.metadata;
 
     if (userId && plan) {
       const admin = createSupabaseAdminClient();
-      await admin.from("users").update({ plan }).eq("id", userId);
+      await admin
+        .from("users")
+        .update({
+          plan,
+          ...(paymentIntent.customer ? { stripe_customer_id: paymentIntent.customer } : {}),
+        })
+        .eq("id", userId);
     }
   }
 

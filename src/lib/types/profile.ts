@@ -22,6 +22,7 @@ export type AthleteProfile = {
   region: string | null;
   video_link: string | null;
   profile_complete: boolean;
+  stripe_customer_id: string | null;
   created_at: string;
 };
 

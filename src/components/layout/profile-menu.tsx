@@ -3,16 +3,17 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { LogOut } from "lucide-react";
+import { CreditCard, LogOut } from "lucide-react";
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getPlan } from "@/lib/stripe/plans";
 import type { AthleteProfile } from "@/lib/types/profile";
 
 const FREE_PLAN_EMAIL_LIMIT = 5;
@@ -53,6 +54,9 @@ export function ProfileMenu({ profile }: { profile: AthleteProfile }) {
   const [securityPending, setSecurityPending] = useState(false);
   const [securityMessage, setSecurityMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [signingOut, setSigningOut] = useState(false);
+
+  const [portalPending, setPortalPending] = useState(false);
+  const [portalError, setPortalError] = useState<string | null>(null);
 
   function openNow() {
     if (closeTimer.current) clearTimeout(closeTimer.current);
@@ -106,7 +110,34 @@ export function ProfileMenu({ profile }: { profile: AthleteProfile }) {
     setSecurityMessage({ type: "success", text: "Password updated." });
   }
 
+  async function handleManageBilling() {
+    setPortalError(null);
+
+    if (isSampleMode) {
+      setPortalError("Sign in to manage billing.");
+      return;
+    }
+
+    setPortalPending(true);
+    const res = await fetch("/api/stripe/create-portal-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ returnUrl: window.location.href }),
+    });
+    const data = await res.json();
+    setPortalPending(false);
+
+    if (!res.ok) {
+      setPortalError(data.error ?? "Couldn't open billing portal");
+      return;
+    }
+
+    window.location.href = data.url;
+  }
+
   const emailsRemaining = Math.max(FREE_PLAN_EMAIL_LIMIT - profile.emails_used, 0);
+  const currentPlanDef = getPlan(profile.plan);
+  const hasBillingAccount = !!profile.stripe_customer_id;
 
   return (
     <div className="relative" onMouseEnter={openNow} onMouseLeave={closeSoon}>
@@ -129,6 +160,7 @@ export function ProfileMenu({ profile }: { profile: AthleteProfile }) {
           <Tabs defaultValue="account" className="gap-0">
             <TabsList className="m-2">
               <TabsTrigger value="account">Account</TabsTrigger>
+              <TabsTrigger value="payment">Payment</TabsTrigger>
               <TabsTrigger value="security">Security</TabsTrigger>
               <TabsTrigger value="info">Info</TabsTrigger>
             </TabsList>
@@ -164,6 +196,37 @@ export function ProfileMenu({ profile }: { profile: AthleteProfile }) {
                 <LogOut className="size-4" />
                 {signingOut ? "Signing out…" : "Sign out"}
               </Button>
+            </TabsContent>
+
+            <TabsContent value="payment" className="flex flex-col gap-4 p-4 pt-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Current plan</span>
+                <Badge variant="secondary" className="capitalize">
+                  {currentPlanDef ? `${currentPlanDef.name} — $${currentPlanDef.priceMonthly}/mo` : profile.plan}
+                </Badge>
+              </div>
+
+              {hasBillingAccount ? (
+                <Button size="sm" onClick={handleManageBilling} disabled={portalPending}>
+                  <CreditCard className="size-4" />
+                  {portalPending ? "Opening…" : "Manage billing"}
+                </Button>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <p className="text-xs text-muted-foreground">
+                    No billing account yet — upgrade to a paid plan to manage payment methods and invoices.
+                  </p>
+                  <Link href="/paywall" className={buttonVariants({ size: "sm" })}>
+                    View plans →
+                  </Link>
+                </div>
+              )}
+
+              {portalError && <p className="text-xs text-destructive">{portalError}</p>}
+
+              <p className="text-[11px] text-muted-foreground">
+                Manage billing opens Stripe&apos;s secure customer portal — update your card, view invoices, or cancel.
+              </p>
             </TabsContent>
 
             <TabsContent value="security" className="flex flex-col gap-3 p-4 pt-2">
