@@ -94,37 +94,44 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: #05070d;
+  --foreground: #f1f5f9;
+  --card: #0d111c;
+  --card-foreground: #f1f5f9;
+  --popover: #111623;
+  --popover-foreground: #f1f5f9;
+  --primary: #5b9bf7;
+  --primary-foreground: #03060d;
+  --secondary: rgba(255, 255, 255, 0.06);
+  --secondary-foreground: #f1f5f9;
+  --muted: rgba(255, 255, 255, 0.06);
+  --muted-foreground: #94a3b8;
+  --accent: rgba(91, 155, 247, 0.16);
+  --accent-foreground: #8fb8fb;
+  --brand: #5b9bf7;
+  --brand-foreground: #03060d;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: rgba(91, 155, 247, 0.5);
+  --chart-1: #5b9bf7;
+  --chart-2: #8fb8fb;
+  --chart-3: #b9d2fd;
+  --chart-4: #3b7af5;
+  --chart-5: #1d4fc4;
+  --sidebar: #0d111c;
+  --sidebar-foreground: #f1f5f9;
+  --sidebar-primary: #5b9bf7;
+  --sidebar-primary-foreground: #03060d;
+  --sidebar-accent: rgba(91, 155, 247, 0.16);
+  --sidebar-accent-foreground: #8fb8fb;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: rgba(91, 155, 247, 0.5);
+
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-bg-strong: rgba(255, 255, 255, 0.09);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
 @layer base {
@@ -175,7 +182,7 @@
 
 @layer utilities {
   .bg-noise {
-    background-image: radial-gradient(circle at 1px 1px, rgba(15, 23, 42, 0.04) 1px, transparent 0);
+    background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.05) 1px, transparent 0);
     background-size: 24px 24px;
   }
 }

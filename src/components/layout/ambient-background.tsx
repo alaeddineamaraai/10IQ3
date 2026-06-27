@@ -46,7 +46,7 @@ export function AmbientBackground() {
 
       <div
         ref={glowRef}
-        className="absolute h-[500px] w-[500px] rounded-full opacity-30 blur-[100px]"
+        className="absolute h-[600px] w-[600px] rounded-full opacity-40 blur-[120px]"
         style={{
           background:
             "radial-gradient(circle, var(--brand) 0%, transparent 70%)",
@@ -55,12 +55,12 @@ export function AmbientBackground() {
 
       <div
         className={cn(
-          "pointer-events-none absolute -inset-[10px] overflow-hidden opacity-25 blur-[60px] will-change-transform",
-          "[mask-image:radial-gradient(ellipse_at_50%_0%,black_10%,transparent_70%)]"
+          "pointer-events-none absolute -inset-[10px] overflow-hidden opacity-50 blur-[40px] will-change-transform",
+          "[mask-image:radial-gradient(ellipse_at_50%_0%,black_30%,transparent_75%)]"
         )}
         style={{
           backgroundImage:
-            "repeating-linear-gradient(100deg, var(--chart-1) 10%, var(--chart-2) 15%, var(--chart-3) 20%, var(--background) 25%, var(--chart-2) 30%)",
+            "repeating-linear-gradient(100deg, var(--chart-1) 10%, var(--chart-4) 15%, var(--chart-3) 20%, var(--chart-5) 25%, var(--chart-2) 30%)",
           backgroundSize: "200% 100%",
           animation: "aurora 60s linear infinite",
         }}

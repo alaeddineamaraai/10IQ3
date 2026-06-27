@@ -130,7 +130,23 @@ export function PaywallClient({ currentPlan }: { currentPlan: Plan }) {
                 <Button onClick={() => setUpgraded(checkoutPlan)}>Simulate payment</Button>
               </div>
             ) : stripePromise ? (
-              <Elements stripe={stripePromise} options={{ clientSecret }}>
+              <Elements
+                stripe={stripePromise}
+                options={{
+                  clientSecret,
+                  appearance: {
+                    theme: "night",
+                    variables: {
+                      colorPrimary: "#5b9bf7",
+                      colorBackground: "#0d111c",
+                      colorText: "#f1f5f9",
+                      colorTextSecondary: "#94a3b8",
+                      colorDanger: "#ef4444",
+                      borderRadius: "12px",
+                    },
+                  },
+                }}
+              >
                 <CheckoutForm onSuccess={() => setUpgraded(checkoutPlan)} />
               </Elements>
             ) : null}
