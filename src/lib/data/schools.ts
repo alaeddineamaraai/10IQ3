@@ -3,6 +3,23 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Coach, Outreach } from "@/lib/types/coach";
 import type { School, SchoolDetail } from "@/lib/types/school";
 
+function toNumber(value: unknown): number | null {
+  if (value == null || value === "") return null;
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+// Postgres `numeric` columns come back from PostgREST as strings, not
+// numbers, even though the Coach type says `number | null`. Coerce here so
+// downstream math (average()) and rendering (.toFixed()) don't break.
+function normalizeCoach(coach: Coach): Coach {
+  return {
+    ...coach,
+    team_utr: toNumber(coach.team_utr),
+    team_wtn: toNumber(coach.team_wtn),
+  };
+}
+
 function average(values: (number | null)[]) {
   const nums = values.filter((v): v is number => v != null);
   if (nums.length === 0) return null;
@@ -35,7 +52,7 @@ export async function getSchools(supabase: SupabaseClient): Promise<School[]> {
     .returns<Coach[]>();
 
   if (error) throw error;
-  return groupSchools(data ?? []);
+  return groupSchools((data ?? []).map(normalizeCoach));
 }
 
 export async function getSchoolDetail(
@@ -52,13 +69,15 @@ export async function getSchoolDetail(
   if (coachesError) throw coachesError;
   if (!coaches || coaches.length === 0) return null;
 
+  const normalizedCoaches = coaches.map(normalizeCoach);
+
   let outreachByCoach = new Map<string, Outreach>();
   if (userId) {
     const { data: outreach, error: outreachError } = await supabase
       .from("outreach")
       .select("*")
       .eq("user_id", userId)
-      .in("coach_email", coaches.map((c) => c.email))
+      .in("coach_email", normalizedCoaches.map((c) => c.email))
       .returns<Outreach[]>();
 
     // Degrade gracefully if the `outreach` table/migration isn't in place
@@ -70,11 +89,11 @@ export async function getSchoolDetail(
     }
   }
 
-  const [summary] = groupSchools(coaches);
+  const [summary] = groupSchools(normalizedCoaches);
 
   return {
     ...summary,
-    coaches: coaches.map((coach) => {
+    coaches: normalizedCoaches.map((coach) => {
       const outreach = outreachByCoach.get(coach.email);
       return {
         email: coach.email,

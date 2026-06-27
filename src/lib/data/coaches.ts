@@ -2,6 +2,23 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Coach, CoachWithOutreach } from "@/lib/types/coach";
 
+function toNumber(value: unknown): number | null {
+  if (value == null || value === "") return null;
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+// Postgres `numeric` columns come back from PostgREST as strings, not
+// numbers, even though the Coach type says `number | null`. Coerce here so
+// downstream math and rendering (.toFixed()) don't break.
+function normalizeCoach<T extends Coach>(coach: T): T {
+  return {
+    ...coach,
+    team_utr: toNumber(coach.team_utr),
+    team_wtn: toNumber(coach.team_wtn),
+  };
+}
+
 /**
  * coaches_database is shared/global and read-only from the client. Per-user
  * send state lives in `outreach`, scoped by RLS to auth.uid(). This merges
@@ -34,7 +51,7 @@ export async function getCoachesWithOutreach(
   );
 
   return (coaches ?? []).map((coach) => ({
-    ...coach,
+    ...normalizeCoach(coach),
     outreach: outreachByCoach.get(coach.email) ?? null,
   }));
 }
