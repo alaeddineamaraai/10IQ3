@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { fetchAllCoaches } from "@/lib/data/coaches";
 import type { Coach, Outreach } from "@/lib/types/coach";
 import type { DashboardData } from "@/lib/types/dashboard";
 
@@ -21,21 +22,17 @@ export async function getDashboardData(
   supabase: SupabaseClient,
   userId: string
 ): Promise<DashboardData> {
-  const [{ count: coachesCount }, { data: coaches }, { data: outreach }] =
-    await Promise.all([
-      supabase.from("coaches_database").select("*", { count: "exact", head: true }),
-      supabase
-        .from("coaches_database")
-        .select("email, coach_name, school_name, division")
-        .returns<Coach[]>(),
-      supabase
-        .from("outreach")
-        .select("*")
-        .eq("user_id", userId)
-        .returns<Outreach[]>(),
-    ]);
+  const [{ count: coachesCount }, coaches, { data: outreach }] = await Promise.all([
+    supabase.from("coaches_database").select("*", { count: "exact", head: true }),
+    fetchAllCoaches<Coach>(supabase, "email, coach_name, school_name, division"),
+    supabase
+      .from("outreach")
+      .select("*")
+      .eq("user_id", userId)
+      .returns<Outreach[]>(),
+  ]);
 
-  const coachByEmail = new Map((coaches ?? []).map((c) => [c.email, c]));
+  const coachByEmail = new Map(coaches.map((c) => [c.email, c]));
   const rows = outreach ?? [];
   const sentRows = rows.filter((r) => r.email_sent);
 

@@ -19,6 +19,39 @@ function normalizeCoach<T extends Coach>(coach: T): T {
   };
 }
 
+// PostgREST caps every request at the project's "Max Rows" setting
+// (1000 by default), so a plain .select("*") silently truncates once
+// coaches_database grows past that — this happened for real at ~1,800
+// rows. Page through with .range() until a page comes back short to
+// reliably fetch every row regardless of table size or that setting.
+const FETCH_PAGE_SIZE = 500;
+
+export async function fetchAllCoaches<T = Coach>(
+  supabase: SupabaseClient,
+  columns = "*"
+): Promise<T[]> {
+  const rows: T[] = [];
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("coaches_database")
+      .select(columns)
+      .range(from, from + FETCH_PAGE_SIZE - 1)
+      .returns<T[]>();
+
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+
+    rows.push(...data);
+    from += data.length;
+
+    if (data.length < FETCH_PAGE_SIZE) break;
+  }
+
+  return rows;
+}
+
 /**
  * coaches_database is shared/global and read-only from the client. Per-user
  * send state lives in `outreach`, scoped by RLS to auth.uid(). This merges
@@ -29,16 +62,14 @@ export async function getCoachesWithOutreach(
   supabase: SupabaseClient,
   userId: string
 ): Promise<CoachWithOutreach[]> {
-  const [{ data: coaches, error: coachesError }, { data: outreach, error: outreachError }] =
-    await Promise.all([
-      supabase.from("coaches_database").select("*").returns<Coach[]>(),
-      supabase
-        .from("outreach")
-        .select("*")
-        .eq("user_id", userId),
-    ]);
+  const [coaches, { data: outreach, error: outreachError }] = await Promise.all([
+    fetchAllCoaches<Coach>(supabase),
+    supabase
+      .from("outreach")
+      .select("*")
+      .eq("user_id", userId),
+  ]);
 
-  if (coachesError) throw coachesError;
   // Degrade gracefully if the `outreach` table/migration isn't in place yet
   // (e.g. not-yet-applied migration) — browsing coaches shouldn't 500 just
   // because per-user send state is unavailable.
@@ -50,7 +81,7 @@ export async function getCoachesWithOutreach(
     (outreachError ? [] : outreach ?? []).map((row) => [row.coach_email, row])
   );
 
-  return (coaches ?? []).map((coach) => ({
+  return coaches.map((coach) => ({
     ...normalizeCoach(coach),
     outreach: outreachByCoach.get(coach.email) ?? null,
   }));

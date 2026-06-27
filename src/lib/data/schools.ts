@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { fetchAllCoaches } from "@/lib/data/coaches";
 import type { Coach, Outreach } from "@/lib/types/coach";
 import type { School, SchoolDetail } from "@/lib/types/school";
 
@@ -46,13 +47,8 @@ function groupSchools(coaches: Coach[]): School[] {
 }
 
 export async function getSchools(supabase: SupabaseClient): Promise<School[]> {
-  const { data, error } = await supabase
-    .from("coaches_database")
-    .select("*")
-    .returns<Coach[]>();
-
-  if (error) throw error;
-  return groupSchools((data ?? []).map(normalizeCoach));
+  const coaches = await fetchAllCoaches<Coach>(supabase);
+  return groupSchools(coaches.map(normalizeCoach));
 }
 
 export async function getSchoolDetail(

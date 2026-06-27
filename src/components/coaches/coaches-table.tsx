@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Mail, X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ type Props = {
 };
 
 const ALL = "all";
+const PAGE_SIZE = 50;
 
 type Status = "all" | "not_contacted" | "sent" | "opened" | "replied";
 
@@ -99,6 +100,44 @@ export function CoachesTable({ coaches }: Props) {
   const [maxWtn, setMaxWtn] = useState("");
   const [sort, setSort] = useState<SortKey>("utr_desc");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(1);
+
+  function updateSearch(v: string) {
+    setSearch(v);
+    setPage(1);
+  }
+  function updateDivision(v: string) {
+    setDivision(v);
+    setPage(1);
+  }
+  function updateRegion(v: string) {
+    setRegion(v);
+    setPage(1);
+  }
+  function updateStatus(v: Status) {
+    setStatus(v);
+    setPage(1);
+  }
+  function updateMinUtr(v: string) {
+    setMinUtr(v);
+    setPage(1);
+  }
+  function updateMaxUtr(v: string) {
+    setMaxUtr(v);
+    setPage(1);
+  }
+  function updateMinWtn(v: string) {
+    setMinWtn(v);
+    setPage(1);
+  }
+  function updateMaxWtn(v: string) {
+    setMaxWtn(v);
+    setPage(1);
+  }
+  function updateSort(v: SortKey) {
+    setSort(v);
+    setPage(1);
+  }
 
   const divisions = useMemo(
     () => [...new Set(coaches.map((c) => c.division))].sort(),
@@ -146,28 +185,35 @@ export function CoachesTable({ coaches }: Props) {
     sort,
   ]);
 
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const paged = useMemo(
+    () => filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [filtered, currentPage]
+  );
+
   const activeFilters = useMemo(() => {
     const chips: { key: string; label: string; onClear: () => void }[] = [];
     if (search.trim()) {
-      chips.push({ key: "search", label: `"${search.trim()}"`, onClear: () => setSearch("") });
+      chips.push({ key: "search", label: `"${search.trim()}"`, onClear: () => updateSearch("") });
     }
     if (division !== ALL) {
-      chips.push({ key: "division", label: division, onClear: () => setDivision(ALL) });
+      chips.push({ key: "division", label: division, onClear: () => updateDivision(ALL) });
     }
     if (region !== ALL) {
-      chips.push({ key: "region", label: region, onClear: () => setRegion(ALL) });
+      chips.push({ key: "region", label: region, onClear: () => updateRegion(ALL) });
     }
     if (status !== "all") {
       chips.push({
         key: "status",
         label: STATUS_OPTIONS.find((s) => s.value === status)?.label ?? status,
-        onClear: () => setStatus("all"),
+        onClear: () => updateStatus("all"),
       });
     }
-    if (minUtr) chips.push({ key: "minUtr", label: `UTR ≥ ${minUtr}`, onClear: () => setMinUtr("") });
-    if (maxUtr) chips.push({ key: "maxUtr", label: `UTR ≤ ${maxUtr}`, onClear: () => setMaxUtr("") });
-    if (minWtn) chips.push({ key: "minWtn", label: `WTN ≥ ${minWtn}`, onClear: () => setMinWtn("") });
-    if (maxWtn) chips.push({ key: "maxWtn", label: `WTN ≤ ${maxWtn}`, onClear: () => setMaxWtn("") });
+    if (minUtr) chips.push({ key: "minUtr", label: `UTR ≥ ${minUtr}`, onClear: () => updateMinUtr("") });
+    if (maxUtr) chips.push({ key: "maxUtr", label: `UTR ≤ ${maxUtr}`, onClear: () => updateMaxUtr("") });
+    if (minWtn) chips.push({ key: "minWtn", label: `WTN ≥ ${minWtn}`, onClear: () => updateMinWtn("") });
+    if (maxWtn) chips.push({ key: "maxWtn", label: `WTN ≤ ${maxWtn}`, onClear: () => updateMaxWtn("") });
     return chips;
   }, [search, division, region, status, minUtr, maxUtr, minWtn, maxWtn]);
 
@@ -180,18 +226,19 @@ export function CoachesTable({ coaches }: Props) {
     setMaxUtr("");
     setMinWtn("");
     setMaxWtn("");
+    setPage(1);
   }
 
-  const allVisibleSelected = filtered.length > 0 && filtered.every((c) => selected.has(c.email));
-  const someVisibleSelected = filtered.some((c) => selected.has(c.email));
+  const allVisibleSelected = paged.length > 0 && paged.every((c) => selected.has(c.email));
+  const someVisibleSelected = paged.some((c) => selected.has(c.email));
 
   function toggleAll() {
     setSelected((prev) => {
       const next = new Set(prev);
       if (allVisibleSelected) {
-        filtered.forEach((c) => next.delete(c.email));
+        paged.forEach((c) => next.delete(c.email));
       } else {
-        filtered.forEach((c) => next.add(c.email));
+        paged.forEach((c) => next.add(c.email));
       }
       return next;
     });
@@ -216,13 +263,13 @@ export function CoachesTable({ coaches }: Props) {
         <Input
           placeholder="Search coach or school…"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => updateSearch(e.target.value)}
           className="col-span-2 sm:col-span-1 lg:col-span-2"
         />
         <Select
           items={{ [ALL]: "All divisions", ...Object.fromEntries(divisions.map((d) => [d, d])) }}
           value={division}
-          onValueChange={(v) => setDivision(v ?? ALL)}
+          onValueChange={(v) => updateDivision(v ?? ALL)}
         >
           <SelectTrigger>
             <SelectValue placeholder="Division" />
@@ -239,7 +286,7 @@ export function CoachesTable({ coaches }: Props) {
         <Select
           items={{ [ALL]: "All regions", ...Object.fromEntries(regions.map((r) => [r, r])) }}
           value={region}
-          onValueChange={(v) => setRegion(v ?? ALL)}
+          onValueChange={(v) => updateRegion(v ?? ALL)}
         >
           <SelectTrigger>
             <SelectValue placeholder="Region" />
@@ -256,7 +303,7 @@ export function CoachesTable({ coaches }: Props) {
         <Select
           items={Object.fromEntries(STATUS_OPTIONS.map((s) => [s.value, s.label]))}
           value={status}
-          onValueChange={(v) => setStatus((v as Status) ?? "all")}
+          onValueChange={(v) => updateStatus((v as Status) ?? "all")}
         >
           <SelectTrigger>
             <SelectValue placeholder="Status" />
@@ -272,7 +319,7 @@ export function CoachesTable({ coaches }: Props) {
         <Select
           items={Object.fromEntries(SORT_OPTIONS.map((s) => [s.value, s.label]))}
           value={sort}
-          onValueChange={(v) => setSort((v as SortKey) ?? "utr_desc")}
+          onValueChange={(v) => updateSort((v as SortKey) ?? "utr_desc")}
         >
           <SelectTrigger>
             <SelectValue placeholder="Sort by" />
@@ -292,25 +339,25 @@ export function CoachesTable({ coaches }: Props) {
           type="number"
           placeholder="Min UTR"
           value={minUtr}
-          onChange={(e) => setMinUtr(e.target.value)}
+          onChange={(e) => updateMinUtr(e.target.value)}
         />
         <Input
           type="number"
           placeholder="Max UTR"
           value={maxUtr}
-          onChange={(e) => setMaxUtr(e.target.value)}
+          onChange={(e) => updateMaxUtr(e.target.value)}
         />
         <Input
           type="number"
           placeholder="Min WTN"
           value={minWtn}
-          onChange={(e) => setMinWtn(e.target.value)}
+          onChange={(e) => updateMinWtn(e.target.value)}
         />
         <Input
           type="number"
           placeholder="Max WTN"
           value={maxWtn}
-          onChange={(e) => setMaxWtn(e.target.value)}
+          onChange={(e) => updateMaxWtn(e.target.value)}
         />
       </div>
 
@@ -370,7 +417,7 @@ export function CoachesTable({ coaches }: Props) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filtered.map((coach) => (
+          {paged.map((coach) => (
             <TableRow key={coach.email}>
               <TableCell>
                 <Checkbox
@@ -405,6 +452,38 @@ export function CoachesTable({ coaches }: Props) {
           ))}
         </TableBody>
       </Table>
+
+      {filtered.length > 0 && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>
+            Showing {(currentPage - 1) * PAGE_SIZE + 1}–
+            {Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="size-4" />
+              Prev
+            </Button>
+            <span className="text-xs">
+              Page {currentPage} of {pageCount}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+              disabled={currentPage === pageCount}
+            >
+              Next
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {filtered.length === 0 && (
         <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
