@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       customer: customerId,
       setup_future_usage: "off_session",
       metadata: { userId: auth.user.id, plan: plan.id },
-      automatic_payment_methods: { enabled: true },
+      payment_method_types: ["card"],
     });
 
     return NextResponse.json({ clientSecret: paymentIntent.client_secret });
