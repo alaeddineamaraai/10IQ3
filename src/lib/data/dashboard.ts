@@ -46,19 +46,28 @@ export async function getDashboardData(
   const pending = Math.max(totalCoaches - sent, 0);
 
   const days = lastNDays(7);
-  const activity = days.map(({ date, label }) => ({
-    date,
-    label,
-    sent: sentRows.filter((r) => r.sent_at?.slice(0, 10) === date).length,
-  }));
+  const activity = days.map(({ date, label }) => {
+    const dayRows = sentRows.filter((r) => r.sent_at?.slice(0, 10) === date);
+    return {
+      date,
+      label,
+      sent: dayRows.length,
+      opened: dayRows.filter((r) => r.opened).length,
+      replied: dayRows.filter((r) => r.replied).length,
+    };
+  });
 
-  const divisionCounts = new Map<string, number>();
+  const divisionCounts = new Map<string, { sent: number; opened: number; replied: number }>();
   for (const row of sentRows) {
     const division = coachByEmail.get(row.coach_email)?.division ?? "Unknown";
-    divisionCounts.set(division, (divisionCounts.get(division) ?? 0) + 1);
+    const entry = divisionCounts.get(division) ?? { sent: 0, opened: 0, replied: 0 };
+    entry.sent += 1;
+    if (row.opened) entry.opened += 1;
+    if (row.replied) entry.replied += 1;
+    divisionCounts.set(division, entry);
   }
   const divisions = [...divisionCounts.entries()]
-    .map(([division, count]) => ({ division, sent: count }))
+    .map(([division, counts]) => ({ division, ...counts }))
     .sort((a, b) => b.sent - a.sent);
 
   const sentEmails = sentRows
@@ -97,6 +106,8 @@ export async function getDashboardData(
 export function getSampleDashboardData(): DashboardData {
   const days = lastNDays(7);
   const sentByDay = [4, 7, 3, 9, 6, 2, 5];
+  const openedByDay = [2, 3, 1, 4, 3, 1, 2];
+  const repliedByDay = [0, 1, 0, 2, 1, 0, 1];
 
   return {
     stats: { coaches: 1820, sent: 42, opened: 18, replied: 5, pending: 1778 },
@@ -105,13 +116,15 @@ export function getSampleDashboardData(): DashboardData {
       date,
       label,
       sent: sentByDay[i],
+      opened: openedByDay[i],
+      replied: repliedByDay[i],
     })),
     divisions: [
-      { division: "D1", sent: 18 },
-      { division: "D2", sent: 11 },
-      { division: "D3", sent: 8 },
-      { division: "NAIA", sent: 3 },
-      { division: "JUCO", sent: 2 },
+      { division: "D1", sent: 18, opened: 9, replied: 3 },
+      { division: "D2", sent: 11, opened: 5, replied: 1 },
+      { division: "D3", sent: 8, opened: 3, replied: 1 },
+      { division: "NAIA", sent: 3, opened: 1, replied: 0 },
+      { division: "JUCO", sent: 2, opened: 0, replied: 0 },
     ],
     sentEmails: [
       {

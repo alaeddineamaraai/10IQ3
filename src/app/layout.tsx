@@ -4,6 +4,7 @@ import "./globals.css";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AmbientBackground } from "@/components/layout/ambient-background";
+import { AuthHashHandler } from "@/components/auth/auth-hash-handler";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,6 +34,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <AmbientBackground />
+        <AuthHashHandler />
         <TooltipProvider>{children}</TooltipProvider>
       </body>
     </html>

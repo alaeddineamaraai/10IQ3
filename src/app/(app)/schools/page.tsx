@@ -1,15 +1,6 @@
-import Link from "next/link";
-import { GraduationCap } from "lucide-react";
-
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSchools, getSampleSchools } from "@/lib/data/schools";
-import { Badge } from "@/components/ui/badge";
-import {
-  GlassCard,
-  GlassCardContent,
-  GlassCardHeader,
-  GlassCardTitle,
-} from "@/components/glass-card";
+import { SchoolsGrid } from "@/components/schools/schools-grid";
 
 async function loadSchools() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
@@ -34,29 +25,7 @@ export default async function SchoolsPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {schools.map((school) => (
-          <Link key={school.school_name} href={`/schools/${encodeURIComponent(school.school_name)}`}>
-            <GlassCard className="transition-smooth h-full hover:-translate-y-0.5 hover:shadow-lg">
-              <GlassCardHeader>
-                <div className="flex items-start justify-between gap-2">
-                  <GlassCardTitle className="leading-snug">{school.school_name}</GlassCardTitle>
-                  <Badge variant="secondary">{school.division}</Badge>
-                </div>
-              </GlassCardHeader>
-              <GlassCardContent className="flex items-center justify-between text-sm text-muted-foreground">
-                <span className="flex items-center gap-1.5">
-                  <GraduationCap className="size-4" />
-                  {school.coach_count} coach{school.coach_count === 1 ? "" : "es"}
-                </span>
-                <span>
-                  {school.avg_utr != null ? `UTR ${school.avg_utr.toFixed(1)}` : "—"}
-                </span>
-              </GlassCardContent>
-            </GlassCard>
-          </Link>
-        ))}
-      </div>
+      <SchoolsGrid schools={schools} />
     </div>
   );
 }

@@ -16,11 +16,15 @@ export type ActivityPoint = {
   date: string;
   label: string;
   sent: number;
+  opened: number;
+  replied: number;
 };
 
 export type DivisionBreakdown = {
   division: string;
   sent: number;
+  opened: number;
+  replied: number;
 };
 
 export type SentEmailRow = {

@@ -8,11 +8,14 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 /**
  * Supabase's email-confirmation link redirects back with
  * #access_token=...&refresh_token=...&type=signup in the URL hash (implicit
- * grant flow) — there's no default page that handles this. We detect it on
- * mount, verify the token, make sure a users row exists, persist the
- * session, strip the hash, and land directly in onboarding step 1 with no
- * re-entering of email/password. This must only fire for the confirmation
- * case — detectSessionInUrl is disabled on the browser client (see
+ * grant flow) — there's no default page that handles this, and the redirect
+ * lands on whatever the project's Site URL is configured to (the marketing
+ * homepage), not /auth. Mounted in the root layout so it catches the hash
+ * no matter which page it lands on. We detect it on mount, verify the
+ * token, make sure a users row exists, persist the session, strip the hash,
+ * and land directly in onboarding step 1 with no re-entering of
+ * email/password. This must only fire for the confirmation case —
+ * detectSessionInUrl is disabled on the browser client (see
  * lib/supabase/client.ts) specifically so normal sign-in never races this.
  */
 function hasSignupHash() {
@@ -62,7 +65,7 @@ export function AuthHashHandler() {
   if (!verifying) return null;
 
   return (
-    <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 text-sm text-muted-foreground">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 text-sm text-muted-foreground">
       Confirming your email…
     </div>
   );
