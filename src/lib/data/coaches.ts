@@ -22,10 +22,15 @@ export async function getCoachesWithOutreach(
     ]);
 
   if (coachesError) throw coachesError;
-  if (outreachError) throw outreachError;
+  // Degrade gracefully if the `outreach` table/migration isn't in place yet
+  // (e.g. not-yet-applied migration) — browsing coaches shouldn't 500 just
+  // because per-user send state is unavailable.
+  if (outreachError) {
+    console.error("getCoachesWithOutreach: outreach query failed", outreachError);
+  }
 
   const outreachByCoach = new Map(
-    (outreach ?? []).map((row) => [row.coach_email, row])
+    (outreachError ? [] : outreach ?? []).map((row) => [row.coach_email, row])
   );
 
   return (coaches ?? []).map((coach) => ({

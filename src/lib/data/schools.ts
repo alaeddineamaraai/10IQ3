@@ -61,8 +61,13 @@ export async function getSchoolDetail(
       .in("coach_email", coaches.map((c) => c.email))
       .returns<Outreach[]>();
 
-    if (outreachError) throw outreachError;
-    outreachByCoach = new Map((outreach ?? []).map((o) => [o.coach_email, o]));
+    // Degrade gracefully if the `outreach` table/migration isn't in place
+    // yet — the roster should still render without per-user send status.
+    if (outreachError) {
+      console.error("getSchoolDetail: outreach query failed", outreachError);
+    } else {
+      outreachByCoach = new Map((outreach ?? []).map((o) => [o.coach_email, o]));
+    }
   }
 
   const [summary] = groupSchools(coaches);
