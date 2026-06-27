@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
+import { cn } from "@/lib/utils";
+
 export function AmbientBackground() {
   const glowRef = useRef<HTMLDivElement>(null);
 
@@ -52,25 +54,15 @@ export function AmbientBackground() {
       />
 
       <div
-        className="absolute -left-32 top-20 h-[420px] w-[420px] rounded-full opacity-25 blur-[90px]"
+        className={cn(
+          "pointer-events-none absolute -inset-[10px] overflow-hidden opacity-25 blur-[60px] will-change-transform",
+          "[mask-image:radial-gradient(ellipse_at_50%_0%,black_10%,transparent_70%)]"
+        )}
         style={{
-          background:
-            "radial-gradient(circle, var(--brand) 0%, transparent 70%)",
-          animation: "orb-drift-1 26s ease-in-out infinite",
-        }}
-      />
-      <div
-        className="absolute right-[-10%] top-[10%] h-[380px] w-[380px] rounded-full opacity-20 blur-[90px]"
-        style={{
-          background: "radial-gradient(circle, #7aa6f8 0%, transparent 70%)",
-          animation: "orb-drift-2 32s ease-in-out infinite",
-        }}
-      />
-      <div
-        className="absolute bottom-[-10%] left-[30%] h-[460px] w-[460px] rounded-full opacity-20 blur-[100px]"
-        style={{
-          background: "radial-gradient(circle, #a9c5fb 0%, transparent 70%)",
-          animation: "orb-drift-3 38s ease-in-out infinite",
+          backgroundImage:
+            "repeating-linear-gradient(100deg, var(--chart-1) 10%, var(--chart-2) 15%, var(--chart-3) 20%, var(--background) 25%, var(--chart-2) 30%)",
+          backgroundSize: "200% 100%",
+          animation: "aurora 60s linear infinite",
         }}
       />
     </div>
