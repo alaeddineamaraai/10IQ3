@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { GraduationCap, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ExpandableCard, type ExpandableCardItem } from "@/components/ui/expandable-card";
 import {
   Select,
   SelectContent,
@@ -93,40 +93,6 @@ export function SchoolsGrid({ schools }: { schools: School[] }) {
     setMaxUtr("");
   }
 
-  const cardItems: ExpandableCardItem[] = useMemo(
-    () =>
-      filtered.map((school) => ({
-        id: school.school_name,
-        title: school.school_name,
-        description: `${school.coach_count} coach${school.coach_count === 1 ? "" : "es"}`,
-        badge: school.division,
-        icon: <GraduationCap className="size-5" />,
-        ctaText: "View roster",
-        ctaHref: `/schools/${encodeURIComponent(school.school_name)}`,
-        content: (
-          <div className="grid grid-cols-2 gap-3 text-foreground">
-            <div className="rounded-xl bg-muted p-3">
-              <p className="text-xs text-muted-foreground">Division</p>
-              <p className="font-semibold">{school.division}</p>
-            </div>
-            <div className="rounded-xl bg-muted p-3">
-              <p className="text-xs text-muted-foreground">Coaches</p>
-              <p className="font-semibold">{school.coach_count}</p>
-            </div>
-            <div className="rounded-xl bg-muted p-3">
-              <p className="text-xs text-muted-foreground">Avg UTR</p>
-              <p className="font-semibold">{school.avg_utr != null ? school.avg_utr.toFixed(1) : "—"}</p>
-            </div>
-            <div className="rounded-xl bg-muted p-3">
-              <p className="text-xs text-muted-foreground">Avg WTN</p>
-              <p className="font-semibold">{school.avg_wtn != null ? school.avg_wtn.toFixed(1) : "—"}</p>
-            </div>
-          </div>
-        ),
-      })),
-    [filtered]
-  );
-
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -205,7 +171,33 @@ export function SchoolsGrid({ schools }: { schools: School[] }) {
         {filtered.length} school{filtered.length === 1 ? "" : "s"}
       </p>
 
-      {cardItems.length > 0 && <ExpandableCard items={cardItems} />}
+      {filtered.length > 0 && (
+        <ul className="flex flex-col gap-2">
+          {filtered.map((school) => (
+            <li key={school.school_name}>
+              <Link
+                href={`/schools/${encodeURIComponent(school.school_name)}`}
+                className="transition-smooth flex items-center justify-between gap-4 rounded-2xl p-4 hover:bg-muted"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                    <GraduationCap className="size-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-foreground">{school.school_name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {school.coach_count} coach{school.coach_count === 1 ? "" : "es"}
+                    </p>
+                  </div>
+                </div>
+                <span className="shrink-0 rounded-full bg-muted px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+                  {school.division}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
 
       {filtered.length === 0 && (
         <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
