@@ -1,14 +1,18 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getSchools, getSampleSchools } from "@/lib/data/schools";
+import { getSchoolDetails, getSampleSchoolDetails } from "@/lib/data/schools";
 import { SchoolsGrid } from "@/components/schools/schools-grid";
 
 async function loadSchools() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    return { schools: getSampleSchools(), isSample: true };
+    return { schools: getSampleSchoolDetails(), isSample: true };
   }
 
   const supabase = await createSupabaseServerClient();
-  return { schools: await getSchools(supabase), isSample: false };
+  const { data: auth } = await supabase.auth.getUser();
+  return {
+    schools: await getSchoolDetails(supabase, auth.user?.id ?? null),
+    isSample: false,
+  };
 }
 
 export default async function SchoolsPage() {

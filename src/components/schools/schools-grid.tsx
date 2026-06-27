@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { GraduationCap, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ExpandableCard, type ExpandableCardItem } from "@/components/ui/expandable-card";
+import { SchoolDetailContent } from "@/components/schools/school-detail-content";
 import {
   Select,
   SelectContent,
@@ -13,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { School } from "@/lib/types/school";
+import type { SchoolDetail } from "@/lib/types/school";
 
 const ALL = "all";
 
@@ -26,7 +27,7 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: "name_asc", label: "School (A–Z)" },
 ];
 
-function sortSchools(schools: School[], sort: SortKey) {
+function sortSchools(schools: SchoolDetail[], sort: SortKey) {
   const withFallback = (v: number | null, dir: 1 | -1) =>
     v ?? (dir === 1 ? -Infinity : Infinity);
 
@@ -44,7 +45,7 @@ function sortSchools(schools: School[], sort: SortKey) {
   });
 }
 
-export function SchoolsGrid({ schools }: { schools: School[] }) {
+export function SchoolsGrid({ schools }: { schools: SchoolDetail[] }) {
   const [search, setSearch] = useState("");
   const [division, setDivision] = useState(ALL);
   const [minUtr, setMinUtr] = useState("");
@@ -92,6 +93,21 @@ export function SchoolsGrid({ schools }: { schools: School[] }) {
     setMinUtr("");
     setMaxUtr("");
   }
+
+  const cardItems: ExpandableCardItem[] = useMemo(
+    () =>
+      filtered.map((school) => ({
+        id: school.school_name,
+        title: school.school_name,
+        description: `${school.coach_count} coach${school.coach_count === 1 ? "" : "es"}`,
+        badge: school.division,
+        icon: <GraduationCap className="size-5" />,
+        ctaText: "Open full page",
+        ctaHref: `/schools/${encodeURIComponent(school.school_name)}`,
+        content: <SchoolDetailContent detail={school} />,
+      })),
+    [filtered]
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -171,32 +187,8 @@ export function SchoolsGrid({ schools }: { schools: School[] }) {
         {filtered.length} school{filtered.length === 1 ? "" : "s"}
       </p>
 
-      {filtered.length > 0 && (
-        <ul className="flex flex-col gap-2">
-          {filtered.map((school) => (
-            <li key={school.school_name}>
-              <Link
-                href={`/schools/${encodeURIComponent(school.school_name)}`}
-                className="transition-smooth flex items-center justify-between gap-4 rounded-2xl p-4 hover:bg-muted"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                    <GraduationCap className="size-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-foreground">{school.school_name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {school.coach_count} coach{school.coach_count === 1 ? "" : "es"}
-                    </p>
-                  </div>
-                </div>
-                <span className="shrink-0 rounded-full bg-muted px-3 py-1.5 text-xs font-semibold text-muted-foreground">
-                  {school.division}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+      {cardItems.length > 0 && (
+        <ExpandableCard items={cardItems} modalClassName="max-w-2xl" />
       )}
 
       {filtered.length === 0 && (

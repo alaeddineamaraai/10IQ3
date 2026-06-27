@@ -17,7 +17,13 @@ export type ExpandableCardItem = {
   content: React.ReactNode;
 };
 
-export function ExpandableCard({ items }: { items: ExpandableCardItem[] }) {
+export function ExpandableCard({
+  items,
+  modalClassName,
+}: {
+  items: ExpandableCardItem[];
+  modalClassName?: string;
+}) {
   const [active, setActive] = useState<ExpandableCardItem | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const id = useId();
@@ -64,7 +70,10 @@ export function ExpandableCard({ items }: { items: ExpandableCardItem[] }) {
             <motion.div
               layoutId={`card-${active.id}-${id}`}
               ref={ref}
-              className="glass-card-strong flex h-full max-h-[90%] w-full max-w-[500px] flex-col overflow-hidden md:h-fit"
+              className={cn(
+                "glass-card-strong flex h-full max-h-[90%] w-full max-w-[500px] flex-col overflow-hidden md:h-fit",
+                modalClassName
+              )}
             >
               <div className="flex items-start justify-between gap-4 p-5">
                 <div className="flex items-center gap-3">

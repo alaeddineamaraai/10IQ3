@@ -46,6 +46,48 @@ function groupSchools(coaches: Coach[]): School[] {
     .sort((a, b) => a.school_name.localeCompare(b.school_name));
 }
 
+function attachOutreach(
+  coaches: Coach[],
+  outreachByCoach: Map<string, Outreach>
+): SchoolDetail["coaches"] {
+  return coaches.map((coach) => {
+    const outreach = outreachByCoach.get(coach.email);
+    return {
+      email: coach.email,
+      coach_name: coach.coach_name,
+      team_utr: coach.team_utr,
+      team_wtn: coach.team_wtn,
+      notes: coach.notes,
+      email_sent: outreach?.email_sent ?? false,
+      opened: outreach?.opened ?? false,
+      replied: outreach?.replied ?? false,
+    };
+  });
+}
+
+async function fetchOutreachByCoach(
+  supabase: SupabaseClient,
+  userId: string | null,
+  context: string
+): Promise<Map<string, Outreach>> {
+  if (!userId) return new Map();
+
+  const { data: outreach, error } = await supabase
+    .from("outreach")
+    .select("*")
+    .eq("user_id", userId)
+    .returns<Outreach[]>();
+
+  // Degrade gracefully if the `outreach` table/migration isn't in place
+  // yet — the roster should still render without per-user send status.
+  if (error) {
+    console.error(`${context}: outreach query failed`, error);
+    return new Map();
+  }
+
+  return new Map((outreach ?? []).map((o) => [o.coach_email, o]));
+}
+
 export async function getSchools(supabase: SupabaseClient): Promise<School[]> {
   const coaches = await fetchAllCoaches<Coach>(supabase);
   return groupSchools(coaches.map(normalizeCoach));
@@ -66,43 +108,41 @@ export async function getSchoolDetail(
   if (!coaches || coaches.length === 0) return null;
 
   const normalizedCoaches = coaches.map(normalizeCoach);
-
-  let outreachByCoach = new Map<string, Outreach>();
-  if (userId) {
-    const { data: outreach, error: outreachError } = await supabase
-      .from("outreach")
-      .select("*")
-      .eq("user_id", userId)
-      .in("coach_email", normalizedCoaches.map((c) => c.email))
-      .returns<Outreach[]>();
-
-    // Degrade gracefully if the `outreach` table/migration isn't in place
-    // yet — the roster should still render without per-user send status.
-    if (outreachError) {
-      console.error("getSchoolDetail: outreach query failed", outreachError);
-    } else {
-      outreachByCoach = new Map((outreach ?? []).map((o) => [o.coach_email, o]));
-    }
-  }
-
+  const outreachByCoach = await fetchOutreachByCoach(supabase, userId, "getSchoolDetail");
   const [summary] = groupSchools(normalizedCoaches);
 
   return {
     ...summary,
-    coaches: normalizedCoaches.map((coach) => {
-      const outreach = outreachByCoach.get(coach.email);
-      return {
-        email: coach.email,
-        coach_name: coach.coach_name,
-        team_utr: coach.team_utr,
-        team_wtn: coach.team_wtn,
-        notes: coach.notes,
-        email_sent: outreach?.email_sent ?? false,
-        opened: outreach?.opened ?? false,
-        replied: outreach?.replied ?? false,
-      };
-    }),
+    coaches: attachOutreach(normalizedCoaches, outreachByCoach),
   };
+}
+
+/**
+ * Full roster + outreach status for every school in one pass, so the
+ * Schools tab can show complete detail (stats, UTR chart, roster) inline
+ * without a per-school round trip.
+ */
+export async function getSchoolDetails(
+  supabase: SupabaseClient,
+  userId: string | null
+): Promise<SchoolDetail[]> {
+  const coaches = await fetchAllCoaches<Coach>(supabase);
+  const normalizedCoaches = coaches.map(normalizeCoach);
+  const outreachByCoach = await fetchOutreachByCoach(supabase, userId, "getSchoolDetails");
+
+  const bySchool = new Map<string, Coach[]>();
+  for (const coach of normalizedCoaches) {
+    const list = bySchool.get(coach.school_name) ?? [];
+    list.push(coach);
+    bySchool.set(coach.school_name, list);
+  }
+
+  return [...bySchool.values()]
+    .map((list) => {
+      const [summary] = groupSchools(list);
+      return { ...summary, coaches: attachOutreach(list, outreachByCoach) };
+    })
+    .sort((a, b) => a.school_name.localeCompare(b.school_name));
 }
 
 const SAMPLE_COACHES: Coach[] = [
@@ -118,6 +158,14 @@ const SAMPLE_COACHES: Coach[] = [
 
 export function getSampleSchools(): School[] {
   return groupSchools(SAMPLE_COACHES);
+}
+
+export function getSampleSchoolDetails(): SchoolDetail[] {
+  const names = [...new Set(SAMPLE_COACHES.map((c) => c.school_name))];
+  return names
+    .map((name) => getSampleSchoolDetail(name))
+    .filter((d): d is SchoolDetail => d != null)
+    .sort((a, b) => a.school_name.localeCompare(b.school_name));
 }
 
 export function getSampleSchoolDetail(schoolName: string): SchoolDetail | null {
