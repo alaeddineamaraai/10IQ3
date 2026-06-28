@@ -25,28 +25,27 @@ export async function POST(request: Request) {
   }
   result.domains = domains.data.map((d) => ({ id: d.id, name: d.name }));
 
+  // The account's plan only allows 1 domain, so receiving is enabled on the
+  // existing sending domain itself (mail.netset.pro) rather than a separate
+  // reply.* domain — reply-to addresses use reply+<id>@mail.netset.pro.
   const sendingDomain = domains.data.find((d) => d.name === "mail.netset.pro");
   if (sendingDomain) {
-    const { error } = await resend.domains.update({ id: sendingDomain.id, openTracking: true });
-    result.openTracking = error ? { error: error.message } : { enabled: true, domainId: sendingDomain.id };
-  } else {
-    result.openTracking = { error: "mail.netset.pro domain not found in Resend account" };
-  }
-
-  const inboundDomain = domains.data.find((d) => d.name === "reply.netset.pro");
-  if (!inboundDomain) {
-    const { data: created, error } = await resend.domains.create({
-      name: "reply.netset.pro",
-      capabilities: { sending: "disabled", receiving: "enabled" },
+    const { error } = await resend.domains.update({
+      id: sendingDomain.id,
+      openTracking: true,
+      capabilities: { receiving: "enabled" },
     });
     if (error) {
+      result.openTracking = { error: error.message };
       result.inboundDomain = { error: error.message };
     } else {
-      result.inboundDomain = created;
+      result.openTracking = { enabled: true, domainId: sendingDomain.id };
+      const { data: full, error: getError } = await resend.domains.get(sendingDomain.id);
+      result.inboundDomain = getError ? { error: getError.message } : full;
     }
   } else {
-    const { data: full, error } = await resend.domains.get(inboundDomain.id);
-    result.inboundDomain = error ? { error: error.message } : full;
+    result.openTracking = { error: "mail.netset.pro domain not found in Resend account" };
+    result.inboundDomain = { error: "mail.netset.pro domain not found in Resend account" };
   }
 
   const { data: webhooks, error: webhooksError } = await resend.webhooks.list();
