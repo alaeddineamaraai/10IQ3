@@ -1,34 +1,46 @@
 import { NextResponse } from "next/server";
+import { Resend } from "resend";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { AthleteProfile } from "@/lib/types/profile";
 
 const FREE_PLAN_EMAIL_LIMIT = 5;
 
-async function sendViaResend(to: string, subject: string, body: string) {
+function htmlFromPlainText(text: string) {
+  const escaped = text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  return `<div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${escaped}</div>`;
+}
+
+async function sendViaResend(
+  to: string,
+  subject: string,
+  body: string,
+  replyTo: string | undefined
+) {
   if (!process.env.RESEND_API_KEY) {
-    return { delivered: false, reason: "RESEND_API_KEY not configured" };
+    return { delivered: false as const, reason: "RESEND_API_KEY not configured" };
   }
 
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: "Netset <recruiting@mail.netset.pro>",
-      to,
-      subject,
-      text: body,
-    }),
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const { data, error } = await resend.emails.send({
+    from: "Netset <recruiting@mail.netset.pro>",
+    to,
+    subject,
+    text: body,
+    // HTML is required for Resend's open-tracking pixel; the plain-text
+    // part keeps it looking identical to a normal email.
+    html: htmlFromPlainText(body),
+    ...(replyTo ? { replyTo } : {}),
   });
 
-  if (!res.ok) {
-    return { delivered: false, reason: `Resend error: ${res.status}` };
+  if (error || !data) {
+    return { delivered: false as const, reason: `Resend error: ${error?.message ?? "unknown"}` };
   }
 
-  return { delivered: true };
+  return { delivered: true as const, emailId: data.id };
 }
 
 export async function POST(request: Request) {
@@ -62,19 +74,51 @@ export async function POST(request: Request) {
     );
   }
 
-  const { delivered, reason } = await sendViaResend(coach_email, subject, body);
+  // The outreach row's id is needed *before* sending so the Reply-To address
+  // can carry it (reply+<id>@...) and inbound replies thread back correctly.
+  // Resolved ahead of the upsert rather than via upsert's own returned id, so
+  // a re-send to the same coach keeps the original row id (and its replies)
+  // instead of getting a fresh one.
+  const { data: existingRow } = await supabase
+    .from("outreach")
+    .select("id")
+    .eq("user_id", auth.user.id)
+    .eq("coach_email", coach_email)
+    .maybeSingle();
 
-  const { error: outreachError } = await supabase.from("outreach").upsert(
-    {
-      user_id: auth.user.id,
-      coach_email,
+  let outreachId = existingRow?.id as string | undefined;
+  if (!outreachId) {
+    const { data: inserted, error: insertError } = await supabase
+      .from("outreach")
+      .insert({ user_id: auth.user.id, coach_email })
+      .select("id")
+      .single();
+
+    if (insertError || !inserted) {
+      return NextResponse.json(
+        { error: insertError?.message ?? "Could not create outreach row" },
+        { status: 500 }
+      );
+    }
+    outreachId = inserted.id;
+  }
+
+  const replyTo = process.env.RESEND_INBOUND_DOMAIN
+    ? `reply+${outreachId}@${process.env.RESEND_INBOUND_DOMAIN}`
+    : undefined;
+
+  const result = await sendViaResend(coach_email, subject, body, replyTo);
+
+  const { error: outreachError } = await supabase
+    .from("outreach")
+    .update({
       email_sent: true,
       sent_at: new Date().toISOString(),
       subject,
       body,
-    },
-    { onConflict: "user_id,coach_email" }
-  );
+      resend_email_id: result.delivered ? result.emailId : null,
+    })
+    .eq("id", outreachId);
 
   if (outreachError) {
     return NextResponse.json({ error: outreachError.message }, { status: 500 });
@@ -85,5 +129,9 @@ export async function POST(request: Request) {
     .update({ emails_used: profile.emails_used + 1 })
     .eq("id", auth.user.id);
 
-  return NextResponse.json({ ok: true, delivered, reason });
+  return NextResponse.json({
+    ok: true,
+    delivered: result.delivered,
+    reason: result.delivered ? undefined : result.reason,
+  });
 }

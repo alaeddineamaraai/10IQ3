@@ -13,7 +13,7 @@ import { OutreachActivityChart } from "@/components/dashboard/outreach-activity-
 import { DivisionBreakdownChart } from "@/components/dashboard/division-breakdown-chart";
 import { OutboundFunnel } from "@/components/dashboard/outbound-funnel";
 import { PerformanceMetrics } from "@/components/dashboard/performance-metrics";
-import { SentEmailsTable } from "@/components/dashboard/sent-emails-table";
+import { SentEmailsList } from "@/components/dashboard/sent-emails-list";
 
 async function loadDashboardData() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
@@ -97,7 +97,7 @@ export default async function DashboardPage() {
           <GlassCardTitle>All Sent Emails</GlassCardTitle>
         </GlassCardHeader>
         <GlassCardContent>
-          <SentEmailsTable rows={data.sentEmails} />
+          <SentEmailsList rows={data.sentEmails} />
         </GlassCardContent>
       </GlassCard>
     </div>

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { fetchAllCoaches } from "@/lib/data/coaches";
-import type { Coach, Outreach } from "@/lib/types/coach";
+import type { Coach, Outreach, OutreachReply } from "@/lib/types/coach";
 import type { DashboardData } from "@/lib/types/dashboard";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -35,6 +35,22 @@ export async function getDashboardData(
   const coachByEmail = new Map(coaches.map((c) => [c.email, c]));
   const rows = outreach ?? [];
   const sentRows = rows.filter((r) => r.email_sent);
+
+  const { data: replies } = sentRows.length
+    ? await supabase
+        .from("outreach_replies")
+        .select("*")
+        .in("outreach_id", sentRows.map((r) => r.id))
+        .order("received_at", { ascending: true })
+        .returns<OutreachReply[]>()
+    : { data: [] as OutreachReply[] };
+
+  const repliesByOutreachId = new Map<string, OutreachReply[]>();
+  for (const reply of replies ?? []) {
+    const list = repliesByOutreachId.get(reply.outreach_id) ?? [];
+    list.push(reply);
+    repliesByOutreachId.set(reply.outreach_id, list);
+  }
 
   const sent = sentRows.length;
   const opened = rows.filter((r) => r.opened).length;
@@ -76,10 +92,21 @@ export async function getDashboardData(
         id: row.id,
         coach_name: coach?.coach_name ?? row.coach_email,
         school_name: coach?.school_name ?? "—",
+        coach_email: row.coach_email,
         subject: row.subject ?? "(no subject)",
+        body: row.body ?? "",
         sent_at: row.sent_at ?? row.created_at,
         opened: row.opened,
         replied: row.replied,
+        opened_at: row.opened_at,
+        replied_at: row.replied_at,
+        replies: (repliesByOutreachId.get(row.id) ?? []).map((reply) => ({
+          id: reply.id,
+          from_email: reply.from_email,
+          subject: reply.subject,
+          body: reply.body,
+          received_at: reply.received_at,
+        })),
       };
     });
 
@@ -128,28 +155,51 @@ export function getSampleDashboardData(): DashboardData {
         id: "1",
         coach_name: "Sarah Mitchell",
         school_name: "Duke University",
+        coach_email: "sarah.mitchell@duke.edu",
         subject: "Introduction from a 2027 recruit",
+        body: "Hi Coach Mitchell,\n\nMy name is Alex and I'm a 2027 recruit with a UTR of 9.8...",
         sent_at: new Date(Date.now() - 1 * DAY_MS).toISOString(),
         opened: true,
         replied: true,
+        opened_at: new Date(Date.now() - 22 * 60 * 60 * 1000).toISOString(),
+        replied_at: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(),
+        replies: [
+          {
+            id: "r1",
+            from_email: "sarah.mitchell@duke.edu",
+            subject: "Re: Introduction from a 2027 recruit",
+            body: "Thanks for reaching out, Alex — your UTR and record stand out. Could you send over a highlight reel and your fall tournament schedule?",
+            received_at: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(),
+          },
+        ],
       },
       {
         id: "2",
         coach_name: "James Park",
         school_name: "UC Berkeley",
+        coach_email: "james.park@berkeley.edu",
         subject: "Tennis recruiting — UTR 9.8",
+        body: "Hi Coach Park,\n\nI wanted to introduce myself ahead of the recruiting season...",
         sent_at: new Date(Date.now() - 2 * DAY_MS).toISOString(),
         opened: true,
         replied: false,
+        opened_at: new Date(Date.now() - 40 * 60 * 60 * 1000).toISOString(),
+        replied_at: null,
+        replies: [],
       },
       {
         id: "3",
         coach_name: "Elena Torres",
         school_name: "University of Michigan",
+        coach_email: "elena.torres@umich.edu",
         subject: "Prospective student-athlete introduction",
+        body: "Hi Coach Torres,\n\nI'm reaching out to introduce myself as a prospective student-athlete...",
         sent_at: new Date(Date.now() - 3 * DAY_MS).toISOString(),
         opened: false,
         replied: false,
+        opened_at: null,
+        replied_at: null,
+        replies: [],
       },
     ],
     isSample: true,

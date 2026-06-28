@@ -11,11 +11,23 @@ export type ExpandableCardItem = {
   title: string;
   description: string;
   badge?: string;
+  badgeVariant?: "solid" | "muted" | "outline";
   icon?: React.ReactNode;
-  ctaText: string;
-  ctaHref: string;
+  ctaText?: string;
+  ctaHref?: string;
   content: React.ReactNode;
 };
+
+function badgeClasses(variant: ExpandableCardItem["badgeVariant"]) {
+  switch (variant) {
+    case "solid":
+      return "bg-primary text-primary-foreground";
+    case "outline":
+      return "border border-border text-muted-foreground";
+    default:
+      return "bg-muted text-muted-foreground";
+  }
+}
 
 export function ExpandableCard({
   items,
@@ -84,12 +96,19 @@ export function ExpandableCard({
                     {active.icon}
                   </motion.div>
                   <div>
-                    <motion.h3
-                      layoutId={`title-${active.id}-${id}`}
-                      className="font-semibold text-foreground"
-                    >
-                      {active.title}
-                    </motion.h3>
+                    <div className="flex items-center gap-2">
+                      <motion.h3
+                        layoutId={`title-${active.id}-${id}`}
+                        className="font-semibold text-foreground"
+                      >
+                        {active.title}
+                      </motion.h3>
+                      {active.badge && (
+                        <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", badgeClasses(active.badgeVariant))}>
+                          {active.badge}
+                        </span>
+                      )}
+                    </div>
                     <motion.p
                       layoutId={`description-${active.id}-${id}`}
                       className="text-sm text-muted-foreground"
@@ -99,13 +118,15 @@ export function ExpandableCard({
                   </div>
                 </div>
 
-                <motion.a
-                  layoutId={`cta-${active.id}-${id}`}
-                  href={active.ctaHref}
-                  className="transition-smooth shrink-0 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
-                >
-                  {active.ctaText}
-                </motion.a>
+                {active.ctaHref && (
+                  <motion.a
+                    layoutId={`cta-${active.id}-${id}`}
+                    href={active.ctaHref}
+                    className="transition-smooth shrink-0 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
+                  >
+                    {active.ctaText}
+                  </motion.a>
+                )}
               </div>
 
               <motion.div
@@ -152,9 +173,10 @@ export function ExpandableCard({
             </div>
             {item.badge && (
               <motion.span
-                layoutId={`cta-${item.id}-${id}`}
+                layoutId={item.ctaHref ? `cta-${item.id}-${id}` : undefined}
                 className={cn(
-                  "shrink-0 rounded-full bg-muted px-3 py-1.5 text-xs font-semibold text-muted-foreground"
+                  "shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold",
+                  badgeClasses(item.badgeVariant)
                 )}
               >
                 {item.badge}

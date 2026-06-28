@@ -21,7 +21,20 @@ export type Outreach = {
   body: string | null;
   opened: boolean;
   replied: boolean;
+  opened_at: string | null;
+  replied_at: string | null;
+  resend_email_id: string | null;
   created_at: string;
+};
+
+/** A reply received via Resend Inbound, threaded to one outreach row. */
+export type OutreachReply = {
+  id: string;
+  outreach_id: string;
+  from_email: string;
+  subject: string | null;
+  body: string | null;
+  received_at: string;
 };
 
 /** coaches_database joined with the current user's outreach row, if any. */

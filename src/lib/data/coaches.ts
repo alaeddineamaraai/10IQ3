@@ -146,6 +146,9 @@ export function getSampleCoaches(count = 24): CoachWithOutreach[] {
             body: null,
             opened,
             replied,
+            opened_at: opened ? new Date(Date.now() - i * 86400000).toISOString() : null,
+            replied_at: replied ? new Date(Date.now() - i * 86400000).toISOString() : null,
+            resend_email_id: null,
             created_at: new Date(Date.now() - i * 86400000).toISOString(),
           }
         : null,
