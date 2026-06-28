@@ -65,7 +65,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section>
+        <section className="pb-20 sm:pb-32">
           <MacbookScrollDemo />
         </section>
 
