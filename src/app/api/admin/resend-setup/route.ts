@@ -48,19 +48,22 @@ export async function POST(request: Request) {
     result.inboundDomain = { error: "mail.netset.pro domain not found in Resend account" };
   }
 
+  // The signing_secret is only ever returned at creation time, so if a
+  // webhook to this endpoint already exists (from a prior run of this
+  // route), it's deleted and recreated to mint a secret we can capture.
   const { data: webhooks, error: webhooksError } = await resend.webhooks.list();
   const endpoint = "https://www.netset.pro/api/webhooks/resend";
   const existing = !webhooksError && webhooks?.data.find((w) => w.endpoint === endpoint);
 
   if (existing) {
-    result.webhook = { id: existing.id, endpoint: existing.endpoint, alreadyExisted: true };
-  } else {
-    const { data: webhook, error } = await resend.webhooks.create({
-      endpoint,
-      events: ["email.opened", "email.received"],
-    });
-    result.webhook = error ? { error: error.message } : webhook;
+    await resend.webhooks.remove(existing.id);
   }
+
+  const { data: webhook, error: createError } = await resend.webhooks.create({
+    endpoint,
+    events: ["email.opened", "email.received"],
+  });
+  result.webhook = createError ? { error: createError.message } : webhook;
 
   return NextResponse.json(result);
 }
