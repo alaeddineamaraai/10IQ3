@@ -102,7 +102,7 @@ export function AuthForm() {
   return (
     <GlassCard strong className="w-full max-w-md">
       <GlassCardHeader>
-        <GlassCardTitle className="text-xl">Welcome to 10IQ</GlassCardTitle>
+        <GlassCardTitle className="text-xl">Welcome to Netset</GlassCardTitle>
         <GlassCardDescription>
           AI-personalized recruiting emails to 1,800+ college coaches.
         </GlassCardDescription>

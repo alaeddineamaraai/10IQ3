@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "10IQ — College Tennis Recruiting",
+  title: "Netset — College Tennis Recruiting",
   description:
     "AI-personalized recruiting emails to 1,800+ college tennis coaches.",
 };

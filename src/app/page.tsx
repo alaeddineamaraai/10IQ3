@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BarChart3, Mail, Sparkles, Users } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
-import { DashboardPreview } from "@/components/landing/dashboard-preview";
+import MacbookScrollDemo from "@/components/macbook-scroll-demo";
 
 const STATS = [
   { label: "College coaches", value: "1,800+" },
@@ -39,7 +39,7 @@ export default function LandingPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="flex items-center justify-between px-6 py-5 sm:px-10">
-        <span className="text-lg font-semibold tracking-tight">10IQ</span>
+        <span className="text-lg font-semibold tracking-tight">Netset</span>
         <Link href="/auth" className={buttonVariants({ variant: "ghost" })}>
           Sign in
         </Link>
@@ -52,7 +52,7 @@ export default function LandingPage() {
             <span className="text-primary">faster</span>
           </h1>
           <p className="max-w-xl text-balance text-muted-foreground sm:text-lg">
-            10IQ writes AI-personalized recruiting emails to college tennis coaches using
+            Netset writes AI-personalized recruiting emails to college tennis coaches using
             your real stats, so you can reach more programs without starting from a blank page.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
@@ -65,8 +65,8 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="px-6 pb-20 sm:px-10">
-          <DashboardPreview />
+        <section>
+          <MacbookScrollDemo />
         </section>
 
         <section className="px-6 pb-20 sm:px-10">
@@ -98,7 +98,7 @@ export default function LandingPage() {
       </main>
 
       <footer className="border-t border-border px-6 py-6 text-center text-xs text-muted-foreground sm:px-10">
-        © {new Date().getFullYear()} 10IQ. Built for student athletes.
+        © {new Date().getFullYear()} Netset. Built for student athletes.
       </footer>
     </div>
   );

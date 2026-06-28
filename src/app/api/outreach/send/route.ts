@@ -17,7 +17,7 @@ async function sendViaResend(to: string, subject: string, body: string) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "10IQ <recruiting@mail.netset.pro>",
+      from: "Netset <recruiting@mail.netset.pro>",
       to,
       subject,
       text: body,
