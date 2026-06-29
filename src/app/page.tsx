@@ -97,8 +97,11 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t border-border px-6 py-6 text-center text-xs text-muted-foreground sm:px-10">
-        © {new Date().getFullYear()} Netset. Built for student athletes.
+      <footer className="flex flex-col items-center gap-2 border-t border-border px-6 py-6 text-center text-xs text-muted-foreground sm:px-10">
+        <span>© {new Date().getFullYear()} Netset. Built for student athletes.</span>
+        <Link href="/privacy" className="transition-smooth hover:text-foreground hover:underline">
+          Privacy Policy
+        </Link>
       </footer>
     </div>
   );

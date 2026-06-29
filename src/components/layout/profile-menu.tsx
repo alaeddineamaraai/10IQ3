@@ -6,6 +6,7 @@ import Link from "next/link";
 import { CreditCard, LogOut } from "lucide-react";
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -58,9 +59,12 @@ export function ProfileMenu({ profile }: { profile: AthleteProfile }) {
   const [portalPending, setPortalPending] = useState(false);
   const [portalError, setPortalError] = useState<string | null>(null);
 
-  function openNow() {
+  // Hover only ever cancels a pending close (so re-entering while the menu
+  // is open keeps it open) — it never opens the menu itself. Opening is
+  // click-only, otherwise hovering onto the avatar opens it and the
+  // immediately-following click toggles it straight back closed.
+  function cancelClose() {
     if (closeTimer.current) clearTimeout(closeTimer.current);
-    setOpen(true);
   }
 
   function closeSoon() {
@@ -140,7 +144,7 @@ export function ProfileMenu({ profile }: { profile: AthleteProfile }) {
   const hasBillingAccount = !!profile.stripe_customer_id;
 
   return (
-    <div className="relative" onMouseEnter={openNow} onMouseLeave={closeSoon}>
+    <div className="relative" onMouseEnter={cancelClose} onMouseLeave={closeSoon}>
       <button
         type="button"
         aria-haspopup="true"
@@ -155,9 +159,16 @@ export function ProfileMenu({ profile }: { profile: AthleteProfile }) {
         </Avatar>
       </button>
 
-      {open && (
-        <div className="glass-card absolute right-0 top-full z-50 mt-2 w-80 p-0">
-          <Tabs defaultValue="account" className="gap-0">
+      <div
+        aria-hidden={!open}
+        className={cn(
+          "glass-card-strong absolute right-0 top-full z-50 mt-2 w-80 origin-top-right p-0 transition-smooth",
+          open
+            ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
+            : "pointer-events-none translate-y-1 scale-95 opacity-0"
+        )}
+      >
+        <Tabs defaultValue="account" className="gap-0">
             <TabsList className="m-2">
               <TabsTrigger value="account">Account</TabsTrigger>
               <TabsTrigger value="payment">Payment</TabsTrigger>
@@ -284,9 +295,8 @@ export function ProfileMenu({ profile }: { profile: AthleteProfile }) {
                 Edit full profile →
               </Link>
             </TabsContent>
-          </Tabs>
-        </div>
-      )}
+        </Tabs>
+      </div>
     </div>
   );
 }

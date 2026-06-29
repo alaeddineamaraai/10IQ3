@@ -44,12 +44,32 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        <StatCard label="Coaches" value={data.stats.coaches.toLocaleString()} icon={Users} />
-        <StatCard label="Sent" value={data.stats.sent} icon={Mail} />
-        <StatCard label="Opened" value={data.stats.opened} icon={MailOpen} />
-        <StatCard label="Replied" value={data.stats.replied} icon={MessageCircle} />
-        <StatCard label="Pending" value={data.stats.pending.toLocaleString()} icon={Clock} />
+      <div className="flex flex-wrap justify-center gap-4">
+        <StatCard
+          className="min-w-[180px] max-w-[260px] flex-1 basis-[200px]"
+          label="Coaches"
+          value={data.stats.coaches.toLocaleString()}
+          icon={Users}
+        />
+        <StatCard className="min-w-[180px] max-w-[260px] flex-1 basis-[200px]" label="Sent" value={data.stats.sent} icon={Mail} />
+        <StatCard
+          className="min-w-[180px] max-w-[260px] flex-1 basis-[200px]"
+          label="Opened"
+          value={data.stats.opened}
+          icon={MailOpen}
+        />
+        <StatCard
+          className="min-w-[180px] max-w-[260px] flex-1 basis-[200px]"
+          label="Replied"
+          value={data.stats.replied}
+          icon={MessageCircle}
+        />
+        <StatCard
+          className="min-w-[180px] max-w-[260px] flex-1 basis-[200px]"
+          label="Pending"
+          value={data.stats.pending.toLocaleString()}
+          icon={Clock}
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
