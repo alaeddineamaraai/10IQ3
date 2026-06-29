@@ -27,7 +27,7 @@ const DOCK_ITEMS: DockItem[] = [
   { title: "AI Advisor", href: "/advisor", icon: Sparkles },
 ];
 
-export function BottomDock() {
+export function SideDock() {
   const pathname = usePathname();
 
   const items: FloatingDockItem[] = DOCK_ITEMS.map(({ title, href, icon: Icon }) => {
@@ -51,12 +51,13 @@ export function BottomDock() {
   });
 
   return (
-    <div className="fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
-      <FloatingDock
-        items={items}
-        desktopClassName="glass-dock"
-        mobileClassName="glass-dock"
-      />
-    </div>
+    <>
+      <div className="fixed inset-y-0 right-6 z-50 hidden items-center md:flex">
+        <FloatingDock items={items} desktopClassName="glass-dock" orientation="vertical" />
+      </div>
+      <div className="fixed inset-x-0 bottom-6 z-50 flex justify-center px-4 md:hidden">
+        <FloatingDock items={items} mobileClassName="glass-dock" />
+      </div>
+    </>
   );
 }

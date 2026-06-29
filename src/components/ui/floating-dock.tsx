@@ -29,14 +29,16 @@ export const FloatingDock = ({
   items,
   desktopClassName,
   mobileClassName,
+  orientation = "horizontal",
 }: {
   items: FloatingDockItem[];
   desktopClassName?: string;
   mobileClassName?: string;
+  orientation?: "horizontal" | "vertical";
 }) => {
   return (
     <>
-      <FloatingDockDesktop items={items} className={desktopClassName} />
+      <FloatingDockDesktop items={items} className={desktopClassName} orientation={orientation} />
       <FloatingDockMobile items={items} className={mobileClassName} />
     </>
   );
@@ -103,32 +105,42 @@ const FloatingDockMobile = ({
 const FloatingDockDesktop = ({
   items,
   className,
+  orientation = "horizontal",
 }: {
   items: FloatingDockItem[];
   className?: string;
+  orientation?: "horizontal" | "vertical";
 }) => {
-  const mouseX = useMotionValue(Infinity);
+  const mouse = useMotionValue(Infinity);
+  const vertical = orientation === "vertical";
+
   return (
     <motion.div
-      onMouseMove={(e) => mouseX.set(e.pageX)}
-      onMouseLeave={() => mouseX.set(Infinity)}
-      className={cn("mx-auto hidden h-16 items-end gap-4 rounded-2xl px-4 pb-3 md:flex", className)}
+      onMouseMove={(e) => mouse.set(vertical ? e.pageY : e.pageX)}
+      onMouseLeave={() => mouse.set(Infinity)}
+      className={cn(
+        "hidden items-center gap-5 rounded-2xl md:flex",
+        vertical ? "w-20 flex-col px-3 py-5" : "mx-auto h-16 items-end gap-4 px-4 pb-3",
+        className,
+      )}
     >
       {items.map((item) => (
-        <IconContainer mouseX={mouseX} key={item.title} {...item} />
+        <IconContainer mouse={mouse} vertical={vertical} key={item.title} {...item} />
       ))}
     </motion.div>
   );
 };
 
 function IconContainer({
-  mouseX,
+  mouse,
+  vertical,
   title,
   icon,
   href,
   className,
 }: {
-  mouseX: MotionValue;
+  mouse: MotionValue;
+  vertical: boolean;
   title: string;
   icon: React.ReactNode;
   href: string;
@@ -136,20 +148,21 @@ function IconContainer({
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
-  const distance = useTransform(mouseX, (val) => {
-    const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
+  const distance = useTransform(mouse, (val) => {
+    const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, y: 0, width: 0, height: 0 };
+    const center = vertical ? bounds.y + bounds.height / 2 : bounds.x + bounds.width / 2;
 
-    return val - bounds.x - bounds.width / 2;
+    return val - center;
   });
 
-  const widthTransform = useTransform(distance, [-150, 0, 150], [40, 80, 40]);
-  const heightTransform = useTransform(distance, [-150, 0, 150], [40, 80, 40]);
+  const widthTransform = useTransform(distance, [-150, 0, 150], [48, 96, 48]);
+  const heightTransform = useTransform(distance, [-150, 0, 150], [48, 96, 48]);
 
-  const widthTransformIcon = useTransform(distance, [-150, 0, 150], [20, 40, 20]);
+  const widthTransformIcon = useTransform(distance, [-150, 0, 150], [24, 48, 24]);
   const heightTransformIcon = useTransform(
     distance,
     [-150, 0, 150],
-    [20, 40, 20],
+    [24, 48, 24],
   );
 
   const width = useSpring(widthTransform, {
@@ -191,10 +204,13 @@ function IconContainer({
         <AnimatePresence>
           {hovered && (
             <motion.div
-              initial={{ opacity: 0, y: 10, x: "-50%" }}
-              animate={{ opacity: 1, y: 0, x: "-50%" }}
-              exit={{ opacity: 0, y: 2, x: "-50%" }}
-              className="absolute -top-8 left-1/2 w-fit rounded-md border border-border bg-popover px-2 py-0.5 text-xs whitespace-pre text-popover-foreground"
+              initial={vertical ? { opacity: 0, x: 10, y: "-50%" } : { opacity: 0, y: 10, x: "-50%" }}
+              animate={vertical ? { opacity: 1, x: 0, y: "-50%" } : { opacity: 1, y: 0, x: "-50%" }}
+              exit={vertical ? { opacity: 0, x: 2, y: "-50%" } : { opacity: 0, y: 2, x: "-50%" }}
+              className={cn(
+                "absolute w-fit rounded-md border border-border bg-popover px-2 py-0.5 text-xs whitespace-pre text-popover-foreground",
+                vertical ? "top-1/2 right-full mr-3" : "-top-8 left-1/2",
+              )}
             >
               {title}
             </motion.div>

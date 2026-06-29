@@ -1,6 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getProfile, getSampleProfile } from "@/lib/data/profile";
-import { BottomDock } from "@/components/layout/bottom-dock";
+import { SideDock } from "@/components/layout/side-dock";
 import { TopHeader } from "@/components/layout/top-header";
 
 async function loadProfile() {
@@ -29,8 +29,10 @@ export default async function AppLayout({
   return (
     <div className="flex min-h-screen flex-col">
       <TopHeader profile={profile} />
-      <main className="flex-1 px-4 pb-32 pt-2 sm:px-6 lg:px-10">{children}</main>
-      <BottomDock />
+      <main className="flex-1 px-4 pb-32 pt-2 sm:px-6 md:pr-28 md:pb-10 lg:px-10 lg:pr-32">
+        <div className="mx-auto w-full max-w-6xl">{children}</div>
+      </main>
+      <SideDock />
     </div>
   );
 }
