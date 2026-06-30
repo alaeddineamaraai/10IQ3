@@ -1,14 +1,30 @@
 import { Suspense } from "react";
 
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getCoachesWithOutreach, getSampleCoaches } from "@/lib/data/coaches";
 import { ComposeClient } from "./compose-client";
 
-export default function ComposePage() {
+async function loadCoaches() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return getSampleCoaches();
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return getSampleCoaches();
+
+  return getCoachesWithOutreach(supabase, auth.user.id);
+}
+
+export default async function ComposePage() {
+  const coaches = await loadCoaches();
+
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Compose</h1>
         <p className="text-sm text-muted-foreground">
-          Draft and send personalized recruiting emails.
+          Select coaches on the left, draft and send on the right.
         </p>
       </div>
 
@@ -19,7 +35,7 @@ export default function ComposePage() {
           </div>
         }
       >
-        <ComposeClient />
+        <ComposeClient coaches={coaches} />
       </Suspense>
     </div>
   );
