@@ -9,7 +9,9 @@ export function TopHeader({ profile }: { profile: AthleteProfile }) {
       <Link href="/dashboard" className="text-lg font-semibold tracking-tight">
         Netset
       </Link>
-      <ProfileMenu profile={profile} />
+      <div className="md:hidden">
+        <ProfileMenu profile={profile} />
+      </div>
     </header>
   );
 }

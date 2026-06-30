@@ -45,7 +45,13 @@ const INFO_FIELDS: { key: keyof AthleteProfile; label: string }[] = [
   { key: "video_link", label: "Highlight video" },
 ];
 
-export function ProfileMenu({ profile }: { profile: AthleteProfile }) {
+export function ProfileMenu({
+  profile,
+  variant = "header",
+}: {
+  profile: AthleteProfile;
+  variant?: "header" | "dock";
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -150,7 +156,10 @@ export function ProfileMenu({ profile }: { profile: AthleteProfile }) {
         aria-haspopup="true"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 rounded-full transition-smooth hover:opacity-80"
+        className={cn(
+          "flex items-center justify-center gap-2 rounded-full transition-smooth hover:opacity-80",
+          variant === "dock" && "glass-dock h-14 w-14"
+        )}
       >
         <Avatar>
           <AvatarFallback className="bg-primary/10 text-primary font-medium">
@@ -162,7 +171,8 @@ export function ProfileMenu({ profile }: { profile: AthleteProfile }) {
       <div
         aria-hidden={!open}
         className={cn(
-          "glass-card-strong absolute right-0 top-full z-50 mt-2 w-80 origin-top-right p-0 transition-smooth",
+          "glass-card-strong absolute z-[60] w-80 origin-top-right p-0 transition-smooth",
+          variant === "dock" ? "right-full top-0 mr-3" : "right-0 top-full mt-2",
           open
             ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
             : "pointer-events-none translate-y-1 scale-95 opacity-0"

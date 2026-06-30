@@ -32,7 +32,7 @@ export default async function AppLayout({
       <main className="flex-1 px-4 pb-32 pt-2 sm:px-6 md:pr-28 md:pb-10 lg:px-10 lg:pr-32">
         <div className="mx-auto w-full max-w-6xl">{children}</div>
       </main>
-      <SideDock />
+      <SideDock profile={profile} />
     </div>
   );
 }
