@@ -7,9 +7,9 @@ function pct(value: number, of: number) {
 
 export function OutboundFunnel({ stats }: { stats: DashboardStats }) {
   const stages = [
-    { label: "Sent", value: stats.sent, conversion: null },
-    { label: "Opened", value: stats.opened, conversion: pct(stats.opened, stats.sent) },
-    { label: "Replied", value: stats.replied, conversion: pct(stats.replied, stats.opened) },
+    { label: "Sent", value: stats.sent, conversion: null, color: "#3b7af5" },
+    { label: "Opened", value: stats.opened, conversion: pct(stats.opened, stats.sent), color: "#f59e0b" },
+    { label: "Replied", value: stats.replied, conversion: pct(stats.replied, stats.opened), color: "#22c55e" },
   ];
   const max = Math.max(stats.sent, 1);
 
@@ -30,8 +30,11 @@ export function OutboundFunnel({ stats }: { stats: DashboardStats }) {
           </div>
           <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full rounded-full bg-primary transition-smooth"
-              style={{ width: `${Math.max((stage.value / max) * 100, stage.value > 0 ? 4 : 0)}%` }}
+              className="h-full rounded-full transition-smooth"
+              style={{
+                width: `${Math.max((stage.value / max) * 100, stage.value > 0 ? 4 : 0)}%`,
+                backgroundColor: stage.color,
+              }}
             />
           </div>
         </div>

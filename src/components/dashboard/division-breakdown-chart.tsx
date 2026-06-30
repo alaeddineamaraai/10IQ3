@@ -13,13 +13,14 @@ const SERIES = [
 export function DivisionBreakdownChart({ data }: { data: DivisionBreakdown[] }) {
   return (
     <ResponsiveContainer width="100%" height={240}>
-      <BarChart data={data} margin={{ top: 8, right: 12, left: -16, bottom: 0 }}>
+      <BarChart data={data} margin={{ top: 8, right: 12, left: 4, bottom: 0 }}>
         <CartesianGrid vertical={false} stroke="var(--border)" />
         <XAxis
           dataKey="division"
           axisLine={false}
           tickLine={false}
-          tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+          interval={0}
+          tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
         />
         <YAxis
           allowDecimals={false}

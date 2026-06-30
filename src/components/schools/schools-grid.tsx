@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { GraduationCap, X } from "lucide-react";
+import { GraduationCap, Star, X } from "lucide-react";
+
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +53,17 @@ export function SchoolsGrid({ schools }: { schools: SchoolDetail[] }) {
   const [minUtr, setMinUtr] = useState("");
   const [maxUtr, setMaxUtr] = useState("");
   const [sort, setSort] = useState<SortKey>("utr_desc");
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [showFavOnly, setShowFavOnly] = useState(false);
+
+  function toggleFav(name: string) {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }
 
   const divisions = useMemo(
     () => [...new Set(schools.map((s) => s.division))].sort(),
@@ -68,11 +81,12 @@ export function SchoolsGrid({ schools }: { schools: SchoolDetail[] }) {
       if (division !== ALL && school.division !== division) return false;
       if (minUtrNum != null && (school.avg_utr ?? -Infinity) < minUtrNum) return false;
       if (maxUtrNum != null && (school.avg_utr ?? Infinity) > maxUtrNum) return false;
+      if (showFavOnly && !favorites.has(school.school_name)) return false;
       return true;
     });
 
     return sortSchools(result, sort);
-  }, [schools, search, division, minUtrNum, maxUtrNum, sort]);
+  }, [schools, search, division, minUtrNum, maxUtrNum, sort, showFavOnly, favorites]);
 
   const activeFilters = useMemo(() => {
     const chips: { key: string; label: string; onClear: () => void }[] = [];
@@ -104,9 +118,23 @@ export function SchoolsGrid({ schools }: { schools: SchoolDetail[] }) {
         icon: <GraduationCap className="size-5" />,
         ctaText: "Open full page",
         ctaHref: `/schools/${encodeURIComponent(school.school_name)}`,
+        action: (
+          <button
+            onClick={() => toggleFav(school.school_name)}
+            className="rounded-full p-1.5 transition-smooth hover:bg-muted"
+            aria-label={favorites.has(school.school_name) ? "Remove from favorites" : "Add to favorites"}
+          >
+            <Star
+              className="size-4"
+              fill={favorites.has(school.school_name) ? "#f59e0b" : "none"}
+              stroke={favorites.has(school.school_name) ? "#f59e0b" : "currentColor"}
+              strokeWidth={1.5}
+            />
+          </button>
+        ),
         content: <SchoolDetailContent detail={school} />,
       })),
-    [filtered]
+    [filtered, favorites]
   );
 
   return (
@@ -183,9 +211,23 @@ export function SchoolsGrid({ schools }: { schools: SchoolDetail[] }) {
         </div>
       )}
 
-      <p className="text-sm text-muted-foreground">
-        {filtered.length} school{filtered.length === 1 ? "" : "s"}
-      </p>
+      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+        <span>{filtered.length} school{filtered.length === 1 ? "" : "s"}</span>
+        {favorites.size > 0 && (
+          <button
+            onClick={() => setShowFavOnly((v) => !v)}
+            className={cn(
+              "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-smooth",
+              showFavOnly
+                ? "border-amber-400/50 bg-amber-400/10 text-amber-500"
+                : "border-border bg-muted hover:text-foreground"
+            )}
+          >
+            <Star className="size-3" fill={showFavOnly ? "#f59e0b" : "none"} stroke={showFavOnly ? "#f59e0b" : "currentColor"} strokeWidth={1.5} />
+            {showFavOnly ? `Starred (${favorites.size})` : `${favorites.size} starred`}
+          </button>
+        )}
+      </div>
 
       {cardItems.length > 0 && (
         <ExpandableCard items={cardItems} modalClassName="max-w-2xl" />

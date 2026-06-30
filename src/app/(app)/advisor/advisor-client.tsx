@@ -119,6 +119,25 @@ export function AdvisorClient() {
           </div>
         </div>
 
+        {messages.length === 1 && !pending && (
+          <div className="flex flex-wrap gap-2 px-4 pb-1">
+            {[
+              "Which divisions match my UTR?",
+              "How do I write a great first email?",
+              "When's the best time to contact coaches?",
+              "What should my highlight video include?",
+            ].map((prompt) => (
+              <button
+                key={prompt}
+                onClick={() => setInput(prompt)}
+                className="rounded-full border border-border bg-muted px-3 py-1.5 text-xs text-muted-foreground transition-smooth hover:border-primary/40 hover:bg-primary/10 hover:text-foreground"
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
+        )}
+
         <form
           onSubmit={handleSend}
           className="flex items-center gap-2 border-t border-border px-4 py-3"
@@ -129,8 +148,9 @@ export function AdvisorClient() {
             onChange={(e) => setInput(e.target.value)}
             disabled={pending}
           />
-          <Button type="submit" size="icon" disabled={pending || !input.trim()}>
+          <Button type="submit" size="sm" disabled={pending || !input.trim()}>
             {pending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+            {!pending && <span className="hidden sm:inline">Send</span>}
           </Button>
         </form>
       </GlassCardContent>

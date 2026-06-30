@@ -418,7 +418,7 @@ export function CoachesTable({ coaches }: Props) {
         </TableHeader>
         <TableBody>
           {paged.map((coach) => (
-            <TableRow key={coach.email}>
+            <TableRow key={coach.email} className="cursor-pointer transition-colors hover:bg-muted/40">
               <TableCell>
                 <Checkbox
                   checked={selected.has(coach.email)}
@@ -439,13 +439,13 @@ export function CoachesTable({ coaches }: Props) {
               </TableCell>
               <TableCell>
                 {coach.outreach?.replied ? (
-                  <Badge>Replied</Badge>
+                  <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium" style={{ background: "#22c55e22", color: "#22c55e" }}>Replied</span>
                 ) : coach.outreach?.opened ? (
-                  <Badge variant="secondary">Opened</Badge>
+                  <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium" style={{ background: "#f9731622", color: "#f97316" }}>Opened</span>
                 ) : coach.outreach?.email_sent ? (
-                  <Badge variant="outline">Sent</Badge>
+                  <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium" style={{ background: "#f59e0b22", color: "#f59e0b" }}>Sent</span>
                 ) : (
-                  <Badge variant="ghost">Not contacted</Badge>
+                  <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-muted-foreground" style={{ background: "var(--muted)" }}>Not contacted</span>
                 )}
               </TableCell>
             </TableRow>

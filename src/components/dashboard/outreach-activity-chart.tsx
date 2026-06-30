@@ -22,7 +22,7 @@ const SERIES = [
 export function OutreachActivityChart({ data }: { data: ActivityPoint[] }) {
   return (
     <ResponsiveContainer width="100%" height={240}>
-      <LineChart data={data} margin={{ top: 8, right: 12, left: -16, bottom: 0 }}>
+      <LineChart data={data} margin={{ top: 8, right: 12, left: 4, bottom: 0 }}>
         <CartesianGrid vertical={false} stroke="var(--border)" />
         <XAxis
           dataKey="label"

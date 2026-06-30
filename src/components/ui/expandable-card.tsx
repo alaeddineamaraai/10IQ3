@@ -15,6 +15,7 @@ export type ExpandableCardItem = {
   icon?: React.ReactNode;
   ctaText?: string;
   ctaHref?: string;
+  action?: React.ReactNode;
   content: React.ReactNode;
 };
 
@@ -171,17 +172,24 @@ export function ExpandableCard({
                 </motion.p>
               </div>
             </div>
-            {item.badge && (
-              <motion.span
-                layoutId={item.ctaHref ? `cta-${item.id}-${id}` : undefined}
-                className={cn(
-                  "shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold",
-                  badgeClasses(item.badgeVariant)
-                )}
-              >
-                {item.badge}
-              </motion.span>
-            )}
+            <div className="flex shrink-0 items-center gap-2">
+              {item.badge && (
+                <motion.span
+                  layoutId={item.ctaHref ? `cta-${item.id}-${id}` : undefined}
+                  className={cn(
+                    "rounded-full px-3 py-1.5 text-xs font-semibold",
+                    badgeClasses(item.badgeVariant)
+                  )}
+                >
+                  {item.badge}
+                </motion.span>
+              )}
+              {item.action && (
+                <div onClick={(e) => e.stopPropagation()}>
+                  {item.action}
+                </div>
+              )}
+            </div>
           </motion.li>
         ))}
       </ul>
