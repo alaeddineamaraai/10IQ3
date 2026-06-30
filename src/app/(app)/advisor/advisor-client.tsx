@@ -7,17 +7,42 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GlassCard, GlassCardContent } from "@/components/glass-card";
 import { cn } from "@/lib/utils";
+import type { DashboardStats } from "@/lib/types/dashboard";
 
 type Message = { role: "user" | "assistant"; content: string };
 
 const isSampleMode = !process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-const GREETING: Message = {
-  role: "assistant",
-  content:
-    "Hi! I'm your recruiting advisor. Ask me about which divisions fit your level, " +
-    "email strategy, timing, or how to read a coach's interest.",
-};
+const BASE_GREETING =
+  "Hi! I'm your recruiting advisor. Ask me about which divisions fit your level, " +
+  "email strategy, timing, or how to read a coach's interest.";
+
+function greetingFor(stats?: DashboardStats): Message {
+  if (!stats) return { role: "assistant", content: BASE_GREETING };
+
+  if (stats.sent === 0) {
+    return {
+      role: "assistant",
+      content:
+        BASE_GREETING +
+        ` You haven't sent any emails yet out of ${stats.coaches.toLocaleString()} coaches in ` +
+        "the database — want help picking your first few?",
+    };
+  }
+
+  const replyNote =
+    stats.replied > 0
+      ? ` ${stats.replied} have replied so far.`
+      : " No replies yet — happy to take a look at what you've been sending.";
+
+  return {
+    role: "assistant",
+    content:
+      BASE_GREETING +
+      ` I can see you've contacted ${stats.sent} of ${stats.coaches.toLocaleString()} coaches so far.` +
+      replyNote,
+  };
+}
 
 function sampleReplyFor(question: string): string {
   const q = question.toLowerCase();
@@ -40,8 +65,8 @@ function sampleReplyFor(question: string): string {
   );
 }
 
-export function AdvisorClient() {
-  const [messages, setMessages] = useState<Message[]>([GREETING]);
+export function AdvisorClient({ stats }: { stats?: DashboardStats }) {
+  const [messages, setMessages] = useState<Message[]>([greetingFor(stats)]);
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
