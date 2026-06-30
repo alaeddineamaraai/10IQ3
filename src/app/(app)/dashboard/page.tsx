@@ -2,6 +2,7 @@ import { Mail, MailOpen, MessageCircle, Users, Clock } from "lucide-react";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getDashboardData, getSampleDashboardData } from "@/lib/data/dashboard";
+import { getProfile } from "@/lib/data/profile";
 import { StatCard } from "@/components/stat-card";
 import {
   GlassCard,
@@ -14,24 +15,30 @@ import { DivisionBreakdownChart } from "@/components/dashboard/division-breakdow
 import { OutboundFunnel } from "@/components/dashboard/outbound-funnel";
 import { PerformanceMetrics } from "@/components/dashboard/performance-metrics";
 import { SentEmailsList } from "@/components/dashboard/sent-emails-list";
+import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
 
 async function loadDashboardData() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    return getSampleDashboardData();
+    return { data: getSampleDashboardData(), profileComplete: false };
   }
 
   const supabase = await createSupabaseServerClient();
   const { data: auth } = await supabase.auth.getUser();
 
   if (!auth.user) {
-    return getSampleDashboardData();
+    return { data: getSampleDashboardData(), profileComplete: false };
   }
 
-  return getDashboardData(supabase, auth.user.id);
+  const [dashData, profile] = await Promise.all([
+    getDashboardData(supabase, auth.user.id),
+    getProfile(supabase, auth.user.id),
+  ]);
+
+  return { data: dashData, profileComplete: profile?.profile_complete ?? false };
 }
 
 export default async function DashboardPage() {
-  const data = await loadDashboardData();
+  const { data, profileComplete } = await loadDashboardData();
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
@@ -43,6 +50,14 @@ export default async function DashboardPage() {
             : "Your recruiting outreach at a glance."}
         </p>
       </div>
+
+      {!data.isSample && (
+        <OnboardingChecklist
+          profileComplete={profileComplete}
+          emailsSent={data.stats.sent}
+          replied={data.stats.replied}
+        />
+      )}
 
       <div className="flex flex-wrap justify-center gap-4">
         <StatCard
