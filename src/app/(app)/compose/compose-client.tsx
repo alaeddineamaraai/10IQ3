@@ -77,6 +77,9 @@ export function ComposeClient({ coaches }: { coaches: CoachWithOutreach[] }) {
   const [planLimitReached, setPlanLimitReached] = useState(false);
   const [search, setSearch] = useState("");
   const [division, setDivision] = useState(ALL);
+  const [mobileTab, setMobileTab] = useState<"coaches" | "drafts">(
+    initialEmails.size > 0 ? "drafts" : "coaches",
+  );
 
   const divisions = useMemo(
     () => [...new Set(coaches.map((c) => c.division))].sort(),
@@ -95,6 +98,10 @@ export function ComposeClient({ coaches }: { coaches: CoachWithOutreach[] }) {
   const visible = filtered.slice(0, MAX_VISIBLE);
 
   useEffect(() => {
+    // Sync drafts to the selected-coach set while preserving in-progress edits
+    // for coaches that stay selected — not expressible as a pure render-time
+    // derivation since draft.subject/body are independently user-editable.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDrafts((prev) => {
       const prevMap = new Map(prev.map((d) => [d.coach.email, d]));
       return [...selected]
@@ -110,8 +117,12 @@ export function ComposeClient({ coaches }: { coaches: CoachWithOutreach[] }) {
   function toggleCoach(email: string) {
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(email)) next.delete(email);
-      else next.add(email);
+      if (next.has(email)) {
+        next.delete(email);
+      } else {
+        next.add(email);
+        setMobileTab("drafts");
+      }
       return next;
     });
   }
@@ -188,10 +199,41 @@ export function ComposeClient({ coaches }: { coaches: CoachWithOutreach[] }) {
   }
 
   return (
-    <div className="flex h-[calc(100vh-172px)] gap-4">
+    <div className="flex flex-col gap-3 md:h-[calc(100vh-172px)] md:flex-row md:gap-4">
+
+      {/* Mobile tab switcher */}
+      <div className="glass-card flex shrink-0 gap-1 p-1 md:hidden">
+        <button
+          onClick={() => setMobileTab("coaches")}
+          className={cn(
+            "flex-1 rounded-xl py-2 text-sm font-medium transition-smooth",
+            mobileTab === "coaches"
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground",
+          )}
+        >
+          Coaches{selected.size > 0 && ` (${selected.size})`}
+        </button>
+        <button
+          onClick={() => setMobileTab("drafts")}
+          className={cn(
+            "flex-1 rounded-xl py-2 text-sm font-medium transition-smooth",
+            mobileTab === "drafts"
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground",
+          )}
+        >
+          Drafts{drafts.length > 0 && ` (${drafts.length})`}
+        </button>
+      </div>
 
       {/* ── LEFT: Coach selector ─────────────────────────── */}
-      <div className="glass-card flex w-72 shrink-0 flex-col overflow-hidden">
+      <div
+        className={cn(
+          "glass-card h-[calc(100vh-260px)] w-full flex-col overflow-hidden md:h-auto md:w-72 md:shrink-0 md:flex",
+          mobileTab === "coaches" ? "flex" : "hidden",
+        )}
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <span className="text-sm font-semibold">
@@ -290,7 +332,12 @@ export function ComposeClient({ coaches }: { coaches: CoachWithOutreach[] }) {
       </div>
 
       {/* ── RIGHT: Draft panel ───────────────────────────── */}
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto pb-2">
+      <div
+        className={cn(
+          "flex-1 flex-col gap-4 overflow-y-auto pb-2 md:flex",
+          mobileTab === "drafts" ? "flex" : "hidden",
+        )}
+      >
         {drafts.length === 0 ? (
           <div className="glass-card flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl p-12 text-center">
             <PenSquare className="size-8 text-muted-foreground/40" />

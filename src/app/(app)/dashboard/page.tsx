@@ -61,35 +61,35 @@ export default async function DashboardPage() {
 
       <div className="flex flex-wrap justify-center gap-4">
         <StatCard
-          className="min-w-[180px] max-w-[260px] flex-1 basis-[200px]"
+          className="min-w-[42%] max-w-[47%] flex-1 basis-[200px] sm:max-w-[260px] sm:min-w-[180px]"
           label="Coaches"
           value={data.stats.coaches.toLocaleString()}
           icon={Users}
           accent="#3b7af5"
         />
         <StatCard
-          className="min-w-[180px] max-w-[260px] flex-1 basis-[200px]"
+          className="min-w-[42%] max-w-[47%] flex-1 basis-[200px] sm:max-w-[260px] sm:min-w-[180px]"
           label="Sent"
           value={data.stats.sent}
           icon={Mail}
           accent="#7c3aed"
         />
         <StatCard
-          className="min-w-[180px] max-w-[260px] flex-1 basis-[200px]"
+          className="min-w-[42%] max-w-[47%] flex-1 basis-[200px] sm:max-w-[260px] sm:min-w-[180px]"
           label="Opened"
           value={data.stats.opened}
           icon={MailOpen}
           accent="#f59e0b"
         />
         <StatCard
-          className="min-w-[180px] max-w-[260px] flex-1 basis-[200px]"
+          className="min-w-[42%] max-w-[47%] flex-1 basis-[200px] sm:max-w-[260px] sm:min-w-[180px]"
           label="Replied"
           value={data.stats.replied}
           icon={MessageCircle}
           accent="#22c55e"
         />
         <StatCard
-          className="min-w-[180px] max-w-[260px] flex-1 basis-[200px]"
+          className="min-w-[42%] max-w-[47%] flex-1 basis-[200px] sm:max-w-[260px] sm:min-w-[180px]"
           label="Pending"
           value={data.stats.pending.toLocaleString()}
           icon={Clock}

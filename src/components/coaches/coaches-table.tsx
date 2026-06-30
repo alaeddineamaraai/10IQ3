@@ -409,10 +409,10 @@ export function CoachesTable({ coaches }: Props) {
             </TableHead>
             <TableHead>Coach</TableHead>
             <TableHead>School</TableHead>
-            <TableHead>Division</TableHead>
-            <TableHead>Region</TableHead>
-            <TableHead>UTR</TableHead>
-            <TableHead>WTN</TableHead>
+            <TableHead className="hidden sm:table-cell">Division</TableHead>
+            <TableHead className="hidden lg:table-cell">Region</TableHead>
+            <TableHead className="hidden sm:table-cell">UTR</TableHead>
+            <TableHead className="hidden md:table-cell">WTN</TableHead>
             <TableHead>Status</TableHead>
           </TableRow>
         </TableHeader>
@@ -425,27 +425,46 @@ export function CoachesTable({ coaches }: Props) {
                   onCheckedChange={() => toggleOne(coach.email)}
                 />
               </TableCell>
-              <TableCell className="font-medium">{coach.coach_name}</TableCell>
-              <TableCell className="text-muted-foreground">{coach.school_name}</TableCell>
-              <TableCell>
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-2">
+                  {coach.coach_name}
+                  <Badge variant="secondary" className="sm:hidden">
+                    {coach.division}
+                  </Badge>
+                </div>
+                {coach.team_utr != null && (
+                  <span className="text-xs font-normal text-muted-foreground sm:hidden">
+                    UTR {coach.team_utr.toFixed(1)}
+                  </span>
+                )}
+              </TableCell>
+              <TableCell className="max-w-[110px] truncate text-muted-foreground sm:max-w-none">
+                {coach.school_name}
+              </TableCell>
+              <TableCell className="hidden sm:table-cell">
                 <Badge variant="secondary">{coach.division}</Badge>
               </TableCell>
-              <TableCell className="text-muted-foreground">{coach.region ?? "—"}</TableCell>
-              <TableCell className="text-muted-foreground">
+              <TableCell className="hidden text-muted-foreground lg:table-cell">
+                {coach.region ?? "—"}
+              </TableCell>
+              <TableCell className="hidden text-muted-foreground sm:table-cell">
                 {coach.team_utr?.toFixed(1) ?? "—"}
               </TableCell>
-              <TableCell className="text-muted-foreground">
+              <TableCell className="hidden text-muted-foreground md:table-cell">
                 {coach.team_wtn?.toFixed(1) ?? "—"}
               </TableCell>
               <TableCell>
                 {coach.outreach?.replied ? (
-                  <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium" style={{ background: "#22c55e22", color: "#22c55e" }}>Replied</span>
+                  <span className="inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium sm:px-2.5 sm:text-xs" style={{ background: "#22c55e22", color: "#22c55e" }}>Replied</span>
                 ) : coach.outreach?.opened ? (
-                  <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium" style={{ background: "#f9731622", color: "#f97316" }}>Opened</span>
+                  <span className="inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium sm:px-2.5 sm:text-xs" style={{ background: "#f9731622", color: "#f97316" }}>Opened</span>
                 ) : coach.outreach?.email_sent ? (
-                  <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium" style={{ background: "#f59e0b22", color: "#f59e0b" }}>Sent</span>
+                  <span className="inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium sm:px-2.5 sm:text-xs" style={{ background: "#f59e0b22", color: "#f59e0b" }}>Sent</span>
                 ) : (
-                  <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-muted-foreground" style={{ background: "var(--muted)" }}>Not contacted</span>
+                  <span className="inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium text-muted-foreground sm:px-2.5 sm:text-xs" style={{ background: "var(--muted)" }}>
+                    <span className="sm:hidden">New</span>
+                    <span className="hidden sm:inline">Not contacted</span>
+                  </span>
                 )}
               </TableCell>
             </TableRow>
