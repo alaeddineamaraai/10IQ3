@@ -79,9 +79,14 @@ export async function getDashboardData(
     if (row.replied) entry.replied += 1;
     divisionCounts.set(division, entry);
   }
-  const divisions = [...divisionCounts.entries()]
-    .map(([division, counts]) => ({ division, ...counts }))
-    .sort((a, b) => b.sent - a.sent);
+  const ALL_DIVISIONS = ["D1", "D2", "D3", "NAIA", "JUCO"];
+  for (const div of ALL_DIVISIONS) {
+    if (!divisionCounts.has(div)) divisionCounts.set(div, { sent: 0, opened: 0, replied: 0 });
+  }
+  const divisions = ALL_DIVISIONS.map((division) => ({
+    division,
+    ...divisionCounts.get(division)!,
+  }));
 
   const sentEmails = sentRows
     .slice()

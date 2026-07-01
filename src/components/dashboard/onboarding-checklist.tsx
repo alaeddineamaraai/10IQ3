@@ -46,20 +46,20 @@ export function OnboardingChecklist({ profileComplete, emailsSent, replied }: Pr
       done: emailsSent >= 1,
     },
     {
-      id: "ten_coaches",
-      title: "Reach 10 coaches",
-      description: "Students who contact 10+ programs see significantly more replies.",
-      href: "/coaches",
-      cta: "Browse coaches →",
-      done: emailsSent >= 10,
-    },
-    {
       id: "first_reply",
       title: "Get your first reply",
       description: "A coach is interested — keep the conversation going.",
       href: "/dashboard",
       cta: "View dashboard →",
       done: replied >= 1,
+    },
+    {
+      id: "ten_coaches",
+      title: "Reach 10 coaches",
+      description: "Athletes who contact 10+ programs see significantly more replies.",
+      href: "/coaches",
+      cta: "Browse coaches →",
+      done: emailsSent >= 10,
     },
   ] as const;
 

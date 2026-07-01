@@ -1,29 +1,30 @@
 import type { DashboardStats } from "@/lib/types/dashboard";
 
-function pct(value: number, of: number) {
-  if (of <= 0) return null;
-  return (value / of) * 100;
-}
-
 export function OutboundFunnel({ stats }: { stats: DashboardStats }) {
-  const stages = [
-    { label: "Sent", value: stats.sent, conversion: null, color: "#3b7af5" },
-    { label: "Opened", value: stats.opened, conversion: pct(stats.opened, stats.sent), color: "#f59e0b" },
-    { label: "Replied", value: stats.replied, conversion: pct(stats.replied, stats.opened), color: "#22c55e" },
-  ];
   const max = Math.max(stats.sent, 1);
 
+  // Always compute rates relative to sent to avoid misleading
+  // edge cases (e.g. 100% reply rate when opened=0 due to tracking gaps).
+  const openPct  = stats.sent  > 0 ? (stats.opened  / stats.sent)  * 100 : null;
+  const replyPct = stats.sent  > 0 ? (stats.replied / stats.sent)  * 100 : null;
+
+  const stages = [
+    { label: "Sent",    value: stats.sent,    pct: null,     hint: null,          color: "#3b7af5" },
+    { label: "Opened",  value: stats.opened,  pct: openPct,  hint: "of sent",     color: "#f59e0b" },
+    { label: "Replied", value: stats.replied, pct: replyPct, hint: "of sent",     color: "#22c55e" },
+  ];
+
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       {stages.map((stage) => (
         <div key={stage.label} className="flex flex-col gap-1.5">
           <div className="flex items-baseline justify-between text-sm">
             <span className="font-medium">{stage.label}</span>
             <span className="text-muted-foreground">
               {stage.value}
-              {stage.conversion != null && (
+              {stage.pct != null && (
                 <span className="ml-1.5 text-xs">
-                  ({stage.conversion.toFixed(0)}% of {stage.label === "Opened" ? "sent" : "opened"})
+                  ({stage.pct.toFixed(0)}% {stage.hint})
                 </span>
               )}
             </span>
@@ -39,6 +40,10 @@ export function OutboundFunnel({ stats }: { stats: DashboardStats }) {
           </div>
         </div>
       ))}
+
+      <p className="mt-1 text-[11px] text-muted-foreground/60">
+        Benchmarks: ~40% open rate · ~8% reply rate
+      </p>
     </div>
   );
 }

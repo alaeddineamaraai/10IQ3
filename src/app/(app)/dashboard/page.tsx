@@ -1,4 +1,4 @@
-import { Mail, MailOpen, MessageCircle, Users, Clock } from "lucide-react";
+import { Mail, MailOpen, MessageCircle, Database, Clock } from "lucide-react";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getDashboardData, getSampleDashboardData } from "@/lib/data/dashboard";
@@ -19,14 +19,14 @@ import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist
 
 async function loadDashboardData() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    return { data: getSampleDashboardData(), profileComplete: false };
+    return { data: getSampleDashboardData(), profileComplete: false, firstName: null };
   }
 
   const supabase = await createSupabaseServerClient();
   const { data: auth } = await supabase.auth.getUser();
 
   if (!auth.user) {
-    return { data: getSampleDashboardData(), profileComplete: false };
+    return { data: getSampleDashboardData(), profileComplete: false, firstName: null };
   }
 
   const [dashData, profile] = await Promise.all([
@@ -34,21 +34,24 @@ async function loadDashboardData() {
     getProfile(supabase, auth.user.id),
   ]);
 
-  return { data: dashData, profileComplete: profile?.profile_complete ?? false };
+  const firstName = profile?.name?.split(" ")[0] ?? null;
+  return { data: dashData, profileComplete: profile?.profile_complete ?? false, firstName };
 }
 
 export default async function DashboardPage() {
-  const { data, profileComplete } = await loadDashboardData();
+  const { data, profileComplete, firstName } = await loadDashboardData();
+
+  const greeting = data.isSample
+    ? "Sample data — sign in to see your real activity."
+    : firstName
+      ? `Hey ${firstName} — here's your recruiting status.`
+      : "Here's your recruiting status.";
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          {data.isSample
-            ? "Sample data — sign in to see your real activity."
-            : "Your recruiting outreach at a glance."}
-        </p>
+        <p className="text-sm text-muted-foreground">{greeting}</p>
       </div>
 
       {!data.isSample && (
@@ -62,9 +65,9 @@ export default async function DashboardPage() {
       <div className="flex flex-wrap justify-center gap-4">
         <StatCard
           className="min-w-[42%] max-w-[47%] flex-1 basis-[200px] sm:max-w-[260px] sm:min-w-[180px]"
-          label="Coaches"
+          label="Available"
           value={data.stats.coaches.toLocaleString()}
-          icon={Users}
+          icon={Database}
           accent="#3b7af5"
         />
         <StatCard
@@ -93,7 +96,7 @@ export default async function DashboardPage() {
           label="Pending"
           value={data.stats.pending.toLocaleString()}
           icon={Clock}
-          accent="#f97316"
+          accent="#6366f1"
           cta={{ label: "Start sending →", href: "/coaches" }}
         />
       </div>
@@ -140,7 +143,7 @@ export default async function DashboardPage() {
 
       <GlassCard>
         <GlassCardHeader>
-          <GlassCardTitle>All Sent Emails</GlassCardTitle>
+          <GlassCardTitle>Recent Outreach</GlassCardTitle>
         </GlassCardHeader>
         <GlassCardContent>
           <SentEmailsList rows={data.sentEmails} />
