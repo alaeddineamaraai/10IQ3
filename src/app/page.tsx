@@ -2,7 +2,6 @@ import Link from "next/link";
 import { BarChart3, Mail, Sparkles, Users, UserCircle2, Search, Send } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
-import MacbookScrollDemo from "@/components/macbook-scroll-demo";
 
 const STATS = [
   { label: "College coaches", value: "1,800+" },
@@ -102,8 +101,8 @@ export default function LandingPage() {
             <Link href="/auth" className={buttonVariants({ size: "lg" })}>
               Get started free
             </Link>
-            <Link href="/auth" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-              Already have an account? Sign in →
+            <Link href="/dashboard" className={buttonVariants({ variant: "outline", size: "lg" })}>
+              Try live demo →
             </Link>
           </div>
 
@@ -120,19 +119,6 @@ export default function LandingPage() {
             </div>
             <span>Joined by student athletes across the country</span>
           </div>
-        </section>
-
-        {/* ── Product screenshot ─────────────────────────────── */}
-        <section className="pb-12 sm:pb-20">
-          <div className="mx-auto max-w-5xl px-6 sm:px-10">
-            <p className="mb-2 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              The platform
-            </p>
-            <h2 className="mb-10 text-center text-2xl font-semibold tracking-tight sm:text-3xl">
-              Recruiting intelligence, beautifully built
-            </h2>
-          </div>
-          <MacbookScrollDemo />
         </section>
 
         {/* ── Stats bar ──────────────────────────────────────── */}
