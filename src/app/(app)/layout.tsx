@@ -29,7 +29,7 @@ export default async function AppLayout({
   return (
     <div className="flex min-h-screen flex-col">
       <TopHeader profile={profile} />
-      <main className="flex-1 px-4 pb-32 pt-2 sm:px-6 md:pr-28 md:pb-10 lg:px-10 lg:pr-32">
+      <main className="flex-1 px-4 pb-32 pt-2 sm:px-6 md:px-28 md:pb-10 lg:px-32">
         <div className="mx-auto w-full max-w-6xl">{children}</div>
       </main>
       <SideDock profile={profile} />
