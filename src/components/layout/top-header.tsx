@@ -41,11 +41,10 @@ export function TopHeader({
 
   return (
     <header
-      className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 backdrop-blur-md rounded-b-3xl sm:px-6 lg:px-10"
+      className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 backdrop-blur-xl rounded-b-3xl sm:px-6 lg:px-10"
       style={{
         viewTransitionName: "site-header",
-        background: "linear-gradient(135deg, rgba(18,13,9,0.94) 0%, rgba(10,8,6,0.88) 100%)",
-        borderBottom: "1px solid rgba(255,255,255,0.05)",
+        background: "rgba(255,255,255,0.04)",
       }}
     >
       {/* Desktop: logo + wordmark + guide button */}
