@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { Inbox } from "lucide-react";
 
 import { ProfileMenu } from "@/components/layout/profile-menu";
-import { HowToGuide } from "@/components/guide/how-to-guide";
 import type { AthleteProfile } from "@/lib/types/profile";
 
 const PAGE_TITLES: [string, string][] = [
@@ -41,46 +40,51 @@ export function TopHeader({
 
   return (
     <header
-      className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 backdrop-blur-xl rounded-b-3xl sm:px-6 lg:px-10"
-      style={{
-        viewTransitionName: "site-header",
-        background: "rgba(255,255,255,0.04)",
-      }}
+      className="sticky top-0 z-40"
+      style={{ viewTransitionName: "site-header" }}
     >
-      {/* Desktop: logo + wordmark + guide button */}
-      <div className="hidden items-center gap-4 md:flex">
+      {/* Blur-only layer: no visible fill, just a gentle blur of whatever
+          scrolls under the top edge, faded out toward the bottom. Kept behind
+          the controls so it never dims the header content itself. */}
+      <div
+        aria-hidden
+        className="top-fade-blur pointer-events-none absolute inset-x-0 top-0 h-[calc(100%+1.75rem)]"
+      />
+
+      <div className="relative flex items-center justify-between px-4 py-3 sm:px-6 lg:px-10">
+        {/* Desktop: logo + wordmark */}
+        <div className="hidden items-center md:flex">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2.5 transition-smooth hover:opacity-70"
+          >
+            <Image src="/logo.png" alt="Netset" width={38} height={38} priority style={{ filter: "grayscale(1) brightness(1.8) contrast(1.1)" }} />
+            <span className="text-lg font-semibold tracking-tight">Netset</span>
+          </Link>
+        </div>
+
+        {/* Mobile: logo is replaced by the merged Inbox/Notifications entry on
+            the left and the current page name centered — the dock at the
+            bottom no longer carries these two, see side-dock.tsx. */}
         <Link
-          href="/dashboard"
-          className="flex items-center gap-2.5 transition-smooth hover:opacity-70"
+          href="/inbox"
+          className="glass-chip relative flex size-11 shrink-0 items-center justify-center rounded-full md:hidden"
+          aria-label="Inbox and notifications"
         >
-          <Image src="/logo.png" alt="Netset" width={38} height={38} priority style={{ filter: "grayscale(1) brightness(1.8) contrast(1.1)" }} />
-          <span className="text-lg font-semibold tracking-tight">Netset</span>
+          <Inbox className="size-5 text-muted-foreground" strokeWidth={2} />
+          {unreadCount > 0 && (
+            <span className="absolute right-1.5 top-1.5 flex size-4 items-center justify-center rounded-full bg-[#7d9159] text-[9px] font-bold text-white">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
         </Link>
-        <HowToGuide />
-      </div>
+        <span className="absolute left-1/2 -translate-x-1/2 text-base font-semibold tracking-tight md:hidden">
+          {title}
+        </span>
 
-      {/* Mobile: logo is replaced by the merged Inbox/Notifications entry on
-          the left and the current page name centered — the dock at the
-          bottom no longer carries these two, see side-dock.tsx. */}
-      <Link
-        href="/inbox"
-        className="relative flex size-11 shrink-0 items-center justify-center rounded-full transition-smooth hover:bg-muted md:hidden"
-        aria-label="Inbox and notifications"
-      >
-        <Inbox className="size-5 text-muted-foreground" strokeWidth={2} />
-        {unreadCount > 0 && (
-          <span className="absolute right-1.5 top-1.5 flex size-4 items-center justify-center rounded-full bg-[#7d9159] text-[9px] font-bold text-white">
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
-        )}
-      </Link>
-      <span className="absolute left-1/2 -translate-x-1/2 text-base font-semibold tracking-tight md:hidden">
-        {title}
-      </span>
-
-      <div className="flex items-center gap-2 md:hidden">
-        <HowToGuide />
-        <ProfileMenu profile={profile} />
+        <div className="flex items-center gap-2 md:hidden">
+          <ProfileMenu profile={profile} />
+        </div>
       </div>
     </header>
   );

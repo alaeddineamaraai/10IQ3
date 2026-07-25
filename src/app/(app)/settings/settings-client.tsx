@@ -12,9 +12,11 @@ import {
   User,
   Pencil,
   Camera,
+  BookOpen,
 } from "lucide-react";
 
 import { ThemeToggle } from "@/components/theme-toggle";
+import { HowToGuide } from "@/components/guide/how-to-guide";
 import { AchievementStory } from "@/components/stories/achievement-story";
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -206,6 +208,21 @@ export function SettingsClient({ profile, stats }: { profile: AthleteProfile; st
             Choose how Netset looks — your preference is saved on this device.
           </p>
           <ThemeToggle />
+        </GlassCardContent>
+      </GlassCard>
+
+      {/* Help — the walkthrough guide, moved here from the top bar */}
+      <GlassCard>
+        <GlassCardHeader>
+          <GlassCardTitle className="flex items-center gap-2">
+            <BookOpen className="size-4" /> Help
+          </GlassCardTitle>
+        </GlassCardHeader>
+        <GlassCardContent className="flex items-center justify-between gap-4">
+          <p className="text-sm text-muted-foreground">
+            New to Netset? Walk through how to find coaches, send emails, and track replies.
+          </p>
+          <HowToGuide />
         </GlassCardContent>
       </GlassCard>
 

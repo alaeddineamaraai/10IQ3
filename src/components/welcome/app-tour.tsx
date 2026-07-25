@@ -53,12 +53,12 @@ function WelcomeSplash({ onBegin, onSkip }: { onBegin: () => void; onSkip: () =>
   return (
     <motion.div
       key="welcome"
-      initial={{ opacity: 1 }}
+      initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0, scale: 0.98 }}
-      transition={{ duration: 0.35 }}
-      className="fixed inset-0 z-[600] flex flex-col items-center justify-center overflow-hidden px-6"
-      style={{ background: "#080808" }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      className="fixed inset-0 z-[600] flex flex-col items-center justify-center overflow-hidden px-6 backdrop-blur-2xl"
+      style={{ background: "rgba(8,7,6,0.62)" }}
     >
       <div
         className="pointer-events-none absolute inset-0"
@@ -202,7 +202,7 @@ export function AppTour() {
   const currentIdx = STEP_ORDER.indexOf(stage);
 
   return createPortal(
-    <AnimatePresence mode="wait">
+    <AnimatePresence>
       {stage === "welcome" ? (
         <WelcomeSplash key="welcome" onBegin={() => goTo("coaches")} onSkip={handleSkip} />
       ) : step ? (
@@ -229,7 +229,12 @@ export function AppTour() {
             />
           )}
           {/* Full scrim before the anchor is found, so nothing flashes */}
-          {!spot && <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.72)" }} />}
+          {!spot && (
+            <div
+              className="absolute inset-0 backdrop-blur-sm"
+              style={{ background: "rgba(0,0,0,0.62)" }}
+            />
+          )}
 
           {/* Tooltip card */}
           <TourCard
@@ -303,8 +308,11 @@ function TourCard({
       style={{
         ...style,
         pointerEvents: "auto",
-        background: "linear-gradient(150deg, #17130E 0%, #0D0B08 100%)",
-        border: "1px solid rgba(255,255,255,0.10)",
+        background: "rgba(20,17,13,0.68)",
+        backdropFilter: "blur(28px) saturate(180%)",
+        WebkitBackdropFilter: "blur(28px) saturate(180%)",
+        border: "1px solid rgba(255,255,255,0.12)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.14), 0 20px 50px rgba(0,0,0,0.5)",
       }}
     >
       <div className="mb-3 flex items-center gap-1.5">

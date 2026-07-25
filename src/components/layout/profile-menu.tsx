@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CreditCard, LogOut } from "lucide-react";
+import { CreditCard, LogOut, Settings } from "lucide-react";
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -12,12 +12,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getPlan } from "@/lib/stripe/plans";
+import { isStrongPassword } from "@/lib/password";
+import { PasswordRequirements } from "@/components/auth/password-requirements";
+import { PlanUsageSummary } from "@/components/billing/plan-usage-summary";
 import type { AthleteProfile } from "@/lib/types/profile";
 
-const FREE_PLAN_EMAIL_LIMIT = 5;
 const isSampleMode = !process.env.NEXT_PUBLIC_SUPABASE_URL;
 
 function initials(name: string | null, email: string) {
@@ -56,6 +57,7 @@ export function ProfileMenu({
   const [open, setOpen] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [securityPending, setSecurityPending] = useState(false);
@@ -91,8 +93,16 @@ export function ProfileMenu({
   async function handlePasswordChange() {
     setSecurityMessage(null);
 
-    if (newPassword.length < 8) {
-      setSecurityMessage({ type: "error", text: "Password must be at least 8 characters." });
+    if (isSampleMode) {
+      setSecurityMessage({ type: "error", text: "Sign in to change your password." });
+      return;
+    }
+    if (!currentPassword) {
+      setSecurityMessage({ type: "error", text: "Enter your current password." });
+      return;
+    }
+    if (!isStrongPassword(newPassword)) {
+      setSecurityMessage({ type: "error", text: "New password doesn't meet the requirements below." });
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -100,13 +110,21 @@ export function ProfileMenu({
       return;
     }
 
-    if (isSampleMode) {
-      setSecurityMessage({ type: "error", text: "Sign in to change your password." });
+    setSecurityPending(true);
+    const supabase = createSupabaseBrowserClient();
+
+    // Same re-authentication gate as the Settings page: confirm the account
+    // owner knows the current password before letting a live session swap it.
+    const { error: reauthError } = await supabase.auth.signInWithPassword({
+      email: profile.email,
+      password: currentPassword,
+    });
+    if (reauthError) {
+      setSecurityPending(false);
+      setSecurityMessage({ type: "error", text: "Current password is incorrect." });
       return;
     }
 
-    setSecurityPending(true);
-    const supabase = createSupabaseBrowserClient();
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     setSecurityPending(false);
 
@@ -115,6 +133,7 @@ export function ProfileMenu({
       return;
     }
 
+    setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
     setSecurityMessage({ type: "success", text: "Password updated." });
@@ -145,7 +164,6 @@ export function ProfileMenu({
     window.location.href = data.url;
   }
 
-  const emailsRemaining = Math.max(FREE_PLAN_EMAIL_LIMIT - profile.emails_used, 0);
   const currentPlanDef = getPlan(profile.plan);
   const hasBillingAccount = !!profile.stripe_customer_id;
 
@@ -158,7 +176,8 @@ export function ProfileMenu({
         onClick={() => setOpen((o) => !o)}
         className={cn(
           "flex items-center justify-center gap-2 rounded-full transition-smooth hover:opacity-80",
-          variant === "dock" && "glass-dock h-14 w-14"
+          variant === "dock" && "glass-dock h-14 w-14",
+          variant === "header" && "glass-chip size-11"
         )}
       >
         <Avatar>
@@ -171,57 +190,49 @@ export function ProfileMenu({
       <div
         aria-hidden={!open}
         className={cn(
-          "glass-card-strong absolute z-[60] w-80 origin-top-right p-0 transition-smooth",
-          variant === "dock" ? "right-full top-0 mr-3" : "right-0 top-full mt-2",
+          "glass-card-strong absolute z-[60] w-80 p-0 transition-smooth",
+          variant === "dock" ? "left-full top-0 ml-3 origin-top-left" : "right-0 top-full mt-2 origin-top-right",
           open
             ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
             : "pointer-events-none translate-y-1 scale-95 opacity-0"
         )}
       >
         <Tabs defaultValue="account" className="gap-0">
-            <TabsList className="m-2">
-              <TabsTrigger value="account">Account</TabsTrigger>
-              <TabsTrigger value="payment">Payment</TabsTrigger>
-              <TabsTrigger value="security">Security</TabsTrigger>
-              <TabsTrigger value="info">Info</TabsTrigger>
+            <TabsList className="mx-auto my-2 flex w-[calc(100%-1rem)]">
+              <TabsTrigger value="account" className="flex-1">Account</TabsTrigger>
+              <TabsTrigger value="payment" className="flex-1">Payment</TabsTrigger>
+              <TabsTrigger value="security" className="flex-1">Security</TabsTrigger>
+              <TabsTrigger value="info" className="flex-1">Info</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="account" className="flex flex-col gap-4 p-4 pt-2">
-              <div className="flex flex-col gap-1">
+            <TabsContent value="account" className="flex flex-col items-center gap-4 p-4 pt-2 text-center">
+              <div className="flex flex-col items-center gap-1">
                 <span className="text-sm font-medium">{profile.name ?? "Your account"}</span>
                 <span className="text-xs text-muted-foreground">{profile.email}</span>
+                <Badge variant="secondary" className="mt-1 capitalize">{profile.plan}</Badge>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Plan</span>
-                <Badge variant="secondary" className="capitalize">
-                  {profile.plan}
-                </Badge>
+              <div className="w-full">
+                <PlanUsageSummary profile={profile} />
               </div>
-              {profile.plan === "free" && (
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex items-baseline justify-between text-xs">
-                    <span className="font-medium text-foreground">Free emails used</span>
-                    <span className="text-muted-foreground">
-                      {profile.emails_used} / {FREE_PLAN_EMAIL_LIMIT}
-                    </span>
-                  </div>
-                  <Progress value={(profile.emails_used / FREE_PLAN_EMAIL_LIMIT) * 100} />
-                  {emailsRemaining === 0 && (
-                    <Link href="/paywall" className="text-xs text-primary hover:underline">
-                      Upgrade for more emails →
-                    </Link>
-                  )}
-                </div>
-              )}
-              <Button variant="outline" size="sm" onClick={handleSignOut} disabled={signingOut}>
-                <LogOut className="size-4" />
-                {signingOut ? "Signing out…" : "Sign out"}
-              </Button>
+              <div className="flex w-full gap-2">
+                <Link
+                  href="/settings"
+                  onClick={() => setOpen(false)}
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium transition-smooth hover:bg-muted"
+                >
+                  <Settings className="size-4" />
+                  Settings
+                </Link>
+                <Button variant="outline" size="sm" className="flex-1" onClick={handleSignOut} disabled={signingOut}>
+                  <LogOut className="size-4" />
+                  {signingOut ? "Signing out…" : "Sign out"}
+                </Button>
+              </div>
             </TabsContent>
 
-            <TabsContent value="payment" className="flex flex-col gap-4 p-4 pt-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Current plan</span>
+            <TabsContent value="payment" className="flex flex-col items-center gap-4 p-4 pt-2 text-center">
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-xs text-muted-foreground">Current plan</span>
                 <Badge variant="secondary" className="capitalize">
                   {currentPlanDef ? `${currentPlanDef.name} — $${currentPlanDef.priceMonthly}/mo` : profile.plan}
                 </Badge>
@@ -233,7 +244,7 @@ export function ProfileMenu({
                   {portalPending ? "Opening…" : "Manage billing"}
                 </Button>
               ) : (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col items-center gap-2">
                   <p className="text-xs text-muted-foreground">
                     No billing account yet — upgrade to a paid plan to manage payment methods and invoices.
                   </p>
@@ -252,47 +263,58 @@ export function ProfileMenu({
 
             <TabsContent value="security" className="flex flex-col gap-3 p-4 pt-2">
               <div className="flex flex-col gap-1.5">
-                <Label className="text-xs">New password</Label>
+                <Label className="text-xs text-center">Current password</Label>
                 <Input
                   type="password"
+                  autoComplete="current-password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-xs text-center">New password</Label>
+                <Input
+                  type="password"
+                  autoComplete="new-password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="At least 8 characters"
                 />
+                <PasswordRequirements password={newPassword} />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label className="text-xs">Confirm password</Label>
+                <Label className="text-xs text-center">Confirm password</Label>
                 <Input
                   type="password"
+                  autoComplete="new-password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
               </div>
               {securityMessage && (
                 <p
-                  className={
-                    securityMessage.type === "error"
-                      ? "text-xs text-destructive"
-                      : "text-xs text-primary"
-                  }
+                  className={cn(
+                    "text-center text-xs",
+                    securityMessage.type === "error" ? "text-destructive" : "text-primary"
+                  )}
                 >
                   {securityMessage.text}
                 </p>
               )}
-              <Button size="sm" onClick={handlePasswordChange} disabled={securityPending}>
+              <Button size="sm" className="w-full" onClick={handlePasswordChange} disabled={securityPending}>
                 {securityPending ? "Updating…" : "Update password"}
               </Button>
             </TabsContent>
 
             <TabsContent value="info" className="flex max-h-80 flex-col gap-3 overflow-y-auto p-4 pt-2">
-              <p className="text-xs text-muted-foreground">
+              <p className="text-center text-xs text-muted-foreground">
                 What you filled in during onboarding — used to personalize your emails.
               </p>
               <div className="grid grid-cols-2 gap-3">
                 {INFO_FIELDS.map((field) => {
                   const value = profile[field.key];
                   return (
-                    <div key={field.key} className="flex flex-col gap-0.5">
+                    <div key={field.key} className="flex flex-col items-center gap-0.5 text-center">
                       <span className="text-[11px] text-muted-foreground">{field.label}</span>
                       <span className="truncate text-xs font-medium">
                         {value != null && value !== "" ? String(value) : "—"}
@@ -301,7 +323,7 @@ export function ProfileMenu({
                   );
                 })}
               </div>
-              <Link href="/profile" className="text-xs text-primary hover:underline">
+              <Link href="/profile" className="text-center text-xs text-primary hover:underline">
                 Edit full profile →
               </Link>
             </TabsContent>

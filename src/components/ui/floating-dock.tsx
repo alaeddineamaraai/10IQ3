@@ -1,48 +1,62 @@
 "use client";
 /**
- * Note: Use position fixed according to your needs
- * Desktop navbar is better positioned at the bottom
- * Mobile navbar is better positioned at bottom right.
+ * Liquid-glass navigation dock.
+ * - Desktop: a calm vertical glass rail on the left. The active item carries a
+ *   soft "lozenge" highlight that slides between items on navigation (shared
+ *   layoutId). Labels appear on hover. No macOS-style magnification.
+ * - Mobile: a floating bottom glass pill. The active tab expands to show its
+ *   label behind a matching lozenge.
  **/
 
-import { cn } from "@/lib/utils";
-import { IconLayoutNavbarCollapse } from "@tabler/icons-react";
-import {
-  AnimatePresence,
-  MotionValue,
-  motion,
-  useMotionValue,
-  useSpring,
-  useTransform,
-} from "motion/react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
 
-import { useRef, useState } from "react";
+import { cn } from "@/lib/utils";
+import { AnimatePresence, motion } from "motion/react";
 
 export type FloatingDockItem = {
   title: string;
   icon: React.ReactNode;
   href: string;
   className?: string;
+  /** Small unread-count dot shown on the icon, e.g. for notifications. */
+  badgeCount?: number;
 };
 
 export const FloatingDock = ({
   items,
+  mobileItems,
   desktopClassName,
   mobileClassName,
-  orientation = "horizontal",
 }: {
   items: FloatingDockItem[];
+  /** Overrides `items` for the mobile bar only — lets mobile carry fewer
+   * entries (more room per touch target) without touching the desktop rail. */
+  mobileItems?: FloatingDockItem[];
   desktopClassName?: string;
   mobileClassName?: string;
+  /** Kept for call-site compatibility; the desktop rail is always vertical. */
   orientation?: "horizontal" | "vertical";
 }) => {
   return (
     <>
-      <FloatingDockDesktop items={items} className={desktopClassName} orientation={orientation} />
-      <FloatingDockMobile items={items} className={mobileClassName} />
+      <FloatingDockDesktop items={items} className={desktopClassName} />
+      <FloatingDockMobile items={mobileItems ?? items} className={mobileClassName} />
     </>
   );
 };
+
+function Badge({ count }: { count?: number }) {
+  if (!count) return null;
+  return (
+    <span className="absolute -top-1 -right-1.5 z-20 flex size-4 items-center justify-center rounded-full bg-[#7d9159] text-[9px] font-bold text-white">
+      {count > 9 ? "9+" : count}
+    </span>
+  );
+}
+
+// ── Mobile: floating bottom pill ────────────────────────────────────────────
 
 const FloatingDockMobile = ({
   items,
@@ -51,178 +65,124 @@ const FloatingDockMobile = ({
   items: FloatingDockItem[];
   className?: string;
 }) => {
-  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+
   return (
-    <div className={cn("relative block md:hidden", className)}>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            layoutId="nav"
-            className="absolute inset-x-0 bottom-full mb-2 flex flex-col gap-2"
+    <div className={cn("flex items-center gap-1.5 rounded-full p-1.5 md:hidden", className)}>
+      {items.map((item) => {
+        const isActive = pathname?.startsWith(item.href) ?? false;
+        return (
+          <Link
+            href={item.href}
+            key={item.title}
+            className="shrink-0 touch-manipulation select-none"
           >
-            {items.map((item, idx) => (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                exit={{
-                  opacity: 0,
-                  y: 10,
-                  transition: {
-                    delay: idx * 0.05,
-                  },
-                }}
-                transition={{ delay: (items.length - 1 - idx) * 0.05 }}
-              >
-                <a
-                  href={item.href}
-                  key={item.title}
-                  className={cn(
-                    "glass-card-strong flex h-10 w-10 items-center justify-center rounded-full",
-                    item.className,
-                  )}
-                >
-                  <div className="h-4 w-4">{item.icon}</div>
-                </a>
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <button
-        onClick={() => setOpen(!open)}
-        className="glass-card-strong flex h-10 w-10 items-center justify-center rounded-full"
-      >
-        <IconLayoutNavbarCollapse className="h-5 w-5 text-muted-foreground" />
-      </button>
+            <motion.div
+              layout
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 300, damping: 26 }}
+              className={cn(
+                "relative flex h-11 items-center justify-center rounded-full",
+                isActive ? "gap-2 px-4 text-foreground" : "w-11 text-muted-foreground",
+              )}
+            >
+              {isActive && (
+                <motion.div
+                  layoutId="dock-lozenge-mobile"
+                  className="nav-lozenge absolute inset-0 rounded-full"
+                  transition={{ type: "spring", stiffness: 320, damping: 30 }}
+                />
+              )}
+              <div className="relative z-10 flex h-5 w-5 shrink-0 items-center justify-center">
+                {item.icon}
+                <Badge count={item.badgeCount} />
+              </div>
+              <AnimatePresence initial={false}>
+                {isActive && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.18 }}
+                    className="relative z-10 overflow-hidden whitespace-nowrap text-sm font-medium"
+                  >
+                    {item.title}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </Link>
+        );
+      })}
     </div>
   );
 };
 
+// ── Desktop: vertical glass rail ────────────────────────────────────────────
+
 const FloatingDockDesktop = ({
   items,
   className,
-  orientation = "horizontal",
 }: {
   items: FloatingDockItem[];
   className?: string;
-  orientation?: "horizontal" | "vertical";
 }) => {
-  const mouse = useMotionValue(Infinity);
-  const vertical = orientation === "vertical";
+  const pathname = usePathname();
 
   return (
-    <motion.div
-      onMouseMove={(e) => mouse.set(vertical ? e.pageY : e.pageX)}
-      onMouseLeave={() => mouse.set(Infinity)}
-      className={cn(
-        "hidden items-center gap-5 rounded-2xl md:flex",
-        vertical ? "w-20 flex-col px-3 py-5" : "mx-auto h-16 items-end gap-4 px-4 pb-3",
-        className,
-      )}
-    >
-      {items.map((item) => (
-        <IconContainer mouse={mouse} vertical={vertical} key={item.title} {...item} />
-      ))}
-    </motion.div>
+    <div className={cn("hidden flex-col items-center gap-1.5 rounded-full p-2 md:flex", className)}>
+      {items.map((item) => {
+        const isActive = pathname?.startsWith(item.href) ?? false;
+        return <DesktopRailItem key={item.title} item={item} isActive={isActive} />;
+      })}
+    </div>
   );
 };
 
-function IconContainer({
-  mouse,
-  vertical,
-  title,
-  icon,
-  href,
-  className,
-}: {
-  mouse: MotionValue;
-  vertical: boolean;
-  title: string;
-  icon: React.ReactNode;
-  href: string;
-  className?: string;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  const distance = useTransform(mouse, (val) => {
-    const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, y: 0, width: 0, height: 0 };
-    const center = vertical ? bounds.y + bounds.height / 2 : bounds.x + bounds.width / 2;
-
-    return val - center;
-  });
-
-  const widthTransform = useTransform(distance, [-150, 0, 150], [48, 96, 48]);
-  const heightTransform = useTransform(distance, [-150, 0, 150], [48, 96, 48]);
-
-  const widthTransformIcon = useTransform(distance, [-150, 0, 150], [24, 48, 24]);
-  const heightTransformIcon = useTransform(
-    distance,
-    [-150, 0, 150],
-    [24, 48, 24],
-  );
-
-  const width = useSpring(widthTransform, {
-    mass: 0.1,
-    stiffness: 150,
-    damping: 12,
-  });
-  const height = useSpring(heightTransform, {
-    mass: 0.1,
-    stiffness: 150,
-    damping: 12,
-  });
-
-  const widthIcon = useSpring(widthTransformIcon, {
-    mass: 0.1,
-    stiffness: 150,
-    damping: 12,
-  });
-  const heightIcon = useSpring(heightTransformIcon, {
-    mass: 0.1,
-    stiffness: 150,
-    damping: 12,
-  });
-
+function DesktopRailItem({ item, isActive }: { item: FloatingDockItem; isActive: boolean }) {
   const [hovered, setHovered] = useState(false);
 
   return (
-    <a href={href}>
+    <Link
+      href={item.href}
+      className="relative"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       <motion.div
-        ref={ref}
-        style={{ width, height }}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+        whileTap={{ scale: 0.9 }}
+        transition={{ type: "spring", stiffness: 300, damping: 26 }}
         className={cn(
-          "relative flex aspect-square items-center justify-center rounded-full bg-foreground/5",
-          className,
+          "relative flex size-12 items-center justify-center rounded-full",
+          isActive ? "text-foreground" : "text-muted-foreground",
         )}
       >
-        <AnimatePresence>
-          {hovered && (
-            <motion.div
-              initial={vertical ? { opacity: 0, x: 10, y: "-50%" } : { opacity: 0, y: 10, x: "-50%" }}
-              animate={vertical ? { opacity: 1, x: 0, y: "-50%" } : { opacity: 1, y: 0, x: "-50%" }}
-              exit={vertical ? { opacity: 0, x: 2, y: "-50%" } : { opacity: 0, y: 2, x: "-50%" }}
-              className={cn(
-                "absolute w-fit rounded-md border border-border bg-popover px-2 py-0.5 text-xs whitespace-pre text-popover-foreground",
-                vertical ? "top-1/2 right-full mr-3" : "-top-8 left-1/2",
-              )}
-            >
-              {title}
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <motion.div
-          style={{ width: widthIcon, height: heightIcon }}
-          className="flex items-center justify-center"
-        >
-          {icon}
-        </motion.div>
+        {isActive && (
+          <motion.div
+            layoutId="dock-lozenge-desktop"
+            className="nav-lozenge absolute inset-0 rounded-full"
+            transition={{ type: "spring", stiffness: 350, damping: 32 }}
+          />
+        )}
+        <div className="relative z-10 flex size-5 items-center justify-center">
+          {item.icon}
+          <Badge count={item.badgeCount} />
+        </div>
       </motion.div>
-    </a>
+
+      <AnimatePresence>
+        {hovered && (
+          <motion.div
+            initial={{ opacity: 0, x: -6, y: "-50%" }}
+            animate={{ opacity: 1, x: 0, y: "-50%" }}
+            exit={{ opacity: 0, x: -4, y: "-50%" }}
+            transition={{ duration: 0.16 }}
+            className="glass-chip pointer-events-none absolute top-1/2 left-full ml-3 w-fit whitespace-pre rounded-lg px-2.5 py-1 text-xs font-medium text-foreground"
+          >
+            {item.title}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </Link>
   );
 }
