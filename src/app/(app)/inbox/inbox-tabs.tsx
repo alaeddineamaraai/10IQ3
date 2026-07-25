@@ -7,6 +7,7 @@ import type { InboxConversation } from "@/lib/types/inbox";
 import type { NotificationItem } from "@/lib/types/notification";
 import type { AthleteProfile } from "@/lib/types/profile";
 import type { AchievementStats } from "@/lib/data/achievements";
+import { TourDemoReply } from "@/components/welcome/tour-demo";
 import { InboxClient } from "./inbox-client";
 import { NotificationsClient } from "../notifications/notifications-client";
 
@@ -33,6 +34,7 @@ export function InboxTabs({
 
   return (
     <div className="flex flex-col gap-4">
+      <TourDemoReply />
       <div className="flex w-fit rounded-xl border border-border/50 bg-muted/40 p-1 backdrop-blur-sm">
         {(["messages", "notifications"] as Tab[]).map((t) => (
           <button

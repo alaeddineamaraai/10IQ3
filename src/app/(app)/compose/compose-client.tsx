@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { PenSquare, Send, Sparkles, X } from "lucide-react";
+import Link from "next/link";
+import { PartyPopper, PenSquare, Send, Sparkles, X } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,6 +24,7 @@ import {
   GlassCardTitle,
 } from "@/components/glass-card";
 import { cn } from "@/lib/utils";
+import { TourDemoCompose } from "@/components/welcome/tour-demo";
 import type { Coach, CoachWithOutreach } from "@/lib/types/coach";
 
 type Status = "idle" | "loading" | "ready" | "sending" | "sent" | "error";
@@ -35,19 +37,105 @@ type Draft = {
   error?: string;
 };
 
-const isSampleMode = !process.env.NEXT_PUBLIC_SUPABASE_URL;
 const ALL = "all";
 const MAX_VISIBLE = 100;
 
-function sampleDraftFor(coach: Coach): { subject: string; body: string } {
-  return {
-    subject: `Introduction from a prospective recruit — ${coach.school_name}`,
+// Five distinct, full-length variants so the demo doesn't look like the same
+// email copy-pasted to every coach — each leads with a different angle
+// (competitive results, academics, film, program fit, recruiting timeline).
+// Picked deterministically per coach (stable across re-generates for the
+// same coach, varied across different coaches) via a simple string hash.
+const SAMPLE_VARIANTS: ((coach: Coach, lastName: string) => { subject: string; body: string })[] = [
+  (coach, lastName) => ({
+    subject: `${coach.school_name} ${coach.division} — recruiting interest from a [grad year] player`,
     body:
-      `Hi Coach ${coach.coach_name.split(" ").pop()},\n\n` +
-      `My name is [Your Name], a [grad year] tennis player interested in ${coach.school_name}'s ` +
-      `${coach.division} program. I'd love to share my UTR, match record, and highlight video ` +
-      `if you have a roster spot open.\n\nThanks for your time,\n[Your Name]`,
-  };
+      `Hi Coach ${lastName},\n\n` +
+      `My name is [Your Name] and I'm a [grad year] tennis player currently ranked around [national rank], ` +
+      `with a UTR of [UTR] and a WTN of [WTN]. I've been following ${coach.school_name}'s ${coach.division} ` +
+      `program for a while now, and the level of competition your team plays at is exactly what I'm looking ` +
+      `for at the next level.\n\n` +
+      `This past season I finished [singles record] in singles and [doubles record] in doubles, and I've ` +
+      `been working specifically on my [playing style] game to get ready for college-level competition. ` +
+      `I'd love the chance to send over my highlight video and full stats if you have a moment.\n\n` +
+      `Would you be open to a quick call in the next couple of weeks to talk about the program and whether ` +
+      `I might be a good fit for your roster?\n\nThanks so much for your time,\n[Your Name]`,
+  }),
+  (coach, lastName) => ({
+    subject: `[grad year] recruit interested in ${coach.school_name} tennis`,
+    body:
+      `Dear Coach ${lastName},\n\n` +
+      `I hope this email finds you well. I'm [Your Name], a [grad year] student-athlete from [location], ` +
+      `and I wanted to reach out directly about the possibility of joining ${coach.school_name}'s tennis program.\n\n` +
+      `Academically, I'm maintaining a [GPA] GPA and I'm targeting [target division] programs that take both ` +
+      `the classroom and the court seriously — from what I've read, that's exactly the culture you've built ` +
+      `at ${coach.school_name}. On the court, my current UTR is [UTR], and I play a [playing style] style that ` +
+      `I think would translate well to your lineup.\n\n` +
+      `I'd be glad to share my transcript, match footage, and references from my current coach whenever it's ` +
+      `convenient. Please let me know if there's anything else you'd like to see from me at this stage.\n\n` +
+      `Best regards,\n[Your Name]`,
+  }),
+  (coach, lastName) => ({
+    subject: `Highlight video + recruiting profile — [Your Name] (${coach.division})`,
+    body:
+      `Hi Coach ${lastName},\n\n` +
+      `I'm [Your Name], a [grad year] tennis player, and I just finished putting together an updated highlight ` +
+      `reel from this season that I wanted to share directly with your program. A few quick stats: [UTR] UTR, ` +
+      `[singles record] in singles this year, and I've spent most of the season working on becoming a more ` +
+      `complete [playing style] player rather than relying on one shot.\n\n` +
+      `${coach.school_name}'s ${coach.division} team has come up a few times when I've talked to my club coach ` +
+      `about programs that would push me — both competitively and in terms of team culture — so I wanted to ` +
+      `get on your radar early rather than wait until closer to signing periods.\n\n` +
+      `Happy to send the full video and stat sheet over whenever works for you, and to answer any questions ` +
+      `about my availability for camps or visits this year.\n\nThank you for your consideration,\n[Your Name]`,
+  }),
+  (coach, lastName) => ({
+    subject: `Prospective ${coach.division} recruit — quick intro`,
+    body:
+      `Hello Coach ${lastName},\n\n` +
+      `My name is [Your Name] — I'm a [grad year] recruit currently rated [UTR] UTR / [WTN] WTN, and I'm in ` +
+      `the early stages of building my list of target programs. ${coach.school_name} stood out because of how ` +
+      `your ${coach.division} team has performed the last couple of seasons, and I wanted to introduce myself ` +
+      `before things get busier closer to the signing period.\n\n` +
+      `A bit about my game: I'd describe myself as a [playing style] player, and this season I went ` +
+      `[singles record] in singles and [doubles record] in doubles. I'm still improving quickly, and I think ` +
+      `I'd have real room to grow inside a program like yours.\n\n` +
+      `If it's useful, I can send over my UTR Sports profile and a recent match video — just let me know what ` +
+      `would help most at this stage of your evaluation.\n\nAppreciate your time,\n[Your Name]`,
+  }),
+  (coach, lastName) => ({
+    subject: `Interested recruit — ${coach.school_name} (${coach.division})`,
+    body:
+      `Hi Coach ${lastName},\n\n` +
+      `I'm [Your Name], a [grad year] tennis player based in [location], and I'm reaching out because ` +
+      `${coach.school_name} has consistently been near the top of my list as I start narrowing down where I'd ` +
+      `like to play at the next level.\n\n` +
+      `Right now I'm sitting at a [UTR] UTR with a [singles record] singles record this season, and my club ` +
+      `coach has been helping me sharpen a [playing style] game plan that I think matches how your ${coach.division} ` +
+      `team likes to compete. I'm also carrying a [GPA] GPA, since I know academics matter just as much as the ` +
+      `athletics side of this decision.\n\n` +
+      `I'd love to learn more about the program — team culture, what you look for in recruits, and whether ` +
+      `there might be a fit for me on your roster in the coming cycle. Happy to send over film or stats ` +
+      `whenever helpful.\n\nThanks for considering me,\n[Your Name]`,
+  }),
+];
+
+// FNV-1a, not a plain "hash*31+c" accumulator — with 5 variants, a
+// multiplier of 31 (≡ 1 mod 5) makes the multiply step contribute nothing to
+// the result mod 5, so nearly every sample email clustered onto the same
+// variant instead of spreading across all five.
+function sampleVariantIndex(email: string): number {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < email.length; i++) {
+    hash ^= email.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return Math.abs(hash) % SAMPLE_VARIANTS.length;
+}
+
+function sampleDraftFor(coach: Coach): { subject: string; body: string } {
+  const lastName = coach.coach_name.split(" ").pop() ?? "Coach";
+  const variant = SAMPLE_VARIANTS[sampleVariantIndex(coach.email)];
+  return variant(coach, lastName);
 }
 
 function outreachStatus(coach: CoachWithOutreach) {
@@ -57,7 +145,13 @@ function outreachStatus(coach: CoachWithOutreach) {
   return null;
 }
 
-export function ComposeClient({ coaches }: { coaches: CoachWithOutreach[] }) {
+export function ComposeClient({
+  coaches,
+  isSampleMode,
+}: {
+  coaches: CoachWithOutreach[];
+  isSampleMode: boolean;
+}) {
   const searchParams = useSearchParams();
 
   const initialEmails = useMemo(
@@ -85,6 +179,9 @@ export function ComposeClient({ coaches }: { coaches: CoachWithOutreach[] }) {
     () => [...new Set(coaches.map((c) => c.division))].sort(),
     [coaches],
   );
+
+  const sentCount = drafts.filter((d) => d.status === "sent").length;
+  const allSent = drafts.length > 0 && sentCount === drafts.length;
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -169,6 +266,14 @@ export function ComposeClient({ coaches }: { coaches: CoachWithOutreach[] }) {
     }
   }
 
+  async function sendAll() {
+    for (const draft of drafts) {
+      if (draft.subject && draft.body && draft.status !== "sent" && draft.status !== "sending") {
+        await send(draft.coach.email);
+      }
+    }
+  }
+
   async function send(email: string) {
     const draft = drafts.find((d) => d.coach.email === email);
     if (!draft) return;
@@ -199,7 +304,9 @@ export function ComposeClient({ coaches }: { coaches: CoachWithOutreach[] }) {
   }
 
   return (
-    <div className="flex flex-col gap-3 md:h-[calc(100vh-172px)] md:flex-row md:gap-4">
+    <>
+    <TourDemoCompose />
+    <div className="flex flex-col gap-3 md:h-[calc(100dvh-172px)] md:flex-row md:gap-4">
 
       {/* Mobile tab switcher */}
       <div className="glass-card flex shrink-0 gap-1 p-1 md:hidden">
@@ -230,7 +337,7 @@ export function ComposeClient({ coaches }: { coaches: CoachWithOutreach[] }) {
       {/* ── LEFT: Coach selector ─────────────────────────── */}
       <div
         className={cn(
-          "glass-card h-[calc(100vh-260px)] w-full flex-col overflow-hidden md:h-auto md:w-72 md:shrink-0 md:flex",
+          "glass-card h-[calc(100dvh-320px)] w-full flex-col overflow-hidden md:h-auto md:w-72 md:shrink-0 md:flex",
           mobileTab === "coaches" ? "flex" : "hidden",
         )}
       >
@@ -312,7 +419,7 @@ export function ComposeClient({ coaches }: { coaches: CoachWithOutreach[] }) {
                     <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
                       {coach.division}
                     </span>
-                    {status === "replied" && <span className="size-1.5 shrink-0 rounded-full bg-green-500" />}
+                    {status === "replied" && <span className="size-1.5 shrink-0 rounded-full bg-[#7d9159]" />}
                     {status === "opened"  && <span className="size-1.5 shrink-0 rounded-full bg-orange-400" />}
                     {status === "sent"    && <span className="size-1.5 shrink-0 rounded-full bg-amber-400" />}
                   </div>
@@ -360,19 +467,70 @@ export function ComposeClient({ coaches }: { coaches: CoachWithOutreach[] }) {
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">
-                  {drafts.length} coach{drafts.length === 1 ? "" : "es"}
-                </span>
+                {/* Goal-gradient: show momentum on multi-coach sends */}
+                {drafts.length > 1 && sentCount > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-1.5 w-20 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-[#7d9159] transition-all duration-500"
+                        style={{ width: `${(sentCount / drafts.length) * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {sentCount} of {drafts.length} sent
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-xs text-muted-foreground">
+                    {drafts.length} coach{drafts.length === 1 ? "" : "es"}
+                  </span>
+                )}
                 <Button variant="outline" size="sm" onClick={generateAll}>
                   <Sparkles className="size-3.5" />
                   Generate all
                 </Button>
+                <Button size="sm" onClick={sendAll} disabled={allSent}>
+                  <Send className="size-3.5" />
+                  Send all
+                </Button>
               </div>
             </div>
 
+            {/* Peak-end: celebrate when every selected email is out the door */}
+            {allSent && (
+              <div className="animate-in fade-in-0 zoom-in-95 glass-card flex items-center justify-between gap-4 rounded-2xl border-[#7d9159]/40 p-4 duration-300">
+                <div className="flex items-center gap-3">
+                  <PartyPopper className="size-5 shrink-0 text-[#7d9159]" />
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {drafts.length === 1 ? "Email sent!" : `All ${drafts.length} emails sent!`}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Coaches usually reply within a few days — you&apos;ll see opens and replies on your dashboard.
+                    </p>
+                  </div>
+                </div>
+                <Link href="/dashboard" className={buttonVariants({ variant: "outline", size: "sm" })}>
+                  View dashboard →
+                </Link>
+              </div>
+            )}
+
             {/* Draft cards */}
             {drafts.map((draft) => (
-              <GlassCard key={draft.coach.email}>
+              <GlassCard
+                key={draft.coach.email}
+                // Without shrink-0, these cards are flex children of a
+                // fixed-height, overflow-y-auto column — flexbox's default
+                // flex-shrink: 1 squishes every card to fit the viewport
+                // instead of letting the column scroll, and each card's own
+                // overflow-hidden then clips the body Textarea and the
+                // Generate/Send footer right off (no way to send).
+                className={cn(
+                  "shrink-0",
+                  draft.status === "sent" && "border-[#7d9159]/40 opacity-80",
+                )}
+              >
                 <GlassCardHeader>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -400,10 +558,12 @@ export function ComposeClient({ coaches }: { coaches: CoachWithOutreach[] }) {
                     onChange={(e) => updateDraft(draft.coach.email, { subject: e.target.value })}
                   />
                   <Textarea
-                    placeholder="Email body"
+                    placeholder={draft.status === "loading" ? "Writing a personalized draft…" : "Email body"}
                     rows={6}
                     value={draft.body}
                     onChange={(e) => updateDraft(draft.coach.email, { body: e.target.value })}
+                    className={cn(draft.status === "loading" && "animate-pulse bg-muted/40")}
+                    disabled={draft.status === "loading"}
                   />
                   {draft.error && <p className="text-xs text-destructive">{draft.error}</p>}
                 </GlassCardContent>
@@ -441,12 +601,13 @@ export function ComposeClient({ coaches }: { coaches: CoachWithOutreach[] }) {
         )}
       </div>
     </div>
+    </>
   );
 }
 
 function StatusLabel({ status }: { status: Status }) {
   switch (status) {
-    case "sent":    return <span className="text-xs font-medium text-green-500">Sent ✓</span>;
+    case "sent":    return <span className="text-xs font-medium text-[#7d9159]">Sent ✓</span>;
     case "sending": return <span className="text-xs text-muted-foreground">Sending…</span>;
     case "ready":   return <span className="text-xs text-muted-foreground">Draft ready</span>;
     case "loading": return <span className="text-xs text-muted-foreground">Generating…</span>;
