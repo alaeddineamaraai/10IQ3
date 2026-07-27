@@ -135,7 +135,7 @@ const FloatingDockDesktop = ({
   const pathname = usePathname();
 
   return (
-    <div className={cn("hidden flex-col items-center gap-1 rounded-full p-2 md:flex", className)}>
+    <div className={cn("hidden flex-col items-start gap-1 rounded-[2rem] p-2 md:flex", className)}>
       {items.map((item) => {
         const isActive = pathname?.startsWith(item.href) ?? false;
         return <DesktopRailItem key={item.title} item={item} isActive={isActive} />;
@@ -144,6 +144,9 @@ const FloatingDockDesktop = ({
   );
 };
 
+// Mirrors the mobile tab, just vertically stacked: the active item expands
+// rightward to reveal its label behind a lozenge that glides between items.
+// Inactive items stay icon-only circles; icons line up on a fixed left column.
 function DesktopRailItem({ item, isActive }: { item: FloatingDockItem; isActive: boolean }) {
   const [hovered, setHovered] = useState(false);
 
@@ -156,8 +159,8 @@ function DesktopRailItem({ item, isActive }: { item: FloatingDockItem; isActive:
     >
       <div
         className={cn(
-          "relative flex size-14 items-center justify-center rounded-full",
-          isActive ? "text-foreground" : "text-muted-foreground",
+          "relative flex h-14 items-center rounded-full",
+          isActive ? "gap-2 pr-5 pl-4 text-foreground" : "w-14 justify-center text-muted-foreground",
         )}
       >
         {isActive && (
@@ -170,15 +173,29 @@ function DesktopRailItem({ item, isActive }: { item: FloatingDockItem; isActive:
         <motion.div
           whileTap={{ scale: 0.82 }}
           transition={LIQUID}
-          className="relative z-10 flex size-6 items-center justify-center"
+          className="relative z-10 flex size-6 shrink-0 items-center justify-center"
         >
           {item.icon}
           <Badge count={item.badgeCount} />
         </motion.div>
+        <AnimatePresence initial={false}>
+          {isActive && (
+            <motion.span
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: "auto" }}
+              exit={{ opacity: 0, width: 0 }}
+              transition={LIQUID}
+              className="relative z-10 overflow-hidden whitespace-nowrap text-[15px] font-medium"
+            >
+              {item.title}
+            </motion.span>
+          )}
+        </AnimatePresence>
       </div>
 
+      {/* Inactive items have no inline label — reveal it on hover instead. */}
       <AnimatePresence>
-        {hovered && (
+        {hovered && !isActive && (
           <motion.div
             initial={{ opacity: 0, x: -6, y: "-50%" }}
             animate={{ opacity: 1, x: 0, y: "-50%" }}
