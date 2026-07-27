@@ -71,7 +71,7 @@ export function SideDock({
           swallow clicks on content beneath; re-enabled on the widgets. */}
       <div
         style={{ viewTransitionName: "site-dock-desktop" }}
-        className="pointer-events-none fixed inset-y-0 left-6 z-50 hidden flex-col items-start justify-center gap-6 md:flex"
+        className="pointer-events-none fixed inset-y-0 left-6 z-50 hidden flex-col items-center justify-center gap-6 md:flex"
       >
         <div className="pointer-events-auto">
           <ProfileMenu profile={profile} variant="dock" />

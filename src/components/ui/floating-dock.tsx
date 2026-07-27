@@ -159,8 +159,8 @@ function DesktopRailItem({ item, isActive }: { item: FloatingDockItem; isActive:
     >
       <div
         className={cn(
-          "relative flex h-14 items-center rounded-full",
-          isActive ? "gap-2 pr-5 pl-4 text-foreground" : "w-14 justify-center text-muted-foreground",
+          "relative flex h-14 w-14 items-center justify-center rounded-full",
+          isActive ? "text-foreground" : "text-muted-foreground",
         )}
       >
         {isActive && (
@@ -178,19 +178,6 @@ function DesktopRailItem({ item, isActive }: { item: FloatingDockItem; isActive:
           {item.icon}
           <Badge count={item.badgeCount} />
         </motion.div>
-        <AnimatePresence initial={false}>
-          {isActive && (
-            <motion.span
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: "auto" }}
-              exit={{ opacity: 0, width: 0 }}
-              transition={LIQUID}
-              className="relative z-10 overflow-hidden whitespace-nowrap text-[15px] font-medium"
-            >
-              {item.title}
-            </motion.span>
-          )}
-        </AnimatePresence>
       </div>
 
       {/* Inactive items have no inline label — reveal it on hover instead. */}

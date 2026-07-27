@@ -56,7 +56,7 @@ export default async function AppLayout({
     <TourRoot>
       <div className="flex min-h-screen flex-col">
         <TopHeader profile={profile} unreadCount={unreadCount} />
-        <main className="flex-1 px-4 pb-32 pt-2 sm:px-6 md:pb-10 md:pl-56 md:pr-12 lg:pl-60 lg:pr-16">
+        <main className="flex-1 px-4 pb-32 pt-2 sm:px-6 md:pb-10 md:pl-32 md:pr-10 lg:pl-36 lg:pr-12">
           <ViewTransition name="page-content">
             <div className="mx-auto w-full max-w-6xl">{children}</div>
           </ViewTransition>
