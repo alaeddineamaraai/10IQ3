@@ -15,6 +15,10 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "motion/react";
 
+// Shared "liquid glass" motion: a soft, slightly heavy spring so the selected
+// lozenge glides between tabs and the label expands without snapping.
+const LIQUID = { type: "spring", stiffness: 260, damping: 30, mass: 0.9 } as const;
+
 export type FloatingDockItem = {
   title: string;
   icon: React.ReactNode;
@@ -68,7 +72,7 @@ const FloatingDockMobile = ({
   const pathname = usePathname();
 
   return (
-    <div className={cn("flex items-center gap-1.5 rounded-full p-1.5 md:hidden", className)}>
+    <div className={cn("flex items-center gap-1.5 rounded-full p-2 md:hidden", className)}>
       {items.map((item) => {
         const isActive = pathname?.startsWith(item.href) ?? false;
         return (
@@ -77,40 +81,41 @@ const FloatingDockMobile = ({
             key={item.title}
             className="shrink-0 touch-manipulation select-none"
           >
-            <motion.div
-              layout
-              whileTap={{ scale: 0.9 }}
-              transition={{ type: "spring", stiffness: 300, damping: 26 }}
+            <div
               className={cn(
-                "relative flex h-11 items-center justify-center rounded-full",
-                isActive ? "gap-2 px-4 text-foreground" : "w-11 text-muted-foreground",
+                "relative flex h-14 items-center justify-center rounded-full",
+                isActive ? "gap-2 px-5 text-foreground" : "w-14 text-muted-foreground",
               )}
             >
               {isActive && (
                 <motion.div
                   layoutId="dock-lozenge-mobile"
                   className="nav-lozenge absolute inset-0 rounded-full"
-                  transition={{ type: "spring", stiffness: 320, damping: 30 }}
+                  transition={LIQUID}
                 />
               )}
-              <div className="relative z-10 flex h-5 w-5 shrink-0 items-center justify-center">
+              <motion.div
+                whileTap={{ scale: 0.82 }}
+                transition={LIQUID}
+                className="relative z-10 flex size-6 shrink-0 items-center justify-center"
+              >
                 {item.icon}
                 <Badge count={item.badgeCount} />
-              </div>
+              </motion.div>
               <AnimatePresence initial={false}>
                 {isActive && (
                   <motion.span
                     initial={{ opacity: 0, width: 0 }}
                     animate={{ opacity: 1, width: "auto" }}
                     exit={{ opacity: 0, width: 0 }}
-                    transition={{ duration: 0.18 }}
-                    className="relative z-10 overflow-hidden whitespace-nowrap text-sm font-medium"
+                    transition={LIQUID}
+                    className="relative z-10 overflow-hidden whitespace-nowrap text-[15px] font-medium"
                   >
                     {item.title}
                   </motion.span>
                 )}
               </AnimatePresence>
-            </motion.div>
+            </div>
           </Link>
         );
       })}
@@ -130,7 +135,7 @@ const FloatingDockDesktop = ({
   const pathname = usePathname();
 
   return (
-    <div className={cn("hidden flex-col items-center gap-1.5 rounded-full p-2 md:flex", className)}>
+    <div className={cn("hidden flex-col items-center gap-1 rounded-full p-2 md:flex", className)}>
       {items.map((item) => {
         const isActive = pathname?.startsWith(item.href) ?? false;
         return <DesktopRailItem key={item.title} item={item} isActive={isActive} />;
@@ -149,11 +154,9 @@ function DesktopRailItem({ item, isActive }: { item: FloatingDockItem; isActive:
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <motion.div
-        whileTap={{ scale: 0.9 }}
-        transition={{ type: "spring", stiffness: 300, damping: 26 }}
+      <div
         className={cn(
-          "relative flex size-12 items-center justify-center rounded-full",
+          "relative flex size-14 items-center justify-center rounded-full",
           isActive ? "text-foreground" : "text-muted-foreground",
         )}
       >
@@ -161,14 +164,18 @@ function DesktopRailItem({ item, isActive }: { item: FloatingDockItem; isActive:
           <motion.div
             layoutId="dock-lozenge-desktop"
             className="nav-lozenge absolute inset-0 rounded-full"
-            transition={{ type: "spring", stiffness: 350, damping: 32 }}
+            transition={LIQUID}
           />
         )}
-        <div className="relative z-10 flex size-5 items-center justify-center">
+        <motion.div
+          whileTap={{ scale: 0.82 }}
+          transition={LIQUID}
+          className="relative z-10 flex size-6 items-center justify-center"
+        >
           {item.icon}
           <Badge count={item.badgeCount} />
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
 
       <AnimatePresence>
         {hovered && (
@@ -177,7 +184,7 @@ function DesktopRailItem({ item, isActive }: { item: FloatingDockItem; isActive:
             animate={{ opacity: 1, x: 0, y: "-50%" }}
             exit={{ opacity: 0, x: -4, y: "-50%" }}
             transition={{ duration: 0.16 }}
-            className="glass-chip pointer-events-none absolute top-1/2 left-full ml-3 w-fit whitespace-pre rounded-lg px-2.5 py-1 text-xs font-medium text-foreground"
+            className="glass-chip pointer-events-none absolute top-1/2 left-full ml-3 w-fit whitespace-pre rounded-lg px-3 py-1.5 text-[13px] font-medium text-foreground"
           >
             {item.title}
           </motion.div>
