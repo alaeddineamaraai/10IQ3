@@ -11,7 +11,7 @@ export type ExpandableCardItem = {
   title: string;
   description: string;
   badge?: string;
-  badgeVariant?: "solid" | "muted" | "outline";
+  badgeVariant?: "solid" | "muted" | "outline" | "unread";
   icon?: React.ReactNode;
   ctaText?: string;
   ctaHref?: string;
@@ -25,6 +25,8 @@ function badgeClasses(variant: ExpandableCardItem["badgeVariant"]) {
       return "bg-primary text-primary-foreground";
     case "outline":
       return "border border-border text-muted-foreground";
+    case "unread":
+      return "bg-[#7d9159]/20 text-[#7d9159]";
     default:
       return "bg-muted text-muted-foreground";
   }
@@ -33,9 +35,11 @@ function badgeClasses(variant: ExpandableCardItem["badgeVariant"]) {
 export function ExpandableCard({
   items,
   modalClassName,
+  onOpen,
 }: {
   items: ExpandableCardItem[];
   modalClassName?: string;
+  onOpen?: (id: string) => void | Promise<void>;
 }) {
   const [active, setActive] = useState<ExpandableCardItem | null>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -147,7 +151,7 @@ export function ExpandableCard({
           <motion.li
             layoutId={`card-${item.id}-${id}`}
             key={item.id}
-            onClick={() => setActive(item)}
+            onClick={() => { setActive(item); onOpen?.(item.id); }}
             className="transition-smooth flex cursor-pointer items-center justify-between gap-4 rounded-2xl p-4 hover:bg-muted"
           >
             <div className="flex items-center gap-3">

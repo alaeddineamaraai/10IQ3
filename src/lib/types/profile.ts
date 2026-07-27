@@ -23,6 +23,9 @@ export type AthleteProfile = {
   video_link: string | null;
   profile_complete: boolean;
   stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  plan_started_at: string | null;
+  email_credits: number;
   created_at: string;
 };
 

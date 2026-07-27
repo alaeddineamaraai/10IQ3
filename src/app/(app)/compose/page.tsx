@@ -6,18 +6,18 @@ import { ComposeClient } from "./compose-client";
 
 async function loadCoaches() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    return getSampleCoaches();
+    return { coaches: getSampleCoaches(), isSample: true };
   }
 
   const supabase = await createSupabaseServerClient();
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return getSampleCoaches();
+  if (!auth.user) return { coaches: getSampleCoaches(), isSample: true };
 
-  return getCoachesWithOutreach(supabase, auth.user.id);
+  return { coaches: await getCoachesWithOutreach(supabase, auth.user.id), isSample: false };
 }
 
 export default async function ComposePage() {
-  const coaches = await loadCoaches();
+  const { coaches, isSample } = await loadCoaches();
 
   return (
     <div className="flex flex-col gap-4">
@@ -35,7 +35,7 @@ export default async function ComposePage() {
           </div>
         }
       >
-        <ComposeClient coaches={coaches} />
+        <ComposeClient coaches={coaches} isSampleMode={isSample} />
       </Suspense>
     </div>
   );

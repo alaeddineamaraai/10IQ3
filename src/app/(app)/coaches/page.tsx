@@ -31,7 +31,7 @@ export default async function CoachesPage() {
         </p>
       </div>
 
-      <CoachesTable coaches={coaches} />
+      <CoachesTable initialCoaches={coaches} isSample={isSample} />
     </div>
   );
 }

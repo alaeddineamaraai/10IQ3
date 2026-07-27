@@ -5,6 +5,10 @@ export type PlanDefinition = {
   name: string;
   priceMonthly: number;
   features: string[];
+  maxEmailsPerDay?: number;
+  freePeriodDays?: number;
+  freeEmailsPerDay?: number;
+  overagePricePerEmailCents?: number;
 };
 
 export const PLANS: PlanDefinition[] = [
@@ -41,3 +45,8 @@ export const PLANS: PlanDefinition[] = [
 export function getPlan(id: string): PlanDefinition | undefined {
   return PLANS.find((p) => p.id === id);
 }
+
+export const FREE_PLAN_EMAIL_LIMIT = 5;
+
+/** Set via env to temporarily block new paid-tier signups (e.g. during billing downtime). */
+export const PAID_TIERS_LOCKED = process.env.PAID_TIERS_LOCKED === "true";

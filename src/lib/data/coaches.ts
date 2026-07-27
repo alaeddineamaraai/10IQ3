@@ -2,6 +2,28 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Coach, CoachWithOutreach } from "@/lib/types/coach";
 
+export type CoachStatus = "all" | "not_contacted" | "sent" | "opened" | "replied";
+export type CoachSortKey = "utr_desc" | "utr_asc" | "wtn_desc" | "wtn_asc" | "name_asc" | "school_asc";
+
+export type CoachesPageOptions = {
+  search?: string;
+  division?: string;
+  region?: string;
+  status?: CoachStatus;
+  minUtr?: number;
+  maxUtr?: number;
+  minWtn?: number;
+  maxWtn?: number;
+  sort?: CoachSortKey;
+  page?: number;
+  pageSize?: number;
+};
+
+export type CoachesPageResult = {
+  coaches: CoachWithOutreach[];
+  total: number;
+};
+
 function toNumber(value: unknown): number | null {
   if (value == null || value === "") return null;
   const n = typeof value === "number" ? value : Number(value);
@@ -87,6 +109,80 @@ export async function getCoachesWithOutreach(
   }));
 }
 
+export async function getCoachesPage(
+  supabase: SupabaseClient,
+  userId: string,
+  opts: CoachesPageOptions = {}
+): Promise<CoachesPageResult> {
+  const {
+    search, division, region, status, minUtr, maxUtr, minWtn, maxWtn,
+    sort = "utr_desc", page = 1, pageSize = 50,
+  } = opts;
+
+  // Fetch all coaches and the user's outreach in parallel — same strategy as
+  // getCoachesWithOutreach, but applies filters + pagination on top.
+  const [allCoaches, { data: outreach, error: outreachError }] = await Promise.all([
+    fetchAllCoaches<Coach>(supabase),
+    supabase.from("outreach").select("*").eq("user_id", userId),
+  ]);
+
+  if (outreachError) console.error("getCoachesPage: outreach query failed", outreachError);
+
+  const outreachByCoach = new Map(
+    (outreachError ? [] : outreach ?? []).map((row) => [row.coach_email, row])
+  );
+
+  let coaches: CoachWithOutreach[] = allCoaches.map((c) => ({
+    ...normalizeCoach(c),
+    outreach: outreachByCoach.get(c.email) ?? null,
+  }));
+
+  // ── Filters ────────────────────────────────────────────────────────────────
+  if (search) {
+    const q = search.toLowerCase();
+    coaches = coaches.filter((c) =>
+      c.coach_name?.toLowerCase().includes(q) ||
+      c.school_name?.toLowerCase().includes(q) ||
+      c.email?.toLowerCase().includes(q)
+    );
+  }
+
+  if (division) coaches = coaches.filter((c) => c.division === division);
+  if (region) coaches = coaches.filter((c) => c.region === region);
+
+  if (status && status !== "all") {
+    coaches = coaches.filter((c) => {
+      if (status === "not_contacted") return !c.outreach?.email_sent;
+      if (status === "sent") return c.outreach?.email_sent && !c.outreach.opened && !c.outreach.replied;
+      if (status === "opened") return c.outreach?.opened && !c.outreach.replied;
+      if (status === "replied") return c.outreach?.replied;
+      return true;
+    });
+  }
+
+  if (minUtr != null) coaches = coaches.filter((c) => (c.team_utr ?? -Infinity) >= minUtr);
+  if (maxUtr != null) coaches = coaches.filter((c) => (c.team_utr ?? Infinity) <= maxUtr);
+  if (minWtn != null) coaches = coaches.filter((c) => (c.team_wtn ?? -Infinity) >= minWtn);
+  if (maxWtn != null) coaches = coaches.filter((c) => (c.team_wtn ?? Infinity) <= maxWtn);
+
+  // ── Sort ───────────────────────────────────────────────────────────────────
+  const fallback = (v: number | null, dir: 1 | -1) => v ?? (dir === 1 ? -Infinity : Infinity);
+  coaches = [...coaches].sort((a, b) => {
+    switch (sort) {
+      case "utr_asc":  return fallback(a.team_utr, 1) - fallback(b.team_utr, 1);
+      case "utr_desc": return fallback(b.team_utr, -1) - fallback(a.team_utr, -1);
+      case "wtn_asc":  return fallback(a.team_wtn, 1) - fallback(b.team_wtn, 1);
+      case "wtn_desc": return fallback(b.team_wtn, -1) - fallback(a.team_wtn, -1);
+      case "name_asc":   return (a.coach_name ?? "").localeCompare(b.coach_name ?? "");
+      case "school_asc": return (a.school_name ?? "").localeCompare(b.school_name ?? "");
+    }
+  });
+
+  const total = coaches.length;
+  const from = (page - 1) * pageSize;
+  return { coaches: coaches.slice(from, from + pageSize), total };
+}
+
 const REGIONS = ["Northeast", "Southeast", "Midwest", "West", "Southwest"];
 const DIVISIONS = ["D1", "D2", "D3", "NAIA", "JUCO"];
 const SCHOOLS = [
@@ -148,6 +244,7 @@ export function getSampleCoaches(count = 24): CoachWithOutreach[] {
             replied,
             opened_at: opened ? new Date(Date.now() - i * 86400000).toISOString() : null,
             replied_at: replied ? new Date(Date.now() - i * 86400000).toISOString() : null,
+            reply_viewed_at: null,
             resend_email_id: null,
             created_at: new Date(Date.now() - i * 86400000).toISOString(),
           }

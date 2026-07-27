@@ -26,7 +26,9 @@ import {
 import type { CoachWithOutreach } from "@/lib/types/coach";
 
 type Props = {
-  coaches: CoachWithOutreach[];
+  initialCoaches: CoachWithOutreach[];
+  initialTotal?: number;
+  isSample?: boolean;
 };
 
 const ALL = "all";
@@ -88,7 +90,8 @@ function sortCoaches(coaches: CoachWithOutreach[], sort: SortKey) {
   });
 }
 
-export function CoachesTable({ coaches }: Props) {
+export function CoachesTable({ initialCoaches, initialTotal: _initialTotal, isSample: _isSample }: Props) {
+  const coaches = initialCoaches;
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [division, setDivision] = useState(ALL);

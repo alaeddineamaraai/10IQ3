@@ -60,3 +60,46 @@ export async function generateDraftEmail(
   const text = await callAIProvider(system, [{ role: "user", content: user }]);
   return parseDraft(text);
 }
+
+export async function generateNudgeFollowUp(
+  athlete: AthleteProfile,
+  coach: Coach,
+  context: { originalSubject: string; originalBody: string; daysSinceSent: number }
+): Promise<DraftEmail> {
+  const system =
+    "You are a college tennis recruiting assistant. Write a brief, polite follow-up email from a student athlete to a college tennis coach who hasn't replied to an earlier email. Keep it short (60-100 words), warm, and low-pressure — just a gentle reminder. " +
+    'Respond with ONLY valid JSON: {"subject": "...", "body": "..."}. ' +
+    "The subject should start with \"Re: \". The body should end with the athlete's name.";
+
+  const user = `Athlete: ${athlete.name ?? "Unknown"}
+Original subject: ${context.originalSubject}
+Original body:
+${context.originalBody}
+Days since sent: ${context.daysSinceSent}
+Coach: ${coach.coach_name}, ${coach.school_name} (${coach.division})`;
+
+  const text = await callAIProvider(system, [{ role: "user", content: user }]);
+  return parseDraft(text);
+}
+
+export async function generateFollowUpReply(
+  athlete: AthleteProfile,
+  coach: Coach,
+  context: { originalSubject: string; originalBody: string; coachReplyBody: string }
+): Promise<DraftEmail> {
+  const system =
+    "You are a college tennis recruiting assistant. Write a reply email from a student athlete to a college tennis coach who has responded to their initial outreach. Be enthusiastic, specific to what the coach said, and keep it concise (80-120 words). " +
+    'Respond with ONLY valid JSON: {"subject": "...", "body": "..."}. ' +
+    "The subject should start with \"Re: \". The body should end with the athlete's name.";
+
+  const user = `Athlete: ${athlete.name ?? "Unknown"}
+Original subject: ${context.originalSubject}
+Original body:
+${context.originalBody}
+Coach's reply:
+${context.coachReplyBody}
+Coach: ${coach.coach_name}, ${coach.school_name} (${coach.division})`;
+
+  const text = await callAIProvider(system, [{ role: "user", content: user }]);
+  return parseDraft(text);
+}

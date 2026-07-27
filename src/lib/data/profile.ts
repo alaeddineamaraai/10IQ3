@@ -40,6 +40,9 @@ export function getSampleProfile(): AthleteProfile {
     video_link: "https://youtube.com/watch?v=sample",
     profile_complete: true,
     stripe_customer_id: null,
+    stripe_subscription_id: null,
+    plan_started_at: null,
+    email_credits: 0,
     created_at: new Date().toISOString(),
   };
 }

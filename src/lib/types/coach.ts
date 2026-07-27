@@ -23,6 +23,7 @@ export type Outreach = {
   replied: boolean;
   opened_at: string | null;
   replied_at: string | null;
+  reply_viewed_at: string | null;
   resend_email_id: string | null;
   created_at: string;
 };
