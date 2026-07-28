@@ -1,29 +1,24 @@
+import Anthropic from "@anthropic-ai/sdk";
 import type { Plan } from "@/lib/types/profile";
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
+const CLAUDE_MODEL = "claude-sonnet-4-6";
+
+function getAnthropicClient(): Anthropic {
+  if (!process.env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is not configured");
+  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+}
+
 async function callClaude(system: string, messages: ChatMessage[]): Promise<string> {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": process.env.ANTHROPIC_API_KEY!,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 600,
-      system,
-      messages,
-    }),
+  const client = getAnthropicClient();
+  const response = await client.messages.create({
+    model: CLAUDE_MODEL,
+    max_tokens: 600,
+    system,
+    messages,
   });
-
-  if (!res.ok) {
-    throw new Error(`Claude API error: ${res.status} ${await res.text()}`);
-  }
-
-  const data = await res.json();
-  return data.content?.[0]?.text ?? "";
+  return response.content[0]?.type === "text" ? response.content[0].text : "";
 }
 
 async function callGemini(system: string, messages: ChatMessage[]): Promise<string> {
@@ -191,51 +186,19 @@ function createThinkTagFilter() {
 }
 
 async function* streamClaude(system: string, messages: ChatMessage[]): AsyncGenerator<string> {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": process.env.ANTHROPIC_API_KEY!,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 600,
-      system,
-      messages,
-      stream: true,
-    }),
+  const client = getAnthropicClient();
+  const stream = client.messages.stream({
+    model: CLAUDE_MODEL,
+    max_tokens: 600,
+    system,
+    messages,
   });
-
-  if (!res.ok || !res.body) {
-    throw new Error(`Claude API error: ${res.status} ${await res.text()}`);
-  }
-
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-
-    for (const line of lines) {
-      if (!line.startsWith("data: ")) continue;
-      const payload = line.slice(6).trim();
-      if (!payload || payload === "[DONE]") continue;
-
-      try {
-        const event = JSON.parse(payload);
-        if (event.type === "content_block_delta" && event.delta?.type === "text_delta") {
-          yield event.delta.text as string;
-        }
-      } catch {
-        // Ignore malformed SSE lines rather than aborting the whole stream.
-      }
+  for await (const event of stream) {
+    if (
+      event.type === "content_block_delta" &&
+      event.delta.type === "text_delta"
+    ) {
+      yield event.delta.text;
     }
   }
 }
