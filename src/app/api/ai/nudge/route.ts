@@ -102,6 +102,7 @@ export async function POST(request: Request) {
       "Content-Type": "text/plain; charset=utf-8",
       "Cache-Control": "no-cache, no-transform",
       "X-Content-Type-Options": "nosniff",
+      "X-Accel-Buffering": "no",
       "X-Draft-Subject": encodeURIComponent(subject),
     },
   });
