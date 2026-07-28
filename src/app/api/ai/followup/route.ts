@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { generateFollowUpReply } from "@/lib/ai/generate";
+import { streamFollowUpReply, getReplySubject } from "@/lib/ai/generate";
 import { rateLimit } from "@/lib/rate-limit";
 import type { AthleteProfile } from "@/lib/types/profile";
 import type { Coach, Outreach, OutreachReply } from "@/lib/types/coach";
 
-// Same budget as fresh drafts — this is the same AI-generation surface.
 const FOLLOWUP_RATE_LIMIT = 30;
 const FOLLOWUP_WINDOW_MS = 60 * 60 * 1000;
 
@@ -31,8 +30,6 @@ export async function POST(request: Request) {
     );
   }
 
-  // Scoped to the requesting user via .eq("user_id", ...) — RLS would also
-  // block a cross-user read, this just gives a cleaner 404 either way.
   const { data: outreach, error: outreachError } = await supabase
     .from("outreach")
     .select("*")
@@ -73,17 +70,47 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No reply to respond to yet" }, { status: 400 });
   }
 
+  const subject = getReplySubject(outreach.subject ?? "");
+  const generator = streamFollowUpReply(athlete, coach, {
+    originalSubject: outreach.subject ?? "",
+    originalBody: outreach.body ?? "",
+    coachReplyBody: latestReply.body ?? "",
+  });
+
+  let first: IteratorResult<string>;
   try {
-    const draft = await generateFollowUpReply(athlete, coach, {
-      originalSubject: outreach.subject ?? "",
-      originalBody: outreach.body ?? "",
-      coachReplyBody: latestReply.body ?? "",
-    });
-    return NextResponse.json(draft);
+    first = await generator.next();
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "AI generation failed" },
       { status: 502 }
     );
   }
+
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      try {
+        if (!first.done && first.value) {
+          controller.enqueue(encoder.encode(first.value));
+        }
+        for await (const chunk of generator) {
+          controller.enqueue(encoder.encode(chunk));
+        }
+      } catch (err) {
+        console.error("ai followup stream failed mid-response", err);
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      "X-Content-Type-Options": "nosniff",
+      "X-Draft-Subject": encodeURIComponent(subject),
+    },
+  });
 }

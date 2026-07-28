@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 const isSampleMode = !process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-type Status = "idle" | "generating" | "ready" | "sending" | "sent" | "error";
+type Status = "idle" | "generating" | "streaming" | "ready" | "sending" | "sent" | "error";
 type Mode = "reply" | "nudge";
 
 const SAMPLE_REPLY =
@@ -78,16 +78,36 @@ export function FollowUpReplyComposer({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ outreachId }),
     });
-    const data = await res.json();
 
     if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
       setError(data.error ?? "Couldn't draft a message");
       setStatus("error");
       return;
     }
 
-    setSubject(data.subject);
-    setBody(data.body);
+    // Subject arrives immediately via header
+    const subject = decodeURIComponent(res.headers.get("X-Draft-Subject") ?? "");
+    if (subject) setSubject(subject);
+
+    if (!res.body) {
+      setError("Empty response");
+      setStatus("error");
+      return;
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let streamedBody = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      streamedBody += decoder.decode(value, { stream: true });
+      setBody(streamedBody);
+      setStatus("streaming");
+    }
+
     setStatus("ready");
   }
 
@@ -136,26 +156,32 @@ export function FollowUpReplyComposer({
         placeholder="Subject"
         value={subject}
         onChange={(e) => setSubject(e.target.value)}
-        disabled={status === "generating"}
+        disabled={status === "generating" || status === "streaming"}
       />
       <Textarea
         placeholder={status === "generating" ? copy.drafting : "Message"}
         rows={5}
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        disabled={status === "generating"}
-        className={status === "generating" ? "animate-pulse bg-muted/40" : undefined}
+        disabled={status === "generating" || status === "streaming"}
+        className={
+          status === "generating"
+            ? "animate-pulse bg-muted/40"
+            : status === "streaming"
+              ? "opacity-80"
+              : undefined
+        }
       />
       {error && <p className="text-xs text-destructive">{error}</p>}
       <div className="flex items-center justify-between gap-2">
-        <Button variant="ghost" size="sm" onClick={generate} disabled={status === "generating" || status === "sending"}>
+        <Button variant="ghost" size="sm" onClick={generate} disabled={status === "generating" || status === "streaming" || status === "sending"}>
           <Sparkles className="size-3.5" />
-          {status === "generating" ? "Drafting…" : "Regenerate"}
+          {status === "generating" || status === "streaming" ? "Drafting…" : "Regenerate"}
         </Button>
         <Button
           size="sm"
           onClick={send}
-          disabled={!subject || !body || status === "generating" || status === "sending"}
+          disabled={!subject || !body || status === "generating" || status === "streaming" || status === "sending"}
         >
           <Send className="size-3.5" />
           {status === "sending" ? "Sending…" : mode === "nudge" ? "Send follow-up" : "Send reply"}

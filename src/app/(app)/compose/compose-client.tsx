@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 import { TourDemoCompose } from "@/components/welcome/tour-demo";
 import type { Coach, CoachWithOutreach } from "@/lib/types/coach";
 
-type Status = "idle" | "loading" | "ready" | "sending" | "sent" | "error";
+type Status = "idle" | "loading" | "streaming" | "ready" | "sending" | "sent" | "error";
 
 type Draft = {
   coach: Coach;
@@ -247,12 +247,34 @@ export function ComposeClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ coachEmail: email }),
       });
-      const data = await res.json();
+
       if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
         updateDraft(email, { status: "error", error: data.error ?? "Generation failed" });
         return;
       }
-      updateDraft(email, { subject: data.subject, body: data.body, status: "ready" });
+
+      // Subject arrives instantly via header — no need to wait for the body stream
+      const subject = decodeURIComponent(res.headers.get("X-Draft-Subject") ?? "");
+      if (subject) updateDraft(email, { subject });
+
+      if (!res.body) {
+        updateDraft(email, { status: "error", error: "Empty response" });
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let body = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        body += decoder.decode(value, { stream: true });
+        updateDraft(email, { body, status: "streaming" });
+      }
+
+      updateDraft(email, { status: "ready" });
     } catch {
       updateDraft(email, { status: "error", error: "Network error" });
     }
@@ -562,8 +584,11 @@ export function ComposeClient({
                     rows={6}
                     value={draft.body}
                     onChange={(e) => updateDraft(draft.coach.email, { body: e.target.value })}
-                    className={cn(draft.status === "loading" && "animate-pulse bg-muted/40")}
-                    disabled={draft.status === "loading"}
+                    className={cn(
+                      draft.status === "loading" && "animate-pulse bg-muted/40",
+                      draft.status === "streaming" && "opacity-80",
+                    )}
+                    disabled={draft.status === "loading" || draft.status === "streaming"}
                   />
                   {draft.error && <p className="text-xs text-destructive">{draft.error}</p>}
                 </GlassCardContent>
@@ -572,10 +597,10 @@ export function ComposeClient({
                     variant="ghost"
                     size="sm"
                     onClick={() => generate(draft.coach.email)}
-                    disabled={draft.status === "loading" || draft.status === "sending"}
+                    disabled={draft.status === "loading" || draft.status === "streaming" || draft.status === "sending"}
                   >
                     <Sparkles className="size-3.5" />
-                    {draft.status === "loading" ? "Generating…" : "Generate"}
+                    {draft.status === "loading" || draft.status === "streaming" ? "Generating…" : "Generate"}
                   </Button>
                   <Button
                     size="sm"
@@ -583,6 +608,8 @@ export function ComposeClient({
                     disabled={
                       !draft.subject ||
                       !draft.body ||
+                      draft.status === "loading" ||
+                      draft.status === "streaming" ||
                       draft.status === "sending" ||
                       draft.status === "sent"
                     }
@@ -607,11 +634,12 @@ export function ComposeClient({
 
 function StatusLabel({ status }: { status: Status }) {
   switch (status) {
-    case "sent":    return <span className="text-xs font-medium text-[#7d9159]">Sent ✓</span>;
-    case "sending": return <span className="text-xs text-muted-foreground">Sending…</span>;
-    case "ready":   return <span className="text-xs text-muted-foreground">Draft ready</span>;
-    case "loading": return <span className="text-xs text-muted-foreground">Generating…</span>;
-    case "error":   return <span className="text-xs text-destructive">Error</span>;
+    case "sent":      return <span className="text-xs font-medium text-[#7d9159]">Sent ✓</span>;
+    case "sending":   return <span className="text-xs text-muted-foreground">Sending…</span>;
+    case "ready":     return <span className="text-xs text-muted-foreground">Draft ready</span>;
+    case "loading":   return <span className="text-xs text-muted-foreground">Generating…</span>;
+    case "streaming": return <span className="text-xs text-muted-foreground">Writing…</span>;
+    case "error":     return <span className="text-xs text-destructive">Error</span>;
     default:        return null;
   }
 }

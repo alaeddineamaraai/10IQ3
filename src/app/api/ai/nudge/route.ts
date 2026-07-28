@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { generateNudgeFollowUp } from "@/lib/ai/generate";
+import { streamNudgeFollowUp, getReplySubject } from "@/lib/ai/generate";
 import { rateLimit } from "@/lib/rate-limit";
 import type { AthleteProfile } from "@/lib/types/profile";
 import type { Coach, Outreach } from "@/lib/types/coach";
@@ -61,18 +61,48 @@ export async function POST(request: Request) {
 
   const sentAt = outreach.sent_at ?? outreach.created_at;
   const daysSinceSent = Math.floor((Date.now() - new Date(sentAt).getTime()) / DAY_MS);
+  const subject = getReplySubject(outreach.subject ?? "");
 
+  const generator = streamNudgeFollowUp(athlete, coach, {
+    originalSubject: outreach.subject ?? "",
+    originalBody: outreach.body ?? "",
+    daysSinceSent,
+  });
+
+  let first: IteratorResult<string>;
   try {
-    const draft = await generateNudgeFollowUp(athlete, coach, {
-      originalSubject: outreach.subject ?? "",
-      originalBody: outreach.body ?? "",
-      daysSinceSent,
-    });
-    return NextResponse.json(draft);
+    first = await generator.next();
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "AI generation failed" },
       { status: 502 }
     );
   }
+
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      try {
+        if (!first.done && first.value) {
+          controller.enqueue(encoder.encode(first.value));
+        }
+        for await (const chunk of generator) {
+          controller.enqueue(encoder.encode(chunk));
+        }
+      } catch (err) {
+        console.error("ai nudge stream failed mid-response", err);
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      "X-Content-Type-Options": "nosniff",
+      "X-Draft-Subject": encodeURIComponent(subject),
+    },
+  });
 }
