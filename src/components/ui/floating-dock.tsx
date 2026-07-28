@@ -15,8 +15,6 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "motion/react";
 
-// Shared "liquid glass" motion: a soft, slightly heavy spring so the selected
-// lozenge glides between tabs and the label expands without snapping.
 const LIQUID = { type: "spring", stiffness: 260, damping: 30, mass: 0.9 } as const;
 
 export type FloatingDockItem = {
@@ -24,7 +22,6 @@ export type FloatingDockItem = {
   icon: React.ReactNode;
   href: string;
   className?: string;
-  /** Small unread-count dot shown on the icon, e.g. for notifications. */
   badgeCount?: number;
 };
 
@@ -35,12 +32,9 @@ export const FloatingDock = ({
   mobileClassName,
 }: {
   items: FloatingDockItem[];
-  /** Overrides `items` for the mobile bar only — lets mobile carry fewer
-   * entries (more room per touch target) without touching the desktop rail. */
   mobileItems?: FloatingDockItem[];
   desktopClassName?: string;
   mobileClassName?: string;
-  /** Kept for call-site compatibility; the desktop rail is always vertical. */
   orientation?: "horizontal" | "vertical";
 }) => {
   return (
@@ -83,17 +77,26 @@ const FloatingDockMobile = ({
           >
             <div
               className={cn(
-                "relative flex h-14 items-center justify-center rounded-full",
+                "relative flex h-14 items-center justify-center rounded-full overflow-hidden",
                 isActive ? "gap-2 px-5 text-foreground" : "w-14 text-muted-foreground",
               )}
             >
-              {isActive && (
-                <motion.div
-                  layoutId="dock-lozenge-mobile"
-                  className="nav-lozenge absolute inset-0 rounded-full"
-                  transition={LIQUID}
-                />
-              )}
+              {/* Lozenge wrapped in AnimatePresence so layoutId always has a
+                  clean mount/unmount cycle — prevents the "ghost" glitch where
+                  the indicator fails to appear after fast navigation. */}
+              <AnimatePresence initial={false}>
+                {isActive && (
+                  <motion.div
+                    key="mobile-lozenge"
+                    layoutId="dock-lozenge-mobile"
+                    className="nav-lozenge absolute inset-0 rounded-full"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={LIQUID}
+                  />
+                )}
+              </AnimatePresence>
               <motion.div
                 whileTap={{ scale: 0.82 }}
                 transition={LIQUID}
@@ -102,12 +105,16 @@ const FloatingDockMobile = ({
                 {item.icon}
                 <Badge count={item.badgeCount} />
               </motion.div>
+              {/* Animate maxWidth instead of width: "auto" — Framer reliably
+                  interpolates numeric values; "auto" is layout-measured and
+                  can flicker on first paint. */}
               <AnimatePresence initial={false}>
                 {isActive && (
                   <motion.span
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: "auto" }}
-                    exit={{ opacity: 0, width: 0 }}
+                    key="label"
+                    initial={{ opacity: 0, maxWidth: 0 }}
+                    animate={{ opacity: 1, maxWidth: 96 }}
+                    exit={{ opacity: 0, maxWidth: 0 }}
                     transition={LIQUID}
                     className="relative z-10 overflow-hidden whitespace-nowrap text-[15px] font-medium"
                   >
@@ -144,9 +151,6 @@ const FloatingDockDesktop = ({
   );
 };
 
-// Mirrors the mobile tab, just vertically stacked: the active item expands
-// rightward to reveal its label behind a lozenge that glides between items.
-// Inactive items stay icon-only circles; icons line up on a fixed left column.
 function DesktopRailItem({ item, isActive }: { item: FloatingDockItem; isActive: boolean }) {
   const [hovered, setHovered] = useState(false);
 
@@ -163,13 +167,19 @@ function DesktopRailItem({ item, isActive }: { item: FloatingDockItem; isActive:
           isActive ? "text-foreground" : "text-muted-foreground",
         )}
       >
-        {isActive && (
-          <motion.div
-            layoutId="dock-lozenge-desktop"
-            className="nav-lozenge absolute inset-0 rounded-full"
-            transition={LIQUID}
-          />
-        )}
+        <AnimatePresence initial={false}>
+          {isActive && (
+            <motion.div
+              key="desktop-lozenge"
+              layoutId="dock-lozenge-desktop"
+              className="nav-lozenge absolute inset-0 rounded-full"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={LIQUID}
+            />
+          )}
+        </AnimatePresence>
         <motion.div
           whileTap={{ scale: 0.82 }}
           transition={LIQUID}
@@ -180,20 +190,23 @@ function DesktopRailItem({ item, isActive }: { item: FloatingDockItem; isActive:
         </motion.div>
       </div>
 
-      {/* Inactive items have no inline label — reveal it on hover instead. */}
-      <AnimatePresence>
-        {hovered && !isActive && (
-          <motion.div
-            initial={{ opacity: 0, x: -6, y: "-50%" }}
-            animate={{ opacity: 1, x: 0, y: "-50%" }}
-            exit={{ opacity: 0, x: -4, y: "-50%" }}
-            transition={{ duration: 0.16 }}
-            className="glass-chip pointer-events-none absolute top-1/2 left-full ml-3 w-fit whitespace-pre rounded-lg px-3 py-1.5 text-[13px] font-medium text-foreground"
-          >
-            {item.title}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Tooltip: position is pure CSS (top-1/2 -translate-y-1/2 in a wrapper
+          div) so Framer only animates opacity + x — no competing transforms. */}
+      <div className="pointer-events-none absolute top-1/2 left-full ml-3 -translate-y-1/2">
+        <AnimatePresence>
+          {hovered && !isActive && (
+            <motion.div
+              initial={{ opacity: 0, x: -6 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -4 }}
+              transition={{ duration: 0.15 }}
+              className="glass-chip w-fit whitespace-pre rounded-lg px-3 py-1.5 text-[13px] font-medium text-foreground"
+            >
+              {item.title}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </Link>
   );
 }
