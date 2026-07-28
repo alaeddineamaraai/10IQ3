@@ -1,5 +1,4 @@
 import { Mail, MailOpen, MessageCircle, Database, Clock } from "lucide-react";
-
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getDashboardData, getSampleDashboardData } from "@/lib/data/dashboard";
 import { getProfile } from "@/lib/data/profile";
@@ -10,23 +9,26 @@ import {
   GlassCardHeader,
   GlassCardTitle,
 } from "@/components/glass-card";
-import { OutreachActivityChart } from "@/components/dashboard/outreach-activity-chart";
-import { DivisionBreakdownChart } from "@/components/dashboard/division-breakdown-chart";
+import {
+  OutreachActivityChartLoader,
+  DivisionBreakdownChartLoader,
+} from "@/components/dashboard/chart-loaders";
 import { OutboundFunnel } from "@/components/dashboard/outbound-funnel";
 import { PerformanceMetrics } from "@/components/dashboard/performance-metrics";
 import { SentEmailsList } from "@/components/dashboard/sent-emails-list";
 import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
+import { getSampleProfile } from "@/lib/data/profile";
 
 async function loadDashboardData() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    return { data: getSampleDashboardData(), profileComplete: false, firstName: null };
+    return { data: getSampleDashboardData(), profileComplete: false, firstName: null, profile: null };
   }
 
   const supabase = await createSupabaseServerClient();
   const { data: auth } = await supabase.auth.getUser();
 
   if (!auth.user) {
-    return { data: getSampleDashboardData(), profileComplete: false, firstName: null };
+    return { data: getSampleDashboardData(), profileComplete: false, firstName: null, profile: null };
   }
 
   const [dashData, profile] = await Promise.all([
@@ -35,11 +37,11 @@ async function loadDashboardData() {
   ]);
 
   const firstName = profile?.name?.split(" ")[0] ?? null;
-  return { data: dashData, profileComplete: profile?.profile_complete ?? false, firstName };
+  return { data: dashData, profileComplete: profile?.profile_complete ?? false, firstName, profile };
 }
 
 export default async function DashboardPage() {
-  const { data, profileComplete, firstName } = await loadDashboardData();
+  const { data, profileComplete, firstName, profile } = await loadDashboardData();
 
   const greeting = data.isSample
     ? "Sample data — sign in to see your real activity."
@@ -62,42 +64,40 @@ export default async function DashboardPage() {
         />
       )}
 
-      <div className="flex flex-wrap justify-center gap-4">
+      {/* 2-up on phones, 5-up from lg — the Pending card spans the full
+          bottom row on small screens instead of orphaning centered. */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         <StatCard
-          className="min-w-[42%] max-w-[47%] flex-1 basis-[200px] sm:max-w-[260px] sm:min-w-[180px]"
           label="Available"
           value={data.stats.coaches.toLocaleString()}
           icon={Database}
-          accent="#3b7af5"
+          accent="#b8863f"
         />
         <StatCard
-          className="min-w-[42%] max-w-[47%] flex-1 basis-[200px] sm:max-w-[260px] sm:min-w-[180px]"
           label="Sent"
           value={data.stats.sent}
           icon={Mail}
-          accent="#7c3aed"
+          accent="#8a6f4d"
         />
         <StatCard
-          className="min-w-[42%] max-w-[47%] flex-1 basis-[200px] sm:max-w-[260px] sm:min-w-[180px]"
           label="Opened"
           value={data.stats.opened}
           icon={MailOpen}
-          accent="#f59e0b"
+          accent="#c9662d"
         />
         <StatCard
-          className="min-w-[42%] max-w-[47%] flex-1 basis-[200px] sm:max-w-[260px] sm:min-w-[180px]"
           label="Replied"
           value={data.stats.replied}
           icon={MessageCircle}
-          accent="#22c55e"
+          accent="#7d9159"
         />
         <StatCard
-          className="min-w-[42%] max-w-[47%] flex-1 basis-[200px] sm:max-w-[260px] sm:min-w-[180px]"
+          className="col-span-2 lg:col-span-1"
           label="Pending"
           value={data.stats.pending.toLocaleString()}
           icon={Clock}
-          accent="#6366f1"
-          cta={{ label: "Start sending →", href: "/coaches" }}
+          accent="#a85d43"
+          cta={{ label: "Start sending →", href: "/contacts" }}
         />
       </div>
 
@@ -107,7 +107,7 @@ export default async function DashboardPage() {
             <GlassCardTitle>7-Day Outreach Activity</GlassCardTitle>
           </GlassCardHeader>
           <GlassCardContent>
-            <OutreachActivityChart data={data.activity} />
+            <OutreachActivityChartLoader data={data.activity} />
           </GlassCardContent>
         </GlassCard>
 
@@ -136,7 +136,7 @@ export default async function DashboardPage() {
             <GlassCardTitle>Division Breakdown</GlassCardTitle>
           </GlassCardHeader>
           <GlassCardContent>
-            <DivisionBreakdownChart data={data.divisions} />
+            <DivisionBreakdownChartLoader data={data.divisions} />
           </GlassCardContent>
         </GlassCard>
       </div>

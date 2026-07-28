@@ -6,6 +6,7 @@ import { Loader2, Send, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GlassCard, GlassCardContent } from "@/components/glass-card";
+import { ChatMarkdown } from "@/components/chat-markdown";
 import { cn } from "@/lib/utils";
 import type { DashboardStats } from "@/lib/types/dashboard";
 
@@ -100,15 +101,51 @@ export function AdvisorClient({ stats }: { stats?: DashboardStats }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: nextMessages }),
       });
-      const data = await res.json();
 
       if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
         setError(data.error ?? "Something went wrong");
         setPending(false);
         return;
       }
 
-      setMessages([...nextMessages, { role: "assistant", content: data.reply }]);
+      if (!res.body) {
+        setError("Empty response");
+        setPending(false);
+        return;
+      }
+
+      // Stream tokens straight into the assistant bubble as they arrive
+      // instead of waiting for the full reply — the route returns a plain
+      // chunked text/plain body, so a raw reader is all that's needed.
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let reply = "";
+      let streamingStarted = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        reply += decoder.decode(value, { stream: true });
+
+        if (!streamingStarted) {
+          streamingStarted = true;
+          setPending(false);
+          setMessages([...nextMessages, { role: "assistant", content: reply }]);
+        } else {
+          setMessages([...nextMessages, { role: "assistant", content: reply }]);
+        }
+      }
+
+      if (!streamingStarted) {
+        // Stream closed with zero bytes — surface something rather than
+        // leaving the "Thinking…" indicator up forever.
+        setMessages([
+          ...nextMessages,
+          { role: "assistant", content: "Sorry, I didn't get a response — try again." },
+        ]);
+      }
     } catch {
       setError("Network error");
     } finally {
@@ -117,7 +154,7 @@ export function AdvisorClient({ stats }: { stats?: DashboardStats }) {
   }
 
   return (
-    <GlassCard className="flex h-[calc(100vh-220px)] flex-col">
+    <GlassCard className="flex h-[calc(100dvh-280px)] flex-col md:h-[calc(100dvh-220px)]">
       <GlassCardContent className="flex flex-1 flex-col gap-4 overflow-hidden p-0">
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-5">
           <div className="flex flex-col gap-3">
@@ -125,13 +162,17 @@ export function AdvisorClient({ stats }: { stats?: DashboardStats }) {
               <div
                 key={i}
                 className={cn(
-                  "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm",
+                  "max-w-[85%] rounded-2xl px-4 py-3 text-sm",
                   message.role === "user"
                     ? "ml-auto bg-primary text-primary-foreground"
                     : "bg-muted text-foreground"
                 )}
               >
-                {message.content}
+                {message.role === "assistant" ? (
+                  <ChatMarkdown content={message.content} />
+                ) : (
+                  message.content
+                )}
               </div>
             ))}
             {pending && (
@@ -150,7 +191,6 @@ export function AdvisorClient({ stats }: { stats?: DashboardStats }) {
               "Which divisions match my UTR?",
               "How do I write a great first email?",
               "When's the best time to contact coaches?",
-              "What should my highlight video include?",
             ].map((prompt) => (
               <button
                 key={prompt}

@@ -6,8 +6,8 @@ import type { DivisionBreakdown } from "@/lib/types/dashboard";
 
 const SERIES = [
   { key: "sent", name: "Sent", color: "var(--brand)" },
-  { key: "opened", name: "Opened", color: "#f59e0b" },
-  { key: "replied", name: "Replied", color: "#22c55e" },
+  { key: "opened", name: "Opened", color: "#c9662d" },
+  { key: "replied", name: "Replied", color: "#7d9159" },
 ] as const;
 
 export function DivisionBreakdownChart({ data }: { data: DivisionBreakdown[] }) {

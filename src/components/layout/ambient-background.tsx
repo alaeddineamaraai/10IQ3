@@ -1,42 +1,33 @@
-"use client";
-
-import { useEffect, useRef } from "react";
-
-import { cn } from "@/lib/utils";
+/**
+ * Repeated wavy stroke used for the topographic contour clusters.
+ * Paths extend well past the viewBox (overflow visible) so the outer ends
+ * bleed off-screen, and callers apply a mask so the inner ends fade out
+ * instead of stopping abruptly mid-page.
+ */
+function ContourLines({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 900 420"
+      overflow="visible"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      {Array.from({ length: 11 }).map((_, i) => (
+        <path
+          key={i}
+          d="M-400 210 C -80 90, 260 330, 480 210 S 780 70, 1300 250"
+          stroke="currentColor"
+          strokeWidth="2"
+          transform={`translate(0 ${i * 26 - 130})`}
+        />
+      ))}
+    </svg>
+  );
+}
 
 export function AmbientBackground() {
-  const glowRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    let frame = 0;
-    let targetX = 0;
-    let targetY = 0;
-    let currentX = 0;
-    let currentY = 0;
-
-    function onMouseMove(e: MouseEvent) {
-      targetX = e.clientX;
-      targetY = e.clientY;
-    }
-
-    function tick() {
-      currentX += (targetX - currentX) * 0.08;
-      currentY += (targetY - currentY) * 0.08;
-      if (glowRef.current) {
-        glowRef.current.style.transform = `translate3d(${currentX - 250}px, ${currentY - 250}px, 0)`;
-      }
-      frame = requestAnimationFrame(tick);
-    }
-
-    window.addEventListener("mousemove", onMouseMove);
-    frame = requestAnimationFrame(tick);
-
-    return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      cancelAnimationFrame(frame);
-    };
-  }, []);
-
   return (
     <div
       aria-hidden
@@ -44,27 +35,29 @@ export function AmbientBackground() {
     >
       <div className="bg-noise absolute inset-0 opacity-60" />
 
+      {/* Soft mesh-gradient orbs — colors come from --orb-* per theme */}
       <div
-        ref={glowRef}
-        className="absolute h-[600px] w-[600px] rounded-full opacity-40 blur-[120px]"
-        style={{
-          background:
-            "radial-gradient(circle, var(--brand) 0%, transparent 70%)",
-        }}
+        className="orb-drift absolute -left-[15%] -top-[20%] size-[55vw] min-h-[420px] min-w-[420px] rounded-full blur-3xl"
+        style={{ background: "radial-gradient(circle, var(--orb-1), transparent 70%)" }}
+      />
+      <div
+        className="orb-drift-slow absolute -right-[12%] top-[5%] size-[45vw] min-h-[380px] min-w-[380px] rounded-full blur-3xl"
+        style={{ background: "radial-gradient(circle, var(--orb-2), transparent 70%)" }}
+      />
+      <div
+        className="orb-drift absolute -bottom-[25%] left-[20%] size-[50vw] min-h-[400px] min-w-[400px] rounded-full blur-3xl [animation-delay:-20s]"
+        style={{ background: "radial-gradient(circle, var(--orb-3), transparent 70%)" }}
+      />
+      <div
+        className="orb-drift-slow absolute bottom-[10%] right-[15%] size-[35vw] min-h-[300px] min-w-[300px] rounded-full blur-3xl [animation-delay:-30s]"
+        style={{ background: "radial-gradient(circle, var(--orb-4), transparent 70%)" }}
       />
 
-      <div
-        className={cn(
-          "pointer-events-none absolute -inset-[10px] overflow-hidden opacity-50 blur-[40px] will-change-transform",
-          "[mask-image:radial-gradient(ellipse_at_50%_0%,black_30%,transparent_75%)]"
-        )}
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(100deg, var(--chart-1) 10%, var(--chart-4) 15%, var(--chart-3) 20%, var(--chart-5) 25%, var(--chart-2) 30%)",
-          backgroundSize: "200% 100%",
-          animation: "aurora 60s linear infinite",
-        }}
-      />
+      {/* Topographic contour accents — bold in light, whisper in dark.
+          Masks fade the strokes toward the page interior so they never
+          end abruptly mid-page; outer ends bleed off-screen. */}
+      <ContourLines className="absolute -left-24 bottom-[-40px] w-[64vw] min-w-[520px] text-[#b97a2e] opacity-60 dark:opacity-[0.08] [mask-image:linear-gradient(to_top_right,black_35%,transparent_72%)]" />
+      <ContourLines className="absolute -right-32 top-[-30px] w-[54vw] min-w-[440px] rotate-180 text-[#b97a2e] opacity-50 dark:opacity-[0.07] [mask-image:linear-gradient(to_top_right,black_35%,transparent_72%)]" />
     </div>
   );
 }

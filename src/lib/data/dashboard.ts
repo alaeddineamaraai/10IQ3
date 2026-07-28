@@ -105,6 +105,7 @@ export async function getDashboardData(
         replied: row.replied,
         opened_at: row.opened_at,
         replied_at: row.replied_at,
+        reply_viewed_at: row.reply_viewed_at,
         replies: (repliesByOutreachId.get(row.id) ?? []).map((reply) => ({
           id: reply.id,
           from_email: reply.from_email,
@@ -168,6 +169,7 @@ export function getSampleDashboardData(): DashboardData {
         replied: true,
         opened_at: new Date(Date.now() - 22 * 60 * 60 * 1000).toISOString(),
         replied_at: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(),
+        reply_viewed_at: null,
         replies: [
           {
             id: "r1",
@@ -190,6 +192,7 @@ export function getSampleDashboardData(): DashboardData {
         replied: false,
         opened_at: new Date(Date.now() - 40 * 60 * 60 * 1000).toISOString(),
         replied_at: null,
+        reply_viewed_at: null,
         replies: [],
       },
       {
@@ -204,6 +207,7 @@ export function getSampleDashboardData(): DashboardData {
         replied: false,
         opened_at: null,
         replied_at: null,
+        reply_viewed_at: null,
         replies: [],
       },
     ],

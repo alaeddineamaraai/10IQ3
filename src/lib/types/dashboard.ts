@@ -47,6 +47,7 @@ export type SentEmailRow = {
   replied: boolean;
   opened_at: string | null;
   replied_at: string | null;
+  reply_viewed_at: string | null;
   replies: SentEmailReply[];
 };
 

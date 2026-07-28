@@ -3,6 +3,7 @@ import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { GlassCard, GlassCardContent } from "@/components/glass-card";
+import { CountUp } from "@/components/count-up";
 
 type StatCardProps = {
   label: string;
@@ -21,16 +22,18 @@ export function StatCard({ label, value, icon: Icon, trend, cta, accent, classNa
   const valueStyle = accent ? { color: accent } : undefined;
 
   return (
-    <GlassCard className={cn("p-0", className)}>
+    <GlassCard className={cn("p-0 hover:-translate-y-0.5 hover:shadow-lg", className)}>
       <GlassCardContent className="flex items-center justify-between gap-4 px-5 py-5">
         <div className="flex flex-col gap-1">
           <span className="text-xs font-medium text-muted-foreground">{label}</span>
-          <span className="text-2xl font-semibold tracking-tight" style={valueStyle}>{value}</span>
+          <span className="text-2xl font-semibold tracking-tight tabular-nums" style={valueStyle}>
+            <CountUp value={String(value)} duration={900} />
+          </span>
           {trend && (
             <span
               className={cn(
                 "text-xs font-medium",
-                trend.positive ? "text-emerald-600" : "text-muted-foreground"
+                trend.positive ? "text-[#7d9159]" : "text-muted-foreground"
               )}
             >
               {trend.value}

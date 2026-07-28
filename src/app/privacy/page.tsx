@@ -138,7 +138,8 @@ export default function PrivacyPolicyPage() {
       </main>
 
       <footer className="border-t border-border px-6 py-6 text-center text-xs text-muted-foreground sm:px-10">
-        © {new Date().getFullYear()} Netset. Built for student athletes.
+        © {new Date().getFullYear()} Netset. Built for student athletes. ·{" "}
+        <Link href="/terms" className="hover:underline">Terms of Service</Link>
       </footer>
     </div>
   );

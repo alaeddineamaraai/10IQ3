@@ -1,9 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Star, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Mail, Star, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useFavoriteSchools } from "@/hooks/use-favorite-schools";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ExpandableCard, type ExpandableCardItem } from "@/components/ui/expandable-card";
@@ -31,8 +33,8 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
 
 const DIV_ORDER: Record<string, number> = { D1: 0, D2: 1, D3: 2, NAIA: 3, JUCO: 4 };
 const AVATAR_COLORS = [
-  "#3b7af5","#7c3aed","#f59e0b","#22c55e","#ec4899",
-  "#14b8a6","#f97316","#6366f1","#84cc16","#0ea5e9",
+  "#b8863f","#8a6f4d","#c9662d","#7d9159","#a85d43",
+  "#7d9159","#c9662d","#a85d43","#9a8b3f","#8a6f4d",
 ];
 
 function avatarColor(name: string) {
@@ -94,21 +96,14 @@ function SchoolAvatar({ name }: { name: string }) {
 }
 
 export function SchoolsGrid({ schools }: { schools: SchoolDetail[] }) {
+  const router = useRouter();
   const [search, setSearch]         = useState("");
   const [division, setDivision]     = useState(ALL);
   const [minUtr, setMinUtr]         = useState("");
   const [maxUtr, setMaxUtr]         = useState("");
   const [sort, setSort]             = useState<SortKey>("div_asc");
-  const [favorites, setFavorites]   = useState<Set<string>>(new Set());
   const [showFavOnly, setShowFavOnly] = useState(false);
-
-  function toggleFav(name: string) {
-    setFavorites((prev) => {
-      const next = new Set(prev);
-      if (next.has(name)) next.delete(name); else next.add(name);
-      return next;
-    });
-  }
+  const { favorites, toggle: toggleFav } = useFavoriteSchools();
 
   const divisions = useMemo(
     () => [...new Set(schools.map((s) => s.division))].sort(),
@@ -161,19 +156,37 @@ export function SchoolsGrid({ schools }: { schools: SchoolDetail[] }) {
           ctaText: "View coaches →",
           ctaHref: `/schools/${encodeURIComponent(school.school_name)}`,
           action: (
-            <button
-              onClick={() => toggleFav(school.school_name)}
-              className="rounded-full p-1.5 transition-smooth hover:bg-muted"
-              aria-label={favorites.has(school.school_name) ? "Remove from shortlist" : "Add to shortlist"}
-              title={favorites.has(school.school_name) ? "Remove from shortlist" : "Save to shortlist"}
-            >
-              <Star
-                className="size-4"
-                fill={favorites.has(school.school_name) ? "#f59e0b" : "none"}
-                stroke={favorites.has(school.school_name) ? "#f59e0b" : "currentColor"}
-                strokeWidth={1.5}
-              />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(
+                    `/compose?coaches=${school.coaches.map((c) => encodeURIComponent(c.email)).join(",")}`
+                  );
+                }}
+                className="rounded-full p-1.5 transition-smooth hover:bg-muted"
+                aria-label={`Compose email to ${name} coaches`}
+                title="Compose email to this school's coaches"
+              >
+                <Mail className="size-4" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFav(school.school_name);
+                }}
+                className="rounded-full p-1.5 transition-smooth hover:bg-muted"
+                aria-label={favorites.has(school.school_name) ? "Remove from shortlist" : "Add to shortlist"}
+                title={favorites.has(school.school_name) ? "Remove from shortlist" : "Save to shortlist"}
+              >
+                <Star
+                  className="size-4"
+                  fill={favorites.has(school.school_name) ? "#c9662d" : "none"}
+                  stroke={favorites.has(school.school_name) ? "#c9662d" : "currentColor"}
+                  strokeWidth={1.5}
+                />
+              </button>
+            </div>
           ),
           content: <SchoolDetailContent detail={school} />,
         };
@@ -263,7 +276,7 @@ export function SchoolsGrid({ schools }: { schools: SchoolDetail[] }) {
                   : "border-border bg-muted text-muted-foreground hover:text-foreground",
               )}
             >
-              <Star className="size-3" fill={showFavOnly ? "#f59e0b" : "none"} stroke={showFavOnly ? "#f59e0b" : "currentColor"} strokeWidth={1.5} />
+              <Star className="size-3" fill={showFavOnly ? "#c9662d" : "none"} stroke={showFavOnly ? "#c9662d" : "currentColor"} strokeWidth={1.5} />
               Shortlist ({favorites.size})
             </button>
           )}

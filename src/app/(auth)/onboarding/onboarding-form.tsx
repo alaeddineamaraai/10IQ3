@@ -22,15 +22,40 @@ import {
   GlassCardHeader,
   GlassCardTitle,
 } from "@/components/glass-card";
+import { REGIONS, clampToRange, rangeHint } from "@/lib/athlete-ranges";
 import type { OnboardingData } from "@/lib/types/profile";
 
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 4;
+
+// Named steps chunk the form into meaningful groups and tell users
+// what's coming, not just how far along they are.
+const STEP_META = [
+  { title: "About you", description: "The basics — who you are on paper." },
+  { title: "Your game", description: "How and where you play." },
+  { title: "Your targets", description: "Where you want to end up." },
+  { title: "AI instructions", description: "Tell the AI anything it should always include." },
+] as const;
 
 const GENDERS = ["Male", "Female"];
 const STYLES = ["Baseliner", "Aggressive baseliner", "Serve and volley", "All-court"];
 const DIVISIONS = ["D1", "D2", "D3", "NAIA", "JUCO"];
 
 type FormState = Partial<OnboardingData>;
+
+type NumericField = "grad_year" | "gpa" | "utr" | "wtn" | "rank";
+
+/**
+ * Postel's Law: accept whatever the athlete types — "13,5", " 9.5 ",
+ * "UTR 11" — and quietly extract the number. Returns null when there's
+ * no number to be found.
+ */
+function parseLooseNumber(raw: string): number | null {
+  const normalized = raw.replace(/,/g, ".").replace(/[^0-9.\-]/g, "");
+  const match = normalized.match(/-?\d+(\.\d+)?/);
+  if (!match) return null;
+  const value = parseFloat(match[0]);
+  return Number.isFinite(value) ? value : null;
+}
 
 function update<K extends keyof FormState>(
   setForm: React.Dispatch<React.SetStateAction<FormState>>,
@@ -43,17 +68,59 @@ export function OnboardingForm() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormState>({});
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  // Numeric fields are kept as raw strings while typing so intermediate
+  // states like "13," or "3." never get eaten; parsed loosely on submit.
+  const [nums, setNums] = useState<Record<NumericField, string>>({
+    grad_year: "",
+    gpa: "",
+    utr: "",
+    wtn: "",
+    rank: "",
+  });
   const [pending, setPending] = useState(false);
+  const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const setNum = (key: NumericField) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setNums((prev) => ({ ...prev, [key]: e.target.value }));
+
+  // Clamp out-of-range values on blur rather than while typing — the
+  // athlete can still type freely (e.g. backspacing through "16" to type
+  // "9.5"), but a stray "99" UTR or "2.5" grad year snaps back into a
+  // sane range once they move on.
+  const clampNum = (key: NumericField) => () =>
+    setNums((prev) => {
+      const parsed = parseLooseNumber(prev[key]);
+      if (parsed == null) return prev;
+      const clamped = clampToRange(key, parsed);
+      return clamped === parsed ? prev : { ...prev, [key]: String(clamped) };
+    });
 
   async function handleFinish() {
     setPending(true);
     setError(null);
 
+    const name = [firstName.trim(), lastName.trim()].filter(Boolean).join(" ") || null;
+    // Blur-time clamping already keeps these in range under normal use, but
+    // clamp again here as a safety net (e.g. a field never blurred before Finish).
+    const clampField = (key: NumericField) => {
+      const parsed = parseLooseNumber(nums[key]);
+      return parsed == null ? null : clampToRange(key, parsed);
+    };
+    const parsedNums = {
+      grad_year: clampField("grad_year"),
+      gpa: clampField("gpa"),
+      utr: clampField("utr"),
+      wtn: clampField("wtn"),
+      rank: clampField("rank"),
+    };
+
     const res = await fetch("/api/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, profile_complete: true }),
+      body: JSON.stringify({ ...form, ...parsedNums, name, profile_complete: true }),
     });
 
     setPending(false);
@@ -63,63 +130,102 @@ export function OnboardingForm() {
       return;
     }
 
-    router.push("/dashboard");
+    // Peak-end: land the finish with a beat of celebration before the redirect
+    setDone(true);
+    setTimeout(() => router.push("/welcome"), 1400);
+  }
+
+  if (done) {
+    return (
+      <GlassCard strong className="animate-in fade-in-0 zoom-in-95 w-full max-w-lg duration-300">
+        <GlassCardContent className="flex flex-col items-center gap-3 py-12 text-center">
+          <div className="flex size-12 items-center justify-center rounded-full bg-primary/10">
+            <svg className="size-6 text-primary" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M8 12l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <GlassCardTitle className="text-xl">Profile saved</GlassCardTitle>
+          <p className="text-sm text-muted-foreground">
+            Setting up your quick start guide…
+          </p>
+        </GlassCardContent>
+      </GlassCard>
+    );
   }
 
   return (
     <GlassCard strong className="w-full max-w-lg">
       <GlassCardHeader>
         <GlassCardTitle className="text-xl">
-          Tell us about your game
+          {STEP_META[step - 1].title}
         </GlassCardTitle>
-        <GlassCardDescription>Step {step} of {TOTAL_STEPS}</GlassCardDescription>
+        <GlassCardDescription>
+          Step {step} of {TOTAL_STEPS} — {STEP_META[step - 1].description}
+        </GlassCardDescription>
         <Progress value={(step / TOTAL_STEPS) * 100} className="mt-2" />
       </GlassCardHeader>
 
       <GlassCardContent className="flex flex-col gap-4">
         {step === 1 && (
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Grad year">
+            <Field label="First name">
               <Input
-                type="number"
+                placeholder="Alex"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+              />
+            </Field>
+            <Field label="Last name">
+              <Input
+                placeholder="Smith"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+              />
+            </Field>
+            <Field label="Grad year" hint={rangeHint("grad_year")}>
+              <Input
+                inputMode="numeric"
                 placeholder="2027"
-                value={form.grad_year ?? ""}
-                onChange={(e) => update(setForm, "grad_year")(Number(e.target.value) || null)}
+                value={nums.grad_year}
+                onChange={setNum("grad_year")}
+                onBlur={clampNum("grad_year")}
               />
             </Field>
-            <Field label="GPA">
+            <Field label="GPA" hint={rangeHint("gpa")}>
               <Input
-                type="number"
-                step="0.01"
+                inputMode="decimal"
                 placeholder="3.8"
-                value={form.gpa ?? ""}
-                onChange={(e) => update(setForm, "gpa")(Number(e.target.value) || null)}
+                value={nums.gpa}
+                onChange={setNum("gpa")}
+                onBlur={clampNum("gpa")}
               />
             </Field>
-            <Field label="UTR">
+            <Field label="UTR" hint={rangeHint("utr")}>
               <Input
-                type="number"
-                step="0.01"
+                inputMode="decimal"
                 placeholder="9.5"
-                value={form.utr ?? ""}
-                onChange={(e) => update(setForm, "utr")(Number(e.target.value) || null)}
+                value={nums.utr}
+                onChange={setNum("utr")}
+                onBlur={clampNum("utr")}
               />
             </Field>
-            <Field label="WTN">
+            <Field label="WTN" hint={rangeHint("wtn")}>
               <Input
-                type="number"
-                step="0.01"
+                inputMode="decimal"
                 placeholder="12.0"
-                value={form.wtn ?? ""}
-                onChange={(e) => update(setForm, "wtn")(Number(e.target.value) || null)}
+                value={nums.wtn}
+                onChange={setNum("wtn")}
+                onBlur={clampNum("wtn")}
               />
             </Field>
-            <Field label="National rank">
+            <Field label="National rank" hint={rangeHint("rank")}>
               <Input
-                type="number"
+                inputMode="numeric"
                 placeholder="150"
-                value={form.rank ?? ""}
-                onChange={(e) => update(setForm, "rank")(Number(e.target.value) || null)}
+                value={nums.rank}
+                onChange={setNum("rank")}
+                onBlur={clampNum("rank")}
               />
             </Field>
           </div>
@@ -132,7 +238,7 @@ export function OnboardingForm() {
                 value={form.gender ?? ""}
                 onValueChange={(v) => update(setForm, "gender")(v as string)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
@@ -149,7 +255,7 @@ export function OnboardingForm() {
                 value={form.style ?? ""}
                 onValueChange={(v) => update(setForm, "style")(v as string)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
@@ -204,7 +310,7 @@ export function OnboardingForm() {
                 value={form.target_div ?? ""}
                 onValueChange={(v) => update(setForm, "target_div")(v as string)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
@@ -217,10 +323,28 @@ export function OnboardingForm() {
               </Select>
             </Field>
             <Field label="Target region">
-              <Input
-                placeholder="Northeast"
+              <Select
                 value={form.region ?? ""}
-                onChange={(e) => update(setForm, "region")(e.target.value)}
+                onValueChange={(v) => update(setForm, "region")(v as string)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  {REGIONS.map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {r}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="UTR Sports profile link" className="col-span-2">
+              <Input
+                type="url"
+                placeholder="https://app.utrsports.net/profiles/..."
+                value={form.utr_sports_link ?? ""}
+                onChange={(e) => update(setForm, "utr_sports_link")(e.target.value)}
               />
             </Field>
             <Field label="Highlight video link" className="col-span-2">
@@ -231,6 +355,25 @@ export function OnboardingForm() {
                 onChange={(e) => update(setForm, "video_link")(e.target.value)}
               />
             </Field>
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-muted-foreground">
+              The AI reads these notes before writing every email — use them for anything
+              consistent about you: injury history, preferred divisions, scholarship need, tone preferences, etc.
+            </p>
+            <textarea
+              rows={7}
+              placeholder={`Examples:\n• I prefer warm, conversational tone\n• I had a shoulder injury in 2023, fully recovered\n• I'm specifically looking for full scholarship opportunities\n• My family is from Tunisia — I speak French and Arabic`}
+              value={form.ai_notes ?? ""}
+              onChange={(e) => update(setForm, "ai_notes")(e.target.value)}
+              className="w-full resize-none rounded-xl border border-border bg-background/50 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+            <p className="text-xs text-muted-foreground">
+              You can always update this later in Settings → Profile.
+            </p>
           </div>
         )}
 
@@ -261,16 +404,21 @@ export function OnboardingForm() {
 
 function Field({
   label,
+  hint,
   className,
   children,
 }: {
   label: string;
+  hint?: string;
   className?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className={`flex flex-col gap-1.5 ${className ?? ""}`}>
-      <Label>{label}</Label>
+      <div className="flex items-baseline justify-between gap-2">
+        <Label>{label}</Label>
+        {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
+      </div>
       {children}
     </div>
   );

@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle } from "@/components/glass-card";
+import { FollowUpReplyComposer } from "@/components/dashboard/followup-reply-composer";
 import type { SentEmailRow } from "@/lib/types/dashboard";
 
 function formatDateTime(value: string) {
@@ -66,6 +67,7 @@ export function EmailDetailContent({ row }: { row: SentEmailRow }) {
               </GlassCardContent>
             </GlassCard>
           ))}
+          <FollowUpReplyComposer outreachId={row.id} coachEmail={row.coach_email} />
         </div>
       ) : (
         <p className="text-sm text-muted-foreground">No reply yet.</p>

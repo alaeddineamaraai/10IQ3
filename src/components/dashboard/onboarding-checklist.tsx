@@ -57,7 +57,7 @@ export function OnboardingChecklist({ profileComplete, emailsSent, replied }: Pr
       id: "ten_coaches",
       title: "Reach 10 coaches",
       description: "Athletes who contact 10+ programs see significantly more replies.",
-      href: "/coaches",
+      href: "/contacts",
       cta: "Browse coaches →",
       done: emailsSent >= 10,
     },
@@ -75,10 +75,10 @@ export function OnboardingChecklist({ profileComplete, emailsSent, replied }: Pr
 
   if (allDone) {
     return (
-      <GlassCard className="border-green-500/20">
+      <GlassCard className="border-[#7d9159]/30">
         <GlassCardContent className="flex items-center justify-between gap-4 px-5 py-4">
           <div className="flex items-center gap-3">
-            <CheckCircle2 className="size-5 shrink-0 text-green-500" />
+            <CheckCircle2 className="size-5 shrink-0 text-[#7d9159]" />
             <div>
               <p className="text-sm font-semibold">You&apos;re all set!</p>
               <p className="text-xs text-muted-foreground">
@@ -146,7 +146,7 @@ export function OnboardingChecklist({ profileComplete, emailsSent, replied }: Pr
                 )}
               >
                 {step.done ? (
-                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-green-500" />
+                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#7d9159]" />
                 ) : (
                   <Circle className="mt-0.5 size-4 shrink-0 text-muted-foreground/40" />
                 )}

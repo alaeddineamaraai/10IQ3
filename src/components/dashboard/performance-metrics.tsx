@@ -32,7 +32,7 @@ export function PerformanceMetrics({ rates }: { rates: DashboardRates }) {
               </div>
             </div>
             <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted">
-              <Progress value={Math.min(metric.value, 100)} className="h-full" />
+              <Progress value={Math.min(metric.value, 100)} className="bar-fill h-full" />
               {bench && (
                 <div
                   className="absolute top-0 h-full w-px bg-muted-foreground/30"

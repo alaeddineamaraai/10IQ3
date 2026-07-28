@@ -2,23 +2,66 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { rateLimit } from "@/lib/rate-limit";
+import { getEmailAllowance } from "@/lib/billing/email-allowance";
 import type { AthleteProfile } from "@/lib/types/profile";
 
-const FREE_PLAN_EMAIL_LIMIT = 5;
+// 50 sends per user per 24 hours (guards against runaway bulk sending)
+const SEND_RATE_LIMIT = 50;
+const SEND_WINDOW_MS = 24 * 60 * 60 * 1000;
 
-function htmlFromPlainText(text: string) {
+// CAN-SPAM / CASL compliance footer appended to every outgoing email.
+// Update NETSET_MAILING_ADDRESS in your env if you have a physical address.
+const COMPLIANCE_FOOTER = `
+
+---
+This email was sent via Netset on behalf of the athlete above.
+${process.env.NETSET_MAILING_ADDRESS ?? "Netset · 548 Market St PMB 72287 · San Francisco, CA 94104"}
+To opt out of emails from this athlete, reply with "unsubscribe".`;
+
+const APP_BASE_URL = process.env.APP_BASE_URL ?? "https://www.netset.pro";
+
+function htmlFromPlainText(text: string, outreachId: string) {
   const escaped = text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
-  return `<div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${escaped}</div>`;
+  // Self-hosted open-tracking pixel — see /api/track/open/[id]. Doesn't
+  // depend on Resend's own open tracking being toggled on for the domain.
+  const pixel = `<img src="${APP_BASE_URL}/api/track/open/${outreachId}" width="1" height="1" alt="" style="display:none" />`;
+  return `<div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${escaped}</div>${pixel}`;
+}
+
+/**
+ * Coaches see the email as coming from the athlete: display name is the
+ * athlete's name and the address localpart is a slug of it, e.g.
+ * "Alex Player <alex.player@mail.netset.pro>".
+ * Resend only accepts a verified sending domain — set NETSET_SEND_DOMAIN
+ * to "netset.pro" once the root domain is verified in Resend.
+ */
+function buildFrom(athleteName: string | null | undefined) {
+  const domain = process.env.NETSET_SEND_DOMAIN ?? "mail.netset.pro";
+  // Header-safe display name: no quotes, angle brackets, or line breaks
+  const display =
+    athleteName?.replace(/["<>\r\n]/g, "").trim().slice(0, 60) || "Netset";
+  const local =
+    display
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[̀-ͯ]/g, "") // strip accents
+      .replace(/[^a-z0-9]+/g, ".")
+      .replace(/^\.+|\.+$/g, "")
+      .slice(0, 40) || "recruiting";
+  return `${display} <${local}@${domain}>`;
 }
 
 async function sendViaResend(
   to: string,
   subject: string,
   body: string,
-  replyTo: string | undefined
+  replyTo: string | undefined,
+  athleteName: string | null | undefined,
+  outreachId: string
 ) {
   if (!process.env.RESEND_API_KEY) {
     return { delivered: false as const, reason: "RESEND_API_KEY not configured" };
@@ -26,13 +69,15 @@ async function sendViaResend(
 
   const resend = new Resend(process.env.RESEND_API_KEY);
   const { data, error } = await resend.emails.send({
-    from: "Netset <recruiting@mail.netset.pro>",
+    from: buildFrom(athleteName),
     to,
     subject,
     text: body,
-    // HTML is required for Resend's open-tracking pixel; the plain-text
-    // part keeps it looking identical to a normal email.
-    html: htmlFromPlainText(body),
+    // The plain-text part keeps this looking identical to a normal email;
+    // the HTML part carries our own open-tracking pixel (see
+    // htmlFromPlainText) rather than depending on Resend's built-in open
+    // tracking, which requires a separate per-domain dashboard toggle.
+    html: htmlFromPlainText(body, outreachId),
     ...(replyTo ? { replyTo } : {}),
   });
 
@@ -57,6 +102,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
+  if (!rateLimit(`send:${auth.user.id}`, SEND_RATE_LIMIT, SEND_WINDOW_MS)) {
+    return NextResponse.json(
+      { error: "Daily send limit reached — try again tomorrow" },
+      { status: 429 }
+    );
+  }
+
   const { data: profile, error: profileError } = await supabase
     .from("users")
     .select("*")
@@ -67,9 +119,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Could not load profile" }, { status: 500 });
   }
 
-  if (profile.plan === "free" && profile.emails_used >= FREE_PLAN_EMAIL_LIMIT) {
+  const startOfTodayUtc = new Date();
+  startOfTodayUtc.setUTCHours(0, 0, 0, 0);
+  const { count: emailsSentToday } = await supabase
+    .from("outreach")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", auth.user.id)
+    .eq("email_sent", true)
+    .gte("sent_at", startOfTodayUtc.toISOString());
+
+  const allowance = getEmailAllowance({ profile, emailsSentToday: emailsSentToday ?? 0 });
+
+  if (!allowance.ok) {
+    const messages: Record<typeof allowance.reason, string> = {
+      lifetime_limit_reached: "Free plan limit reached",
+      daily_cap_reached: "Daily email cap reached — try again tomorrow",
+      no_credits: "You're out of email credits — buy more to keep sending today",
+    };
     return NextResponse.json(
-      { error: "Free plan limit reached", code: "PLAN_LIMIT_REACHED" },
+      { error: messages[allowance.reason], code: allowance.reason.toUpperCase() },
       { status: 402 }
     );
   }
@@ -103,11 +171,22 @@ export async function POST(request: Request) {
     outreachId = inserted.id;
   }
 
+  if (!outreachId) {
+    return NextResponse.json({ error: "Could not resolve outreach row" }, { status: 500 });
+  }
+
   const replyTo = process.env.RESEND_INBOUND_DOMAIN
     ? `reply+${outreachId}@${process.env.RESEND_INBOUND_DOMAIN}`
     : undefined;
 
-  const result = await sendViaResend(coach_email, subject, body, replyTo);
+  const result = await sendViaResend(
+    coach_email,
+    subject,
+    body + COMPLIANCE_FOOTER,
+    replyTo,
+    profile.name,
+    outreachId
+  );
 
   const { error: outreachError } = await supabase
     .from("outreach")
@@ -126,7 +205,10 @@ export async function POST(request: Request) {
 
   await supabase
     .from("users")
-    .update({ emails_used: profile.emails_used + 1 })
+    .update({
+      emails_used: profile.emails_used + 1,
+      ...(allowance.source === "credit" ? { email_credits: profile.email_credits - 1 } : {}),
+    })
     .eq("id", auth.user.id);
 
   return NextResponse.json({

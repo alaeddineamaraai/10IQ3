@@ -19,6 +19,13 @@ export async function POST(request: Request) {
 
   const supabase = createSupabaseAdminClient();
 
+  // Confirm the id actually belongs to an auth user before writing anything.
+  // Without this check, any caller with a known UUID could forge a users row.
+  const { data: authUser, error: lookupError } = await supabase.auth.admin.getUserById(id);
+  if (lookupError || !authUser?.user) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
   const { error } = await supabase
     .from("users")
     .upsert(

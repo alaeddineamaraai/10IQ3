@@ -9,9 +9,9 @@ export function OutboundFunnel({ stats }: { stats: DashboardStats }) {
   const replyPct = stats.sent  > 0 ? (stats.replied / stats.sent)  * 100 : null;
 
   const stages = [
-    { label: "Sent",    value: stats.sent,    pct: null,     hint: null,          color: "#3b7af5" },
-    { label: "Opened",  value: stats.opened,  pct: openPct,  hint: "of sent",     color: "#f59e0b" },
-    { label: "Replied", value: stats.replied, pct: replyPct, hint: "of sent",     color: "#22c55e" },
+    { label: "Sent",    value: stats.sent,    pct: null,     hint: null,          color: "#b8863f" },
+    { label: "Opened",  value: stats.opened,  pct: openPct,  hint: "of sent",     color: "#c9662d" },
+    { label: "Replied", value: stats.replied, pct: replyPct, hint: "of sent",     color: "#7d9159" },
   ];
 
   return (
@@ -31,10 +31,10 @@ export function OutboundFunnel({ stats }: { stats: DashboardStats }) {
           </div>
           <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full rounded-full transition-smooth"
+              className="bar-fill h-full rounded-full transition-smooth"
               style={{
                 width: `${Math.max((stage.value / max) * 100, stage.value > 0 ? 4 : 0)}%`,
-                backgroundColor: stage.color,
+                backgroundImage: `linear-gradient(90deg, ${stage.color}, color-mix(in srgb, ${stage.color} 72%, white))`,
               }}
             />
           </div>

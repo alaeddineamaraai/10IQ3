@@ -1,4 +1,8 @@
+import Link from "next/link";
+import { Mail } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -53,6 +57,7 @@ export function SchoolDetailContent({ detail }: { detail: SchoolDetail }) {
                 <TableHead>WTN</TableHead>
                 <TableHead>Notes</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="w-10" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -78,6 +83,16 @@ export function SchoolDetailContent({ detail }: { detail: SchoolDetail }) {
                     ) : (
                       <Badge variant="ghost">Not contacted</Badge>
                     )}
+                  </TableCell>
+                  <TableCell>
+                    <Link
+                      href={`/compose?coaches=${encodeURIComponent(coach.email)}`}
+                      className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
+                      title={`Compose email to ${coach.coach_name}`}
+                      aria-label={`Compose email to ${coach.coach_name}`}
+                    >
+                      <Mail className="size-4" />
+                    </Link>
                   </TableCell>
                 </TableRow>
               ))}

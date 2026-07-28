@@ -2,8 +2,13 @@ import { NextResponse } from "next/server";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { generateDraftEmail } from "@/lib/ai/generate";
+import { rateLimit } from "@/lib/rate-limit";
 import type { AthleteProfile } from "@/lib/types/profile";
 import type { Coach } from "@/lib/types/coach";
+
+// 30 draft generations per user per hour
+const DRAFT_RATE_LIMIT = 30;
+const DRAFT_WINDOW_MS = 60 * 60 * 1000;
 
 export async function POST(request: Request) {
   const { coachEmail } = await request.json();
@@ -17,6 +22,13 @@ export async function POST(request: Request) {
 
   if (!auth.user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  if (!rateLimit(`ai-draft:${auth.user.id}`, DRAFT_RATE_LIMIT, DRAFT_WINDOW_MS)) {
+    return NextResponse.json(
+      { error: "Too many requests — try again in an hour" },
+      { status: 429 }
+    );
   }
 
   const [{ data: athlete, error: athleteError }, { data: coach, error: coachError }] =
