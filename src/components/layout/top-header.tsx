@@ -56,9 +56,9 @@ export function TopHeader({
         <div className="hidden items-center md:flex">
           <Link
             href="/dashboard"
-            className="flex items-center gap-2.5 transition-smooth hover:opacity-70"
+            className="flex items-center gap-2.5 opacity-60 transition-smooth hover:opacity-90"
           >
-            <Image src="/logo.png" alt="Netset" width={38} height={38} priority style={{ filter: "grayscale(1) brightness(1.8) contrast(1.1)" }} />
+            <Image src="/logo.png" alt="Netset" width={38} height={38} priority style={{ filter: "grayscale(0.2) brightness(1.3) contrast(1.0)" }} />
             <span className="text-lg font-semibold tracking-tight">Netset</span>
           </Link>
         </div>
