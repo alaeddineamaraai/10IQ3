@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
+import { PlanUsageSummary } from "@/components/billing/plan-usage-summary";
 import {
   Select,
   SelectContent,
@@ -22,12 +22,17 @@ import {
   GlassCardHeader,
   GlassCardTitle,
 } from "@/components/glass-card";
+import {
+  REGIONS,
+  clampToRange,
+  rangeHint,
+  type AthleteNumericField,
+} from "@/lib/athlete-ranges";
 import type { AthleteProfile, OnboardingData } from "@/lib/types/profile";
 
 const GENDERS = ["Male", "Female"];
 const STYLES = ["Baseliner", "Aggressive baseliner", "Serve and volley", "All-court"];
 const DIVISIONS = ["D1", "D2", "D3", "NAIA", "JUCO"];
-const FREE_PLAN_EMAIL_LIMIT = 5;
 
 const isSampleMode = !process.env.NEXT_PUBLIC_SUPABASE_URL;
 
@@ -50,6 +55,8 @@ function toFormState(profile: AthleteProfile): FormState {
     target_div: profile.target_div,
     region: profile.region,
     video_link: profile.video_link,
+    utr_sports_link: profile.utr_sports_link,
+    ai_notes: profile.ai_notes,
   };
 }
 
@@ -63,6 +70,16 @@ export function ProfileForm({ profile }: { profile: AthleteProfile }) {
     setForm((prev) => ({ ...prev, [key]: value }));
     setSaved(false);
   }
+
+  // Same behavior as onboarding: type freely, snap back into the real-world
+  // range once the field loses focus.
+  const clampNum = (key: AthleteNumericField) => () =>
+    setForm((prev) => {
+      const value = prev[key];
+      if (value == null) return prev;
+      const clamped = clampToRange(key, value);
+      return clamped === value ? prev : { ...prev, [key]: clamped };
+    });
 
   async function handleSave() {
     setSaving(true);
@@ -91,8 +108,6 @@ export function ProfileForm({ profile }: { profile: AthleteProfile }) {
     setSaved(true);
   }
 
-  const emailsRemaining = Math.max(FREE_PLAN_EMAIL_LIMIT - profile.emails_used, 0);
-
   return (
     <div className="flex flex-col gap-6">
       <GlassCard>
@@ -109,22 +124,7 @@ export function ProfileForm({ profile }: { profile: AthleteProfile }) {
               {profile.plan}
             </Badge>
           </div>
-          {profile.plan === "free" && (
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-baseline justify-between text-sm">
-                <span className="font-medium">Free emails used</span>
-                <span className="text-muted-foreground">
-                  {profile.emails_used} / {FREE_PLAN_EMAIL_LIMIT}
-                </span>
-              </div>
-              <Progress value={(profile.emails_used / FREE_PLAN_EMAIL_LIMIT) * 100} />
-              {emailsRemaining === 0 && (
-                <span className="text-xs text-destructive">
-                  No free emails left — upgrade to send more.
-                </span>
-              )}
-            </div>
-          )}
+          <PlanUsageSummary profile={profile} />
         </GlassCardContent>
       </GlassCard>
 
@@ -137,47 +137,52 @@ export function ProfileForm({ profile }: { profile: AthleteProfile }) {
         </GlassCardHeader>
         <GlassCardContent>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Grad year">
+            <Field label="Grad year" hint={rangeHint("grad_year")}>
               <Input
                 type="number"
                 value={form.grad_year ?? ""}
                 onChange={(e) => update("grad_year", Number(e.target.value) || null)}
+                onBlur={clampNum("grad_year")}
               />
             </Field>
-            <Field label="GPA">
+            <Field label="GPA" hint={rangeHint("gpa")}>
               <Input
                 type="number"
                 step="0.01"
                 value={form.gpa ?? ""}
                 onChange={(e) => update("gpa", Number(e.target.value) || null)}
+                onBlur={clampNum("gpa")}
               />
             </Field>
-            <Field label="UTR">
+            <Field label="UTR" hint={rangeHint("utr")}>
               <Input
                 type="number"
                 step="0.01"
                 value={form.utr ?? ""}
                 onChange={(e) => update("utr", Number(e.target.value) || null)}
+                onBlur={clampNum("utr")}
               />
             </Field>
-            <Field label="WTN">
+            <Field label="WTN" hint={rangeHint("wtn")}>
               <Input
                 type="number"
                 step="0.01"
                 value={form.wtn ?? ""}
                 onChange={(e) => update("wtn", Number(e.target.value) || null)}
+                onBlur={clampNum("wtn")}
               />
             </Field>
-            <Field label="National rank">
+            <Field label="National rank" hint={rangeHint("rank")}>
               <Input
                 type="number"
                 value={form.rank ?? ""}
                 onChange={(e) => update("rank", Number(e.target.value) || null)}
+                onBlur={clampNum("rank")}
               />
             </Field>
             <Field label="Gender">
               <Select value={form.gender ?? ""} onValueChange={(v) => update("gender", v)}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
@@ -191,7 +196,7 @@ export function ProfileForm({ profile }: { profile: AthleteProfile }) {
             </Field>
             <Field label="Playing style">
               <Select value={form.style ?? ""} onValueChange={(v) => update("style", v)}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
@@ -205,7 +210,7 @@ export function ProfileForm({ profile }: { profile: AthleteProfile }) {
             </Field>
             <Field label="Target division">
               <Select value={form.target_div ?? ""} onValueChange={(v) => update("target_div", v)}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
@@ -243,13 +248,41 @@ export function ProfileForm({ profile }: { profile: AthleteProfile }) {
               />
             </Field>
             <Field label="Target region">
-              <Input value={form.region ?? ""} onChange={(e) => update("region", e.target.value)} />
+              <Select value={form.region ?? ""} onValueChange={(v) => update("region", v)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  {REGIONS.map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {r}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="UTR Sports profile link" className="col-span-2">
+              <Input
+                type="url"
+                placeholder="https://app.utrsports.net/profiles/..."
+                value={form.utr_sports_link ?? ""}
+                onChange={(e) => update("utr_sports_link", e.target.value)}
+              />
             </Field>
             <Field label="Highlight video link" className="col-span-2">
               <Input
                 type="url"
                 value={form.video_link ?? ""}
                 onChange={(e) => update("video_link", e.target.value)}
+              />
+            </Field>
+            <Field label="AI notes" className="col-span-2">
+              <textarea
+                rows={4}
+                placeholder="Anything the AI should always include — tone preference, scholarship need, injury history, languages…"
+                value={form.ai_notes ?? ""}
+                onChange={(e) => update("ai_notes", e.target.value)}
+                className="w-full resize-none rounded-xl border border-border bg-background/50 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </Field>
           </div>
@@ -268,16 +301,21 @@ export function ProfileForm({ profile }: { profile: AthleteProfile }) {
 
 function Field({
   label,
+  hint,
   className,
   children,
 }: {
   label: string;
+  hint?: string;
   className?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className={`flex flex-col gap-1.5 ${className ?? ""}`}>
-      <Label>{label}</Label>
+      <div className="flex items-baseline justify-between gap-2">
+        <Label>{label}</Label>
+        {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
+      </div>
       {children}
     </div>
   );

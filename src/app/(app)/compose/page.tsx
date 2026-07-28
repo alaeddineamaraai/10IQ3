@@ -4,20 +4,29 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getCoachesWithOutreach, getSampleCoaches } from "@/lib/data/coaches";
 import { ComposeClient } from "./compose-client";
 
-async function loadCoaches() {
+// Returns whether this render is showing sample data — either because
+// Supabase isn't configured at all, or because the visitor isn't logged in
+// (e.g. the homepage's "Try live demo" link, which intentionally works
+// without an account). ComposeClient needs this explicitly: it can't infer
+// "sample" from env vars alone, since production has real Supabase
+// configured but an anonymous demo visitor still gets sample data.
+async function loadCoaches(): Promise<{
+  coaches: Awaited<ReturnType<typeof getCoachesWithOutreach>> | ReturnType<typeof getSampleCoaches>;
+  isSampleMode: boolean;
+}> {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    return { coaches: getSampleCoaches(), isSample: true };
+    return { coaches: getSampleCoaches(), isSampleMode: true };
   }
 
   const supabase = await createSupabaseServerClient();
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return { coaches: getSampleCoaches(), isSample: true };
+  if (!auth.user) return { coaches: getSampleCoaches(), isSampleMode: true };
 
-  return { coaches: await getCoachesWithOutreach(supabase, auth.user.id), isSample: false };
+  return { coaches: await getCoachesWithOutreach(supabase, auth.user.id), isSampleMode: false };
 }
 
 export default async function ComposePage() {
-  const { coaches, isSample } = await loadCoaches();
+  const { coaches, isSampleMode } = await loadCoaches();
 
   return (
     <div className="flex flex-col gap-4">
@@ -35,7 +44,7 @@ export default async function ComposePage() {
           </div>
         }
       >
-        <ComposeClient coaches={coaches} isSampleMode={isSample} />
+        <ComposeClient coaches={coaches} isSampleMode={isSampleMode} />
       </Suspense>
     </div>
   );

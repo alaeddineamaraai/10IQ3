@@ -1,4 +1,4 @@
-import { callAIProvider, type ChatMessage } from "@/lib/ai/provider";
+import { callAIProvider, streamAIProvider, type ChatMessage } from "@/lib/ai/provider";
 import type { AthleteProfile } from "@/lib/types/profile";
 import type { DashboardData } from "@/lib/types/dashboard";
 
@@ -25,21 +25,35 @@ function buildOutreachLine(outreach?: DashboardData) {
 }
 
 function buildSystemPrompt(athlete: AthleteProfile, outreach?: DashboardData) {
-  const profileLine =
-    `Athlete profile: grad year ${athlete.grad_year ?? "N/A"}, UTR ${athlete.utr ?? "N/A"}, ` +
-    `WTN ${athlete.wtn ?? "N/A"}, GPA ${athlete.gpa ?? "N/A"}, target division ` +
-    `${athlete.target_div ?? "N/A"}, target region ${athlete.region ?? "N/A"}, plan ${athlete.plan}.`;
+  const facts = [
+    athlete.grad_year != null ? `grad year ${athlete.grad_year}` : null,
+    athlete.utr != null ? `UTR ${athlete.utr}` : null,
+    athlete.wtn != null ? `WTN ${athlete.wtn}` : null,
+    athlete.gpa != null ? `GPA ${athlete.gpa}` : null,
+    athlete.target_div ? `target division ${athlete.target_div}` : null,
+    athlete.region ? `target region ${athlete.region}` : null,
+    `plan ${athlete.plan}`,
+  ]
+    .filter((f): f is string => f !== null)
+    .join(", ");
+
+  const profileLine = `Athlete profile: ${facts}.`;
 
   return (
     "You are a college tennis recruiting advisor helping a student athlete navigate " +
     "the recruiting process — which divisions/schools fit their level, how to talk to " +
     "coaches, email strategy, timing, and what to do with their UTR/WTN/grades. Be " +
     "direct, encouraging, and specific. Keep replies under 150 words unless asked for " +
-    "more detail. Never invent facts about specific schools or coaches you don't know. " +
-    "Use the athlete's real outreach numbers below when they're relevant — for example, " +
-    "point out if they've only contacted a handful of coaches and could scale up, flag a " +
-    "low reply rate and suggest what to change, or note if their outreach skews toward " +
-    "one division more than their stated target.\n\n" +
+    "more detail. Never invent facts about specific schools or coaches you don't know, " +
+    "and never mention a profile field that wasn't given to you above (don't say " +
+    '"N/A" or "not provided" — just skip topics you have no data for). Format your ' +
+    "replies to be easy to scan: use **bold** for key terms or numbers, short " +
+    "paragraphs, and numbered or bulleted markdown lists (\"1. \" or \"- \") when " +
+    "giving multiple steps or options — never one dense paragraph. Use the athlete's " +
+    "real outreach numbers below when they're relevant — for example, point out if " +
+    "they've only contacted a handful of coaches and could scale up, flag a low reply " +
+    "rate and suggest what to change, or note if their outreach skews toward one " +
+    "division more than their stated target.\n\n" +
     profileLine +
     "\n" +
     buildOutreachLine(outreach)
@@ -52,5 +66,14 @@ export async function generateAdvisorReply(
   outreach?: DashboardData,
 ): Promise<string> {
   const system = buildSystemPrompt(athlete, outreach);
-  return callAIProvider(system, history);
+  return callAIProvider(system, history, athlete.plan);
+}
+
+export function streamAdvisorReply(
+  athlete: AthleteProfile,
+  history: ChatMessage[],
+  outreach?: DashboardData,
+): AsyncGenerator<string> {
+  const system = buildSystemPrompt(athlete, outreach);
+  return streamAIProvider(system, history, athlete.plan);
 }

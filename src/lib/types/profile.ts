@@ -6,6 +6,8 @@ export type AthleteProfile = {
   name: string | null;
   plan: Plan;
   emails_used: number;
+  plan_started_at: string | null;
+  email_credits: number;
   utr: number | null;
   grad_year: number | null;
   gpa: number | null;
@@ -21,11 +23,13 @@ export type AthleteProfile = {
   target_div: string | null;
   region: string | null;
   video_link: string | null;
+  utr_sports_link: string | null;
+  ai_notes: string | null;
+  instagram_token: string | null;
   profile_complete: boolean;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
-  plan_started_at: string | null;
-  email_credits: number;
+  subscription_status: string | null;
   created_at: string;
 };
 
@@ -46,4 +50,6 @@ export type OnboardingData = Pick<
   | "target_div"
   | "region"
   | "video_link"
+  | "utr_sports_link"
+  | "ai_notes"
 >;
