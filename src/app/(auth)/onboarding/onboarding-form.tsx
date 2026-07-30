@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
+import { THEMES, applyTheme } from "@/lib/themes";
 import {
   Select,
   SelectContent,
@@ -66,7 +69,11 @@ function update<K extends keyof FormState>(
 
 export function OnboardingForm() {
   const router = useRouter();
-  const [step, setStep] = useState(1);
+  const { resolvedTheme, setTheme } = useTheme();
+  const [themeMounted, setThemeMounted] = useState(false);
+  useEffect(() => setThemeMounted(true), []);
+
+  const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>({});
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -151,6 +158,48 @@ export function OnboardingForm() {
           </p>
         </GlassCardContent>
       </GlassCard>
+    );
+  }
+
+  if (step === 0) {
+    return (
+      <div className="flex w-full max-w-lg flex-col items-center gap-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold">Pick your look</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Choose a theme to start — you can always change it later in Settings.
+          </p>
+        </div>
+
+        <div className="grid w-full grid-cols-4 gap-3">
+          {THEMES.map((t) => {
+            const isActive = themeMounted && resolvedTheme === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => applyTheme(setTheme, t.id)}
+                className={cn(
+                  "flex flex-col items-center gap-2 rounded-xl border p-3 transition-all duration-200",
+                  isActive
+                    ? "border-foreground/30 bg-[var(--glass-bg-strong)] shadow-md"
+                    : "border-transparent bg-[var(--glass-bg)] hover:border-border hover:bg-[var(--glass-bg-strong)]"
+                )}
+              >
+                <div
+                  className="aspect-video w-full rounded-lg border border-black/10"
+                  style={{ backgroundColor: t.bg }}
+                />
+                <span className="text-xs font-medium">{t.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <Button className="w-full" onClick={() => setStep(1)}>
+          Get started
+        </Button>
+      </div>
     );
   }
 

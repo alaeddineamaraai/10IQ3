@@ -203,11 +203,11 @@ export function SettingsClient({ profile, stats }: { profile: AthleteProfile; st
             <Palette className="size-4" /> Appearance
           </GlassCardTitle>
         </GlassCardHeader>
-        <GlassCardContent className="flex items-center justify-between gap-4">
+        <GlassCardContent className="flex flex-col gap-4">
           <p className="text-sm text-muted-foreground">
             Choose how Netset looks — your preference is saved on this device.
           </p>
-          <ThemeToggle />
+          <ThemeToggle variant="grid" />
         </GlassCardContent>
       </GlassCard>
 
