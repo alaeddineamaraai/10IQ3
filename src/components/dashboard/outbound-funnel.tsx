@@ -9,9 +9,9 @@ export function OutboundFunnel({ stats }: { stats: DashboardStats }) {
   const replyPct = stats.sent  > 0 ? (stats.replied / stats.sent)  * 100 : null;
 
   const stages = [
-    { label: "Sent",    value: stats.sent,    pct: null,     hint: null,          color: "#b8863f" },
-    { label: "Opened",  value: stats.opened,  pct: openPct,  hint: "of sent",     color: "#c9662d" },
-    { label: "Replied", value: stats.replied, pct: replyPct, hint: "of sent",     color: "#7d9159" },
+    { label: "Sent",    value: stats.sent,    pct: null,     hint: null,      color: "var(--chart-1)" },
+    { label: "Opened",  value: stats.opened,  pct: openPct,  hint: "of sent", color: "var(--chart-4)" },
+    { label: "Replied", value: stats.replied, pct: replyPct, hint: "of sent", color: "var(--chart-2)" },
   ];
 
   return (

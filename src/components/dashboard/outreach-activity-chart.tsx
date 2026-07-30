@@ -16,9 +16,9 @@ import { cn } from "@/lib/utils";
 import type { ActivityPoint } from "@/lib/types/dashboard";
 
 const SERIES = [
-  { key: "sent", name: "Sent", color: "var(--brand)" },
-  { key: "opened", name: "Opened", color: "#c9662d" },
-  { key: "replied", name: "Replied", color: "#7d9159" },
+  { key: "sent",    name: "Sent",    color: "var(--chart-1)" },
+  { key: "opened",  name: "Opened",  color: "var(--chart-4)" },
+  { key: "replied", name: "Replied", color: "var(--chart-2)" },
 ] as const;
 
 type Filter = "all" | "sent" | "opened" | "replied";

@@ -58,7 +58,7 @@ export function TopHeader({
             href="/dashboard"
             className="flex items-center gap-2.5 opacity-75 transition-smooth hover:opacity-100"
           >
-            <Image src="/logo.png" alt="Netset" width={38} height={38} priority />
+            <Image src="/logo.png" alt="Netset" width={38} height={38} priority style={{ filter: "var(--logo-filter, none)" }} />
             <span className="text-lg font-semibold tracking-tight text-muted-foreground">Netset</span>
           </Link>
         </div>
@@ -73,7 +73,7 @@ export function TopHeader({
         >
           <Inbox className="size-5 text-muted-foreground" strokeWidth={2} />
           {unreadCount > 0 && (
-            <span className="absolute right-1.5 top-1.5 flex size-4 items-center justify-center rounded-full bg-[#7d9159] text-[9px] font-bold text-white">
+            <span className="absolute right-1.5 top-1.5 flex size-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}

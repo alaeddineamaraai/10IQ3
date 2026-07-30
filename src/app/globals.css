@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is([data-theme="dark"] *, [data-theme="blue"] *, [data-theme="green"] *, [data-theme="purple"] *, [data-theme="black"] *));
+@custom-variant dark (&:is([data-theme="dark"] *, [data-theme="blue"] *, [data-theme="black"] *));
 
 @theme inline {
   --color-background: var(--background);
@@ -97,6 +97,7 @@ html[data-theme="beige"] {
   --glass-sheen: rgba(255, 255, 255, 0.68);
   --primary-hi: #3a342a;
   --primary-lo: #211d15;
+  --logo-filter: none;
 }
 
 :root {
@@ -145,6 +146,8 @@ html[data-theme="beige"] {
 
   --primary-hi: #3a342a;
   --primary-lo: #211d15;
+
+  --logo-filter: none;
 
   /* unused orb vars kept for compat */
   --orb-1: rgba(193, 146, 84, 0.32);   /* caramel */
@@ -198,6 +201,7 @@ html[data-theme="dark"] {
 
   --primary-hi: #f7f2e4;
   --primary-lo: #ddd3bc;
+  --logo-filter: brightness(0) invert(1);
 
   --orb-1: rgba(150, 115, 70, 0.22);  /* warm umber */
   --orb-2: rgba(110, 100, 80, 0.22);  /* olive gray */
@@ -248,108 +252,11 @@ html[data-theme="blue"] {
   --glass-sheen: rgba(106, 172, 245, 0.18);
   --primary-hi: #bfdbfe;
   --primary-lo: #3b82f6;
+  --logo-filter: brightness(0) invert(1);
   --orb-1: rgba(59, 130, 246, 0.28);
   --orb-2: rgba(29, 78, 216, 0.22);
   --orb-3: rgba(96, 165, 250, 0.24);
   --orb-4: rgba(30, 58, 138, 0.28);
-}
-
-html[data-theme="green"] {
-  --background: #0c1a10;
-  --foreground: #d0f0de;
-  --card: #132218;
-  --card-foreground: #d0f0de;
-  --popover: #17281d;
-  --popover-foreground: #d0f0de;
-  --primary: #79e0a4;
-  --primary-foreground: #0c1a10;
-  --secondary: rgba(121, 224, 164, 0.07);
-  --secondary-foreground: #d0f0de;
-  --muted: rgba(121, 224, 164, 0.07);
-  --muted-foreground: #7db896;
-  --accent: rgba(121, 224, 164, 0.1);
-  --accent-foreground: #d0f0de;
-  --brand: #79e0a4;
-  --brand-foreground: #0c1a10;
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: rgba(121, 224, 164, 0.12);
-  --input: rgba(121, 224, 164, 0.14);
-  --ring: rgba(121, 224, 164, 0.4);
-  --chart-1: #79e0a4;
-  --chart-2: #4ade80;
-  --chart-3: #86efac;
-  --chart-4: #22c55e;
-  --chart-5: #15803d;
-  --radius: 0.9rem;
-  --sidebar: #132218;
-  --sidebar-foreground: #d0f0de;
-  --sidebar-primary: #79e0a4;
-  --sidebar-primary-foreground: #0c1a10;
-  --sidebar-accent: rgba(121, 224, 164, 0.1);
-  --sidebar-accent-foreground: #d0f0de;
-  --sidebar-border: rgba(121, 224, 164, 0.12);
-  --sidebar-ring: rgba(121, 224, 164, 0.4);
-  --glass-bg: rgba(19, 34, 24, 0.28);
-  --glass-bg-strong: rgba(19, 34, 24, 0.48);
-  --glass-border: rgba(121, 224, 164, 0.3);
-  --glass-hi: rgba(121, 224, 164, 0.36);
-  --glass-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px rgba(121, 224, 164, 0.1), 0 12px 48px rgba(0, 0, 0, 0.38), 0 2px 8px rgba(0, 0, 0, 0.2);
-  --glass-sheen: rgba(121, 224, 164, 0.16);
-  --primary-hi: #bbf7d0;
-  --primary-lo: #4ade80;
-  --orb-1: rgba(34, 197, 94, 0.24);
-  --orb-2: rgba(22, 101, 52, 0.28);
-  --orb-3: rgba(74, 222, 128, 0.2);
-  --orb-4: rgba(20, 83, 45, 0.3);
-}
-
-html[data-theme="purple"] {
-  --background: #110c1e;
-  --foreground: #e8deff;
-  --card: #1c1434;
-  --card-foreground: #e8deff;
-  --popover: #211940;
-  --popover-foreground: #e8deff;
-  --primary: #b09ef7;
-  --primary-foreground: #110c1e;
-  --secondary: rgba(176, 158, 247, 0.07);
-  --secondary-foreground: #e8deff;
-  --muted: rgba(176, 158, 247, 0.07);
-  --muted-foreground: #9485c9;
-  --accent: rgba(176, 158, 247, 0.1);
-  --accent-foreground: #e8deff;
-  --brand: #b09ef7;
-  --brand-foreground: #110c1e;
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: rgba(176, 158, 247, 0.12);
-  --input: rgba(176, 158, 247, 0.14);
-  --ring: rgba(176, 158, 247, 0.4);
-  --chart-1: #b09ef7;
-  --chart-2: #a78bfa;
-  --chart-3: #c4b5fd;
-  --chart-4: #7c3aed;
-  --chart-5: #5b21b6;
-  --radius: 0.9rem;
-  --sidebar: #1c1434;
-  --sidebar-foreground: #e8deff;
-  --sidebar-primary: #b09ef7;
-  --sidebar-primary-foreground: #110c1e;
-  --sidebar-accent: rgba(176, 158, 247, 0.1);
-  --sidebar-accent-foreground: #e8deff;
-  --sidebar-border: rgba(176, 158, 247, 0.12);
-  --sidebar-ring: rgba(176, 158, 247, 0.4);
-  --glass-bg: rgba(28, 20, 52, 0.28);
-  --glass-bg-strong: rgba(28, 20, 52, 0.48);
-  --glass-border: rgba(176, 158, 247, 0.3);
-  --glass-hi: rgba(176, 158, 247, 0.36);
-  --glass-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px rgba(176, 158, 247, 0.1), 0 12px 48px rgba(0, 0, 0, 0.38), 0 2px 8px rgba(0, 0, 0, 0.2);
-  --glass-sheen: rgba(176, 158, 247, 0.16);
-  --primary-hi: #ddd6fe;
-  --primary-lo: #7c3aed;
-  --orb-1: rgba(124, 58, 237, 0.26);
-  --orb-2: rgba(91, 33, 182, 0.24);
-  --orb-3: rgba(167, 139, 250, 0.22);
-  --orb-4: rgba(76, 29, 149, 0.28);
 }
 
 html[data-theme="black"] {
@@ -395,6 +302,7 @@ html[data-theme="black"] {
   --glass-sheen: rgba(255, 255, 255, 0.1);
   --primary-hi: #f0f0f0;
   --primary-lo: #909090;
+  --logo-filter: brightness(0) invert(1);
   --orb-1: rgba(80, 80, 80, 0.2);
   --orb-2: rgba(50, 50, 50, 0.25);
   --orb-3: rgba(100, 100, 100, 0.18);
@@ -444,6 +352,7 @@ html[data-theme="white"] {
   --glass-sheen: rgba(255, 255, 255, 0.72);
   --primary-hi: #333333;
   --primary-lo: #666666;
+  --logo-filter: none;
   --orb-1: rgba(200, 200, 200, 0.4);
   --orb-2: rgba(180, 180, 180, 0.3);
   --orb-3: rgba(220, 220, 220, 0.35);
@@ -463,6 +372,12 @@ html[data-theme="white"] {
     scrollbar-gutter: stable;
     scrollbar-width: thin;
     scrollbar-color: color-mix(in srgb, var(--foreground) 22%, transparent) transparent;
+  }
+
+  @media (min-width: 768px) {
+    html {
+      zoom: 1.25;
+    }
   }
 
   ::selection {
