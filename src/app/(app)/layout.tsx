@@ -65,7 +65,7 @@ export default async function AppLayout({
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             <AppTopbar profile={profile} unreadCount={unreadCount} />
 
-            <main className="flex-1 overflow-y-auto">
+            <main className="flex-1 overflow-y-auto app-wave-bg">
               <div className="p-4 sm:p-6">
                 <ViewTransition name="page-content">
                   <div className="mx-auto w-full max-w-6xl">{children}</div>

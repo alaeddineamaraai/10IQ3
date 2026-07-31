@@ -450,6 +450,18 @@ html[data-theme] {
     color: var(--sidebar-accent-foreground);
   }
 
+  /* ── Subtle wave-lines background for app content area ─────────────── */
+  .app-wave-bg {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60'%3E%3Cpath d='M0 30 Q30 10 60 30 Q90 50 120 30' fill='none' stroke='%23000' stroke-width='0.8' stroke-opacity='0.045'/%3E%3C/svg%3E");
+    background-size: 120px 60px;
+    background-repeat: repeat;
+  }
+  @media (prefers-color-scheme: dark) {
+    .app-wave-bg {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60'%3E%3Cpath d='M0 30 Q30 10 60 30 Q90 50 120 30' fill='none' stroke='%23fff' stroke-width='0.8' stroke-opacity='0.055'/%3E%3C/svg%3E");
+    }
+  }
+
   /* ── Liquid-glass context (auth page over the court background) ────── */
   .liquid-glass {
     background: rgba(255, 255, 255, 0.10) !important;
@@ -498,16 +510,16 @@ html[data-theme] {
     box-shadow: none !important;
   }
 
-  /* Outline / ghost buttons (e.g. Continue with Google) */
-  .liquid-glass button[class*="outline"],
-  .liquid-glass [data-slot="button"][class*="outline"] {
-    background: rgba(255,255,255,0.10) !important;
-    border-color: rgba(255,255,255,0.22) !important;
-    color: white !important;
+  /* All buttons in the glass context — white fill, dark text */
+  .liquid-glass button:not(.text-muted-foreground):not([role="tab"]),
+  .liquid-glass [data-slot="button"]:not([role="tab"]) {
+    background: rgba(255,255,255,0.92) !important;
+    border-color: rgba(255,255,255,0.5) !important;
+    color: #1a2e1a !important;
   }
-  .liquid-glass button[class*="outline"]:hover,
-  .liquid-glass [data-slot="button"][class*="outline"]:hover {
-    background: rgba(255,255,255,0.18) !important;
+  .liquid-glass button:not(.text-muted-foreground):not([role="tab"]):hover,
+  .liquid-glass [data-slot="button"]:not([role="tab"]):hover {
+    background: white !important;
   }
 
   /* "or" divider line and subtle text */
