@@ -130,30 +130,30 @@ export default async function LandingPage({
 
           {/* Content — glass panel, left column */}
           <div
-            className="relative px-6 sm:px-10 lg:px-16"
-            style={{ paddingTop: "110px", paddingBottom: "5rem", zIndex: 10, maxWidth: "600px" }}
+            className="relative w-full px-4 sm:px-8 lg:px-14"
+            style={{ paddingTop: "80px", paddingBottom: "4rem", zIndex: 10, maxWidth: "640px" }}
           >
             <div
-              className="flex flex-col rounded-2xl px-8 py-8"
+              className="flex flex-col rounded-2xl p-5 sm:p-8"
               style={{ background: "rgba(255,255,255,0.07)", backdropFilter: "blur(10px)" }}
             >
               {/* Small wordmark above headline */}
               <span
-                className="mb-8 text-base font-normal tracking-widest text-white/60"
-                style={{ fontFamily: "'Times New Roman', Times, serif", letterSpacing: "0.15em" }}
+                className="mb-5 sm:mb-7 text-xs font-normal text-white/55"
+                style={{ fontFamily: "'Times New Roman', Times, serif", letterSpacing: "0.2em" }}
               >
                 NETSET
               </span>
 
-              {/* Big headline */}
+              {/* Big headline — clamped so it never blows up on narrow screens */}
               <h1
                 className="font-semibold text-white"
                 style={{
                   fontFamily: "'Times New Roman', Times, serif",
-                  fontSize: "clamp(44px, 6vw, 80px)",
+                  fontSize: "clamp(30px, 5.5vw, 80px)",
                   lineHeight: 1.05,
                   textShadow: "0 2px 16px rgba(0,0,0,0.3)",
-                  marginBottom: "24px",
+                  marginBottom: "20px",
                 }}
               >
                 Get Recruited by College Tennis Coaches
@@ -162,7 +162,7 @@ export default async function LandingPage({
               {/* Description */}
               <p
                 className="text-sm sm:text-base"
-                style={{ color: "rgba(255,255,255,0.80)", textShadow: "0 1px 4px rgba(0,0,0,0.4)", marginBottom: "40px", maxWidth: "440px" }}
+                style={{ color: "rgba(255,255,255,0.78)", textShadow: "0 1px 4px rgba(0,0,0,0.4)", marginBottom: "32px", maxWidth: "420px" }}
               >
                 Match with 1,800+ college coaches and send personalized recruiting emails in minutes.
               </p>
@@ -192,7 +192,16 @@ export default async function LandingPage({
         <section className="relative z-10 -mt-6 px-4 pb-20 sm:px-6">
           <div className="scroll-reveal mx-auto grid max-w-3xl grid-cols-2 overflow-hidden rounded-2xl bg-background shadow-xl sm:grid-cols-4">
             {STATS.map((stat, i) => (
-              <div key={stat.label} className={`flex flex-col items-center gap-1 py-8 text-center ${i < 3 ? "border-r border-border/40" : ""}`}>
+              <div
+                key={stat.label}
+                className={[
+                  "flex flex-col items-center gap-1 py-6 sm:py-8 text-center",
+                  // mobile 2-col: border-b between rows, border-r inside each row
+                  i === 0 ? "border-b border-r border-border/40 sm:border-b-0" : "",
+                  i === 1 ? "border-b border-border/40 sm:border-b-0 sm:border-r" : "",
+                  i === 2 ? "sm:border-r border-border/40" : "",
+                ].join(" ")}
+              >
                 <span className="text-2xl font-semibold tracking-tight text-primary">
                   <CountUp value={stat.value} />
                 </span>
