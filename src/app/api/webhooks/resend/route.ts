@@ -3,11 +3,69 @@ import { Resend } from "resend";
 
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-// Matches the reply+<outreach_id>@<inbound-domain> address set as Reply-To
-// when an outreach email is sent (see /api/outreach/send), so an inbound
-// reply can be threaded back to the right outreach row without relying on
-// fragile subject-line "Re:" matching.
 const REPLY_ADDRESS_RE = /^reply\+([0-9a-f-]{36})@/i;
+
+const NOTIFY_FROM = process.env.NETSET_NOTIFY_FROM ?? "noreply@netset.pro";
+const APP_BASE_URL = process.env.APP_BASE_URL ?? "https://www.netset.pro";
+
+async function notifyAthleteOfReply({
+  resend,
+  admin,
+  outreachId,
+  coachEmail,
+  subject,
+  snippet,
+}: {
+  resend: Resend;
+  admin: ReturnType<typeof import("@/lib/supabase/admin").createSupabaseAdminClient>;
+  outreachId: string;
+  coachEmail: string;
+  subject: string;
+  snippet: string;
+}) {
+  // Look up the athlete's email from the outreach row → user
+  const { data: outreach } = await admin
+    .from("outreach")
+    .select("user_id")
+    .eq("id", outreachId)
+    .single();
+
+  if (!outreach) return;
+
+  const { data: user } = await admin
+    .from("users")
+    .select("email, name")
+    .eq("id", outreach.user_id)
+    .single();
+
+  if (!user?.email) return;
+
+  const firstName = user.name?.split(" ")[0] ?? "there";
+  const trimmedSnippet = snippet.trim().replace(/\s+/g, " ");
+
+  const text = [
+    `Hi ${firstName},`,
+    "",
+    `You got a reply from ${coachEmail}.`,
+    "",
+    subject ? `Subject: ${subject}` : null,
+    trimmedSnippet ? `\n"${trimmedSnippet}${trimmedSnippet.length >= 300 ? "…" : ""}"` : null,
+    "",
+    `View it and reply inside Netset: ${APP_BASE_URL}/dashboard`,
+    "",
+    "— The Netset team",
+  ].filter((l) => l !== null).join("\n");
+
+  await resend.emails.send({
+    from: `Netset <${NOTIFY_FROM}>`,
+    to: user.email,
+    subject: `Coach replied: ${subject || coachEmail}`,
+    text,
+    headers: {
+      "X-Entity-Ref-ID": outreachId,
+    },
+  });
+}
 
 export async function POST(request: Request) {
   if (!process.env.RESEND_API_KEY || !process.env.RESEND_WEBHOOK_SECRET) {
@@ -65,6 +123,16 @@ export async function POST(request: Request) {
         .from("outreach")
         .update({ replied: true, replied_at: event.created_at })
         .eq("id", outreachId);
+
+      // Notify the athlete that a coach replied
+      await notifyAthleteOfReply({
+        resend,
+        admin,
+        outreachId,
+        coachEmail: event.data.from,
+        subject: event.data.subject ?? "",
+        snippet: (full?.text ?? "").slice(0, 300),
+      });
     }
   }
 
