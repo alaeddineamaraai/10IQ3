@@ -74,17 +74,13 @@ export default async function LandingPage({
     <div className="flex min-h-screen flex-col">
 
       {/* ── Navbar ─────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 flex items-center justify-between border-b border-border/20 bg-background/20 px-6 py-4 backdrop-blur-xl sm:px-10">
-        <Link href="/" className="text-lg font-semibold tracking-tight transition-opacity hover:opacity-70">
-          Netset
-        </Link>
-        <nav className="hidden items-center gap-6 text-sm text-muted-foreground sm:flex">
-          <a href="#how-it-works" className="transition-colors hover:text-foreground">How it works</a>
-          <a href="#features" className="transition-colors hover:text-foreground">Features</a>
+      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 sm:px-10">
+        <nav className="hidden items-center gap-6 text-sm sm:flex" style={{ color: "rgba(255,255,255,0.75)" }}>
+          <a href="#how-it-works" className="transition-opacity hover:opacity-100">How it works</a>
+          <a href="#features" className="transition-opacity hover:opacity-100">Features</a>
         </nav>
-        <div className="flex items-center gap-3">
-          <ThemeToggle className="hidden sm:flex" />
-          <Link href="/auth" className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block">
+        <div className="ml-auto flex items-center gap-3">
+          <Link href="/auth" className="hidden text-sm transition-opacity hover:opacity-100 sm:block" style={{ color: "rgba(255,255,255,0.75)" }}>
             Sign in
           </Link>
           <Link href="/auth" className={buttonVariants({ size: "sm" })}>
@@ -96,45 +92,77 @@ export default async function LandingPage({
       <main className="flex-1">
 
         {/* ── Hero ───────────────────────────────────────────── */}
-        <section className="flex flex-col items-center gap-6 px-6 pb-16 pt-16 text-center sm:px-10 sm:pt-24">
-          <div className="inline-flex items-center gap-2 rounded-full border border-border/40 bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
-            <span className="size-1.5 rounded-full bg-[#7d9159]" />
-            Now with AI-personalized outreach for every coach
-          </div>
+        <section
+          className="flex min-h-screen items-center overflow-hidden"
+          style={{
+            backgroundImage: "url(/hero-court.jpg)",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            position: "relative",
+          }}
+        >
+          {/* Bottom fade */}
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: "auto 0 0",
+              height: "10rem",
+              background: "linear-gradient(to top, var(--background), transparent)",
+            }}
+          />
 
-          <h1 className="max-w-2xl text-balance text-4xl font-bold tracking-[-0.035em] sm:text-5xl lg:text-6xl">
-            Get recruited by college tennis coaches —{" "}
-            <span className="text-gradient-primary">faster</span>
-          </h1>
-
-          <p className="max-w-lg text-balance text-muted-foreground sm:text-lg">
-            AI writes personalized outreach emails to 1,800+ coaches using your real stats.
-            You just hit send.
-          </p>
-
-          <div className="flex flex-col items-center gap-3 sm:flex-row">
-            <Link href="/auth" className={buttonVariants({ size: "lg" })}>
-              Get started free
-            </Link>
-            <Link href="/dashboard" className={buttonVariants({ variant: "outline", size: "lg" })}>
-              Try live demo →
-            </Link>
-          </div>
-
-          {/* Social proof */}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <div className="flex -space-x-2">
-              {["#b8863f","#8a6f4d","#7d9159","#c9662d"].map((color) => (
-                <div
-                  key={color}
-                  className="size-6 rounded-full border-2 border-background shadow-sm"
-                  style={{
-                    backgroundImage: `linear-gradient(135deg, ${color}, color-mix(in srgb, ${color} 65%, #000))`,
-                  }}
-                />
-              ))}
+          {/* Content — left column */}
+          <div
+            className="relative flex max-w-lg flex-col gap-7 px-6 sm:px-10 lg:max-w-xl lg:px-16"
+            style={{ paddingTop: "100px", paddingBottom: "5rem", zIndex: 10 }}
+          >
+            {/* Serif wordmark + slogan */}
+            <div>
+              <h1
+                className="font-normal leading-[1] tracking-tight text-white"
+                style={{
+                  fontFamily: "'Times New Roman', Times, serif",
+                  fontSize: "clamp(64px, 10vw, 100px)",
+                  textShadow: "0 2px 12px rgba(0,0,0,0.35)",
+                }}
+              >
+                Netset
+              </h1>
+              <p
+                className="mt-3 font-normal leading-snug text-white/90"
+                style={{
+                  fontFamily: "'Times New Roman', Times, serif",
+                  fontSize: "clamp(18px, 2.5vw, 26px)",
+                  textShadow: "0 1px 8px rgba(0,0,0,0.4)",
+                }}
+              >
+                Your path to college tennis starts here.
+              </p>
             </div>
-            <span>Joined by student athletes across the country</span>
+
+            {/* Description */}
+            <p
+              className="max-w-sm text-sm sm:text-base"
+              style={{ color: "rgba(255,255,255,0.82)", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}
+            >
+              AI writes personalized outreach emails to 1,800+ coaches using your real stats.
+              You just hit send.
+            </p>
+
+            {/* CTAs */}
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Link href="/auth" className={buttonVariants({ size: "lg" })}>
+                Get started free
+              </Link>
+              <Link
+                href="/dashboard"
+                className={buttonVariants({ variant: "outline", size: "lg" })}
+                style={{ borderColor: "rgba(255,255,255,0.5)", color: "white", backdropFilter: "blur(4px)", background: "rgba(255,255,255,0.08)" }}
+              >
+                Try live demo →
+              </Link>
+            </div>
           </div>
         </section>
 
