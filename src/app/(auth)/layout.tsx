@@ -15,8 +15,8 @@ export default function AuthLayout({
         backgroundPosition: "center",
       }}
     >
-      {/* Dark overlay for readability */}
-      <div aria-hidden style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.52)", backdropFilter: "blur(1px)" }} />
+      {/* Blurred dark overlay — hides image quality, improves card contrast */}
+      <div aria-hidden style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.48)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)" }} />
       <div className="relative z-10 flex flex-col items-center gap-6 w-full">
         {children}
         <Link
