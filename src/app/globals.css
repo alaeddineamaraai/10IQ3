@@ -369,6 +369,11 @@ html[data-theme] {
     html {
       zoom: 0.9;
     }
+    /* zoom: 0.9 makes 100vh render at 90% of the visual viewport.
+       --full-h compensates so shells can fill the full screen. */
+    :root {
+      --full-h: calc(100vh / 0.9);
+    }
   }
 
   ::selection {

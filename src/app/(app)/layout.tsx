@@ -54,7 +54,7 @@ export default async function AppLayout({
 
   return (
     <TourRoot>
-      <div className="shell-panel h-screen flex overflow-hidden rounded-none">
+      <div className="shell-panel flex overflow-hidden rounded-none" style={{ height: "var(--full-h, 100vh)" }}>
           <aside
             style={{ viewTransitionName: "site-sidebar" }}
             className="hidden w-[16.5rem] shrink-0 overflow-y-auto border-r border-border/60 lg:block"
