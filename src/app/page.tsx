@@ -93,7 +93,7 @@ export default async function LandingPage({
 
         {/* ── Hero ───────────────────────────────────────────── */}
         <section
-          className="flex min-h-screen items-center overflow-hidden"
+          className="flex min-h-screen items-start overflow-hidden"
           style={{
             backgroundImage: "url(/hero-court.jpg)",
             backgroundSize: "cover",
@@ -115,7 +115,7 @@ export default async function LandingPage({
           {/* Content — left column */}
           <div
             className="relative flex max-w-lg flex-col gap-7 px-6 sm:px-10 lg:max-w-xl lg:px-16"
-            style={{ paddingTop: "100px", paddingBottom: "5rem", zIndex: 10 }}
+            style={{ paddingTop: "130px", paddingBottom: "5rem", zIndex: 10 }}
           >
             {/* Serif wordmark + slogan */}
             <div>
@@ -137,7 +137,7 @@ export default async function LandingPage({
                   textShadow: "0 1px 8px rgba(0,0,0,0.4)",
                 }}
               >
-                Your path to college tennis starts here.
+                Your key to college tennis
               </p>
             </div>
 
