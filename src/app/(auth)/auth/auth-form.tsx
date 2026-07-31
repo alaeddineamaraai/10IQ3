@@ -151,7 +151,7 @@ export function AuthForm() {
   }
 
   return (
-    <GlassCard strong className="animate-in fade-in-0 slide-in-from-bottom-4 w-full max-w-md duration-500">
+    <GlassCard strong className="liquid-glass animate-in fade-in-0 slide-in-from-bottom-4 w-full max-w-md duration-500">
       <GlassCardHeader>
         <GlassCardTitle className="text-xl">Welcome to Netset</GlassCardTitle>
         <GlassCardDescription>

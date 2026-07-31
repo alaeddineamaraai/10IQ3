@@ -450,6 +450,81 @@ html[data-theme] {
     color: var(--sidebar-accent-foreground);
   }
 
+  /* ── Liquid-glass context (auth page over the court background) ────── */
+  .liquid-glass {
+    background: rgba(255, 255, 255, 0.10) !important;
+    backdrop-filter: blur(40px) saturate(180%) brightness(1.08) !important;
+    -webkit-backdrop-filter: blur(40px) saturate(180%) brightness(1.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.08),
+      0 16px 48px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.32),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.12) !important;
+    color: white;
+  }
+
+  .liquid-glass .text-muted-foreground { color: rgba(255,255,255,0.60) !important; }
+  .liquid-glass h1, .liquid-glass h2, .liquid-glass h3 { color: white !important; }
+  /* Card title / description forwarded via GlassCard aliases */
+  .liquid-glass [class*="CardTitle"],
+  .liquid-glass [data-slot="card-title"] { color: white !important; }
+  .liquid-glass [data-slot="card-description"] { color: rgba(255,255,255,0.60) !important; }
+
+  /* Labels */
+  .liquid-glass label,
+  .liquid-glass [data-slot="label"] { color: rgba(255,255,255,0.88) !important; }
+
+  /* Inputs */
+  .liquid-glass input[type="email"],
+  .liquid-glass input[type="password"],
+  .liquid-glass input[type="text"],
+  .liquid-glass input[type="number"] {
+    background: rgba(255,255,255,0.10) !important;
+    border-color: rgba(255,255,255,0.20) !important;
+    color: white !important;
+  }
+  .liquid-glass input::placeholder { color: rgba(255,255,255,0.38) !important; }
+
+  /* Tab list / triggers */
+  .liquid-glass [role="tablist"] {
+    background: rgba(255,255,255,0.10) !important;
+    border-color: rgba(255,255,255,0.15) !important;
+  }
+  .liquid-glass [role="tab"] { color: rgba(255,255,255,0.58) !important; }
+  .liquid-glass [role="tab"][data-state="active"] {
+    background: rgba(255,255,255,0.20) !important;
+    color: white !important;
+    box-shadow: none !important;
+  }
+
+  /* Outline / ghost buttons (e.g. Continue with Google) */
+  .liquid-glass button[class*="outline"],
+  .liquid-glass [data-slot="button"][class*="outline"] {
+    background: rgba(255,255,255,0.10) !important;
+    border-color: rgba(255,255,255,0.22) !important;
+    color: white !important;
+  }
+  .liquid-glass button[class*="outline"]:hover,
+  .liquid-glass [data-slot="button"][class*="outline"]:hover {
+    background: rgba(255,255,255,0.18) !important;
+  }
+
+  /* "or" divider line and subtle text */
+  .liquid-glass .bg-border\/50,
+  .liquid-glass .h-px { background: rgba(255,255,255,0.20) !important; }
+  .liquid-glass .text-xs.text-muted-foreground { color: rgba(255,255,255,0.48) !important; }
+
+  /* Forgot-password / back link */
+  .liquid-glass button.text-muted-foreground { color: rgba(255,255,255,0.52) !important; }
+  .liquid-glass button.text-muted-foreground:hover { color: rgba(255,255,255,0.85) !important; }
+
+  /* Error text — keep visible but softer red on dark */
+  .liquid-glass .text-destructive { color: #ff7a7a !important; }
+
+  /* Checkbox accent stays brand green */
+  .liquid-glass input[type="checkbox"] { accent-color: var(--primary); }
+
   .transition-smooth {
     transition-timing-function: var(--ease-smooth);
     transition-duration: 300ms;
