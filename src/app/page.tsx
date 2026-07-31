@@ -4,7 +4,7 @@ import { BarChart3, Mail, Sparkles, Users, UserCircle2, Search, Send } from "luc
 
 import { buttonVariants } from "@/components/ui/button";
 import { CountUp } from "@/components/count-up";
-import { ThemeToggle } from "@/components/theme-toggle";
+
 
 const STATS = [
   { label: "College coaches", value: "1,800+" },
@@ -74,16 +74,23 @@ export default async function LandingPage({
     <div className="flex min-h-screen flex-col">
 
       {/* ── Navbar ─────────────────────────────────────────── */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 sm:px-10">
-        <nav className="hidden items-center gap-6 text-sm sm:flex" style={{ color: "rgba(255,255,255,0.75)" }}>
+      <header
+        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 sm:px-10"
+        style={{ background: "rgba(0,0,0,0.18)", backdropFilter: "blur(8px)" }}
+      >
+        <nav className="hidden items-center gap-6 text-sm sm:flex" style={{ color: "rgba(255,255,255,0.78)" }}>
           <a href="#how-it-works" className="transition-opacity hover:opacity-100">How it works</a>
           <a href="#features" className="transition-opacity hover:opacity-100">Features</a>
         </nav>
         <div className="ml-auto flex items-center gap-3">
-          <Link href="/auth" className="hidden text-sm transition-opacity hover:opacity-100 sm:block" style={{ color: "rgba(255,255,255,0.75)" }}>
+          <Link href="/auth" className="hidden text-sm transition-opacity hover:opacity-100 sm:block" style={{ color: "rgba(255,255,255,0.78)" }}>
             Sign in
           </Link>
-          <Link href="/auth" className={buttonVariants({ size: "sm" })}>
+          <Link
+            href="/auth"
+            className={buttonVariants({ size: "sm" })}
+            style={{ background: "white", color: "#1a2e1a" }}
+          >
             Get started free
           </Link>
         </div>
@@ -97,81 +104,96 @@ export default async function LandingPage({
           style={{
             backgroundImage: "url(/hero-court.jpg)",
             backgroundSize: "cover",
-            backgroundPosition: "center",
+            backgroundPosition: "30% center",
             position: "relative",
           }}
         >
+          {/* Dark left-to-right overlay for readability */}
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "linear-gradient(90deg, rgba(0,0,0,.58) 0%, rgba(0,0,0,.38) 30%, rgba(0,0,0,.10) 60%, rgba(0,0,0,0) 100%)",
+            }}
+          />
           {/* Bottom fade */}
           <div
             aria-hidden
             style={{
               position: "absolute",
               inset: "auto 0 0",
-              height: "10rem",
+              height: "12rem",
               background: "linear-gradient(to top, var(--background), transparent)",
             }}
           />
 
-          {/* Content — left column */}
+          {/* Content — glass panel, left column */}
           <div
-            className="relative flex max-w-lg flex-col gap-7 px-6 sm:px-10 lg:max-w-xl lg:px-16"
-            style={{ paddingTop: "130px", paddingBottom: "5rem", zIndex: 10 }}
+            className="relative px-6 sm:px-10 lg:px-16"
+            style={{ paddingTop: "110px", paddingBottom: "5rem", zIndex: 10, maxWidth: "600px" }}
           >
-            {/* Serif wordmark + slogan */}
-            <div>
-              <h1
-                className="font-normal leading-[1] tracking-tight text-white"
-                style={{
-                  fontFamily: "'Times New Roman', Times, serif",
-                  fontSize: "clamp(64px, 10vw, 100px)",
-                  textShadow: "0 2px 12px rgba(0,0,0,0.35)",
-                }}
-              >
-                Netset
-              </h1>
-              <p
-                className="mt-3 font-normal leading-snug text-white/90"
-                style={{
-                  fontFamily: "'Times New Roman', Times, serif",
-                  fontSize: "clamp(18px, 2.5vw, 26px)",
-                  textShadow: "0 1px 8px rgba(0,0,0,0.4)",
-                }}
-              >
-                Your key to college tennis
-              </p>
-            </div>
-
-            {/* Description */}
-            <p
-              className="max-w-sm text-sm sm:text-base"
-              style={{ color: "rgba(255,255,255,0.82)", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}
+            <div
+              className="flex flex-col rounded-2xl px-8 py-8"
+              style={{ background: "rgba(255,255,255,0.07)", backdropFilter: "blur(10px)" }}
             >
-              AI writes personalized outreach emails to 1,800+ coaches using your real stats.
-              You just hit send.
-            </p>
-
-            {/* CTAs */}
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Link href="/auth" className={buttonVariants({ size: "lg" })}>
-                Get started free
-              </Link>
-              <Link
-                href="/dashboard"
-                className={buttonVariants({ variant: "outline", size: "lg" })}
-                style={{ borderColor: "rgba(255,255,255,0.5)", color: "white", backdropFilter: "blur(4px)", background: "rgba(255,255,255,0.08)" }}
+              {/* Small wordmark above headline */}
+              <span
+                className="mb-8 text-base font-normal tracking-widest text-white/60"
+                style={{ fontFamily: "'Times New Roman', Times, serif", letterSpacing: "0.15em" }}
               >
-                Try live demo →
-              </Link>
+                NETSET
+              </span>
+
+              {/* Big headline */}
+              <h1
+                className="font-semibold text-white"
+                style={{
+                  fontFamily: "'Times New Roman', Times, serif",
+                  fontSize: "clamp(44px, 6vw, 80px)",
+                  lineHeight: 1.05,
+                  textShadow: "0 2px 16px rgba(0,0,0,0.3)",
+                  marginBottom: "24px",
+                }}
+              >
+                Get Recruited by College Tennis Coaches
+              </h1>
+
+              {/* Description */}
+              <p
+                className="text-sm sm:text-base"
+                style={{ color: "rgba(255,255,255,0.80)", textShadow: "0 1px 4px rgba(0,0,0,0.4)", marginBottom: "40px", maxWidth: "440px" }}
+              >
+                Match with 1,800+ college coaches and send personalized recruiting emails in minutes.
+              </p>
+
+              {/* CTAs */}
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href="/auth"
+                  className={buttonVariants({ size: "lg" })}
+                  style={{ background: "white", color: "#1a2e1a", fontWeight: 600 }}
+                >
+                  Start Free
+                </Link>
+                <Link
+                  href="/dashboard"
+                  className={buttonVariants({ variant: "outline", size: "lg" })}
+                  style={{ borderColor: "rgba(255,255,255,0.45)", color: "white", background: "rgba(255,255,255,0.06)" }}
+                >
+                  Watch Demo →
+                </Link>
+              </div>
             </div>
           </div>
         </section>
 
         {/* ── Stats bar ──────────────────────────────────────── */}
-        <section className="px-6 pb-20 sm:px-10">
-          <div className="scroll-reveal mx-auto grid max-w-4xl grid-cols-2 gap-6 sm:grid-cols-4">
-            {STATS.map((stat) => (
-              <div key={stat.label} className="flex flex-col items-center gap-1 text-center">
-                <span className="text-3xl font-semibold tracking-tight text-primary">
+        <section className="relative z-10 -mt-6 px-4 pb-20 sm:px-6">
+          <div className="scroll-reveal mx-auto grid max-w-3xl grid-cols-2 overflow-hidden rounded-2xl bg-background shadow-xl sm:grid-cols-4">
+            {STATS.map((stat, i) => (
+              <div key={stat.label} className={`flex flex-col items-center gap-1 py-8 text-center ${i < 3 ? "border-r border-border/40" : ""}`}>
+                <span className="text-2xl font-semibold tracking-tight text-primary">
                   <CountUp value={stat.value} />
                 </span>
                 <span className="text-xs text-muted-foreground">{stat.label}</span>
