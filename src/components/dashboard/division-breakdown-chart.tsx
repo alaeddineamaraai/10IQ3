@@ -5,9 +5,9 @@ import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAx
 import type { DivisionBreakdown } from "@/lib/types/dashboard";
 
 const SERIES = [
-  { key: "sent", name: "Sent", color: "var(--brand)" },
-  { key: "opened", name: "Opened", color: "#c9662d" },
-  { key: "replied", name: "Replied", color: "#7d9159" },
+  { key: "sent", name: "Sent", color: "var(--chart-5)" },
+  { key: "opened", name: "Opened", color: "var(--chart-4)" },
+  { key: "replied", name: "Replied", color: "var(--chart-1)" },
 ] as const;
 
 export function DivisionBreakdownChart({ data }: { data: DivisionBreakdown[] }) {

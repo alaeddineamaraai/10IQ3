@@ -524,11 +524,11 @@ export function CoachesTable({ initialCoaches, initialTotal, isSample }: Props) 
               </TableCell>
               <TableCell>
                 {coach.outreach?.replied ? (
-                  <span className="inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium sm:px-2.5 sm:text-xs" style={{ background: "#7d915922", color: "#7d9159" }}>Replied</span>
+                  <span className="inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium sm:px-2.5 sm:text-xs" style={{ background: "color-mix(in srgb, var(--chart-1) 13%, transparent)", color: "var(--chart-1)" }}>Replied</span>
                 ) : coach.outreach?.opened ? (
-                  <span className="inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium sm:px-2.5 sm:text-xs" style={{ background: "#f9731622", color: "#f97316" }}>Opened</span>
+                  <span className="inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium sm:px-2.5 sm:text-xs" style={{ background: "color-mix(in srgb, var(--chart-4) 13%, transparent)", color: "var(--chart-4)" }}>Opened</span>
                 ) : coach.outreach?.email_sent ? (
-                  <span className="inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium sm:px-2.5 sm:text-xs" style={{ background: "#c9662d22", color: "#c9662d" }}>Sent</span>
+                  <span className="inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium sm:px-2.5 sm:text-xs" style={{ background: "color-mix(in srgb, var(--chart-5) 13%, transparent)", color: "var(--chart-5)" }}>Sent</span>
                 ) : (
                   <span className="inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium text-muted-foreground sm:px-2.5 sm:text-xs" style={{ background: "var(--muted)" }}>
                     <span className="sm:hidden">New</span>
@@ -562,8 +562,8 @@ export function CoachesTable({ initialCoaches, initialTotal, isSample }: Props) 
                   >
                     <Star
                       className="size-4"
-                      fill={favorites.has(coach.school_name) ? "#c9662d" : "none"}
-                      stroke={favorites.has(coach.school_name) ? "#c9662d" : "currentColor"}
+                      fill={favorites.has(coach.school_name) ? "var(--chart-4)" : "none"}
+                      stroke={favorites.has(coach.school_name) ? "var(--chart-4)" : "currentColor"}
                       strokeWidth={1.5}
                     />
                   </button>

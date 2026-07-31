@@ -15,7 +15,7 @@ export function PasswordRequirements({ password }: { password: string }) {
             key={rule.key}
             className={cn(
               "flex items-center gap-1.5 text-xs transition-smooth",
-              met ? "text-[#7d9159]" : "text-muted-foreground"
+              met ? "text-primary" : "text-muted-foreground"
             )}
           >
             {met ? <Check className="size-3 shrink-0" /> : <X className="size-3 shrink-0" />}

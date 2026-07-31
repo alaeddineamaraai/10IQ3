@@ -45,13 +45,13 @@ type StatusInfo = { text: string; bg: string; color: string };
 
 function getStatusInfo(outreach: CoachProfile["outreach"]): StatusInfo {
   if (outreach?.replied) {
-    return { text: "Replied", bg: "#7d915922", color: "#7d9159" };
+    return { text: "Replied", bg: "color-mix(in srgb, var(--chart-1) 13%, transparent)", color: "var(--chart-1)" };
   }
   if (outreach?.opened) {
-    return { text: "Opened", bg: "#f9731622", color: "#f97316" };
+    return { text: "Opened", bg: "color-mix(in srgb, var(--chart-4) 13%, transparent)", color: "var(--chart-4)" };
   }
   if (outreach?.email_sent) {
-    return { text: "Sent", bg: "#c9662d22", color: "#c9662d" };
+    return { text: "Sent", bg: "color-mix(in srgb, var(--chart-5) 13%, transparent)", color: "var(--chart-5)" };
   }
   return { text: "Not contacted", bg: "var(--muted)", color: "var(--muted-foreground)" };
 }
@@ -109,10 +109,10 @@ function buildEvents(outreach: Outreach & { replies: OutreachReply[] }): Timelin
 // ─── Dot styles per event kind ──────────────────────────────────────────────
 
 const DOT_STYLES = {
-  sent: { bg: "#c9662d22", color: "#c9662d" },
-  opened: { bg: "#f9731622", color: "#f97316" },
-  reply: { bg: "#7d915922", color: "#7d9159" },
-} as const;
+  sent:   { bg: "color-mix(in srgb, var(--chart-5) 13%, transparent)", color: "var(--chart-5)" },
+  opened: { bg: "color-mix(in srgb, var(--chart-4) 13%, transparent)", color: "var(--chart-4)" },
+  reply:  { bg: "color-mix(in srgb, var(--chart-1) 13%, transparent)", color: "var(--chart-1)" },
+};
 
 // ─── BodyBlock — expandable text ────────────────────────────────────────────
 

@@ -29,14 +29,14 @@ function ConversationCard({
   const isUnread = conversation.lastMessageDirection === "received" && !conversation.reply_viewed_at;
 
   return (
-    <GlassCard className={cn(isUnread && "border-[#7d9159]/30")}>
+    <GlassCard className={cn(isUnread && "border-primary/30")}>
       <button
         className="flex w-full items-start gap-4 p-4 text-left"
         onClick={() => setExpanded((v) => !v)}
       >
         <div className={cn(
           "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full",
-          isUnread ? "bg-[#7d9159]/15 text-[#7d9159]" : "bg-muted text-muted-foreground"
+          isUnread ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
         )}>
           {isUnread ? <Mail className="size-4" /> : <MailOpen className="size-4" />}
         </div>
@@ -45,7 +45,7 @@ function ConversationCard({
             <div className="flex items-center gap-2 truncate">
               <span className="truncate font-medium">{conversation.coach_name}</span>
               {isUnread && (
-                <span className="shrink-0 rounded-full bg-[#7d9159]/20 px-2 py-0.5 text-[10px] font-semibold text-[#7d9159]">
+                <span className="shrink-0 rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-semibold text-primary">
                   New
                 </span>
               )}

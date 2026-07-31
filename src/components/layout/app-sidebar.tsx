@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Bell,
@@ -123,13 +122,25 @@ export function AppSidebar({
         onClick={onNavigate}
         className="flex items-center gap-2.5 px-1 transition-smooth hover:opacity-80"
       >
-        <Image
-          src="/logo.png"
-          alt=""
-          width={34}
-          height={34}
-          priority
-          style={{ filter: "var(--logo-filter, none)" }}
+        {/* CSS mask: the PNG alpha defines the shape, var(--primary) fills it —
+            logo automatically takes each theme's accent colour with no extra asset. */}
+        <span
+          aria-hidden
+          style={{
+            display: "inline-block",
+            width: 34,
+            height: 34,
+            flexShrink: 0,
+            WebkitMaskImage: "url(/logo.png)",
+            WebkitMaskSize: "contain",
+            WebkitMaskRepeat: "no-repeat",
+            WebkitMaskPosition: "center",
+            maskImage: "url(/logo.png)",
+            maskSize: "contain",
+            maskRepeat: "no-repeat",
+            maskPosition: "center",
+            backgroundColor: "var(--primary)",
+          }}
         />
         <span className="text-xl font-semibold tracking-tight">Netset</span>
       </Link>

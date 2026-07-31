@@ -181,8 +181,8 @@ export function SchoolsGrid({ schools }: { schools: SchoolDetail[] }) {
               >
                 <Star
                   className="size-4"
-                  fill={favorites.has(school.school_name) ? "#c9662d" : "none"}
-                  stroke={favorites.has(school.school_name) ? "#c9662d" : "currentColor"}
+                  fill={favorites.has(school.school_name) ? "var(--chart-4)" : "none"}
+                  stroke={favorites.has(school.school_name) ? "var(--chart-4)" : "currentColor"}
                   strokeWidth={1.5}
                 />
               </button>
@@ -276,7 +276,7 @@ export function SchoolsGrid({ schools }: { schools: SchoolDetail[] }) {
                   : "border-border bg-muted text-muted-foreground hover:text-foreground",
               )}
             >
-              <Star className="size-3" fill={showFavOnly ? "#c9662d" : "none"} stroke={showFavOnly ? "#c9662d" : "currentColor"} strokeWidth={1.5} />
+              <Star className="size-3" fill={showFavOnly ? "var(--chart-4)" : "none"} stroke={showFavOnly ? "var(--chart-4)" : "currentColor"} strokeWidth={1.5} />
               Shortlist ({favorites.size})
             </button>
           )}

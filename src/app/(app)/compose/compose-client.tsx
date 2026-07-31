@@ -441,7 +441,7 @@ export function ComposeClient({
                     <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
                       {coach.division}
                     </span>
-                    {status === "replied" && <span className="size-1.5 shrink-0 rounded-full bg-[#7d9159]" />}
+                    {status === "replied" && <span className="size-1.5 shrink-0 rounded-full bg-[var(--chart-1)]" />}
                     {status === "opened"  && <span className="size-1.5 shrink-0 rounded-full bg-orange-400" />}
                     {status === "sent"    && <span className="size-1.5 shrink-0 rounded-full bg-amber-400" />}
                   </div>
@@ -494,7 +494,7 @@ export function ComposeClient({
                   <div className="flex items-center gap-2">
                     <div className="h-1.5 w-20 overflow-hidden rounded-full bg-muted">
                       <div
-                        className="h-full rounded-full bg-[#7d9159] transition-all duration-500"
+                        className="h-full rounded-full bg-primary transition-all duration-500"
                         style={{ width: `${(sentCount / drafts.length) * 100}%` }}
                       />
                     </div>
@@ -520,9 +520,9 @@ export function ComposeClient({
 
             {/* Peak-end: celebrate when every selected email is out the door */}
             {allSent && (
-              <div className="animate-in fade-in-0 zoom-in-95 glass-card flex items-center justify-between gap-4 rounded-2xl border-[#7d9159]/40 p-4 duration-300">
+              <div className="animate-in fade-in-0 zoom-in-95 glass-card flex items-center justify-between gap-4 rounded-2xl border-primary/40 p-4 duration-300">
                 <div className="flex items-center gap-3">
-                  <PartyPopper className="size-5 shrink-0 text-[#7d9159]" />
+                  <PartyPopper className="size-5 shrink-0 text-primary" />
                   <div>
                     <p className="text-sm font-semibold">
                       {drafts.length === 1 ? "Email sent!" : `All ${drafts.length} emails sent!`}
@@ -634,7 +634,7 @@ export function ComposeClient({
 
 function StatusLabel({ status }: { status: Status }) {
   switch (status) {
-    case "sent":      return <span className="text-xs font-medium text-[#7d9159]">Sent ✓</span>;
+    case "sent":      return <span className="text-xs font-medium text-primary">Sent ✓</span>;
     case "sending":   return <span className="text-xs text-muted-foreground">Sending…</span>;
     case "ready":     return <span className="text-xs text-muted-foreground">Draft ready</span>;
     case "loading":   return <span className="text-xs text-muted-foreground">Generating…</span>;

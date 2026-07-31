@@ -49,7 +49,7 @@ export function InboxTabs({
           >
             {t === "messages" ? "Messages" : "Notifications"}
             {t === "notifications" && unreadNotifications > 0 && (
-              <span className="flex size-4 items-center justify-center rounded-full bg-[#7d9159] text-[9px] font-bold text-white">
+              <span className="flex size-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
                 {unreadNotifications > 9 ? "9+" : unreadNotifications}
               </span>
             )}

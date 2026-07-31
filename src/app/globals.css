@@ -121,7 +121,6 @@ html[data-theme="white"] {
   --shadow-card-hover: 0 2px 4px rgba(16, 20, 24, 0.05), 0 10px 28px rgba(16, 20, 24, 0.08);
   --shadow-panel: 0 2px 8px rgba(16, 20, 24, 0.05), 0 20px 60px rgba(16, 20, 24, 0.08);
   --hatch: rgba(22, 24, 26, 0.1);
-  --logo-filter: none;
 }
 
 /* ── Beige — warm sand, chocolate ink, brass accent ── */
@@ -176,7 +175,6 @@ html[data-theme="beige"] {
   --shadow-card-hover: 0 2px 4px rgba(60, 50, 32, 0.06), 0 10px 28px rgba(60, 50, 32, 0.1);
   --shadow-panel: 0 2px 8px rgba(60, 50, 32, 0.06), 0 20px 60px rgba(60, 50, 32, 0.1);
   --hatch: rgba(60, 50, 32, 0.12);
-  --logo-filter: none;
 }
 
 /* ── Brown — dark walnut ── */
@@ -231,7 +229,6 @@ html[data-theme="dark"] {
   --shadow-card-hover: 0 2px 4px rgba(0, 0, 0, 0.34), 0 10px 28px rgba(0, 0, 0, 0.34);
   --shadow-panel: 0 2px 8px rgba(0, 0, 0, 0.3), 0 20px 60px rgba(0, 0, 0, 0.4);
   --hatch: rgba(236, 229, 211, 0.14);
-  --logo-filter: brightness(0) invert(1);
 }
 
 /* ── Blue — deep navy, cyan-blue accent ── */
@@ -286,7 +283,6 @@ html[data-theme="blue"] {
   --shadow-card-hover: 0 2px 4px rgba(0, 0, 0, 0.4), 0 10px 28px rgba(0, 0, 0, 0.4);
   --shadow-panel: 0 2px 8px rgba(0, 0, 0, 0.36), 0 20px 60px rgba(0, 0, 0, 0.46);
   --hatch: rgba(230, 237, 247, 0.13);
-  --logo-filter: brightness(0) invert(1);
 }
 
 /* ── Black — true black, neutral gray accent ── */
@@ -341,7 +337,6 @@ html[data-theme="black"] {
   --shadow-card-hover: 0 2px 4px rgba(0, 0, 0, 0.7), 0 10px 28px rgba(0, 0, 0, 0.6);
   --shadow-panel: 0 2px 8px rgba(0, 0, 0, 0.6), 0 20px 60px rgba(0, 0, 0, 0.7);
   --hatch: rgba(229, 229, 229, 0.12);
-  --logo-filter: brightness(0) invert(1);
 }
 
 /* Legacy glass variables aliased onto flat tokens, for every theme. These
