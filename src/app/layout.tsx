@@ -4,7 +4,6 @@ import "./globals.css";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
-import { AmbientBackground } from "@/components/layout/ambient-background";
 import { AuthHashHandlerLoader } from "@/components/auth/auth-hash-handler-loader";
 
 const geistSans = Geist({
@@ -23,8 +22,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#eae4d3" },
-    { media: "(prefers-color-scheme: dark)", color: "#2e2a24" },
+    { media: "(prefers-color-scheme: light)", color: "#e8e8e8" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0b0b" },
   ],
 };
 
@@ -48,7 +47,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} antialiased`}
     >
       <head>
         {process.env.NEXT_PUBLIC_SUPABASE_URL && (
@@ -58,9 +57,8 @@ export default function RootLayout({
           </>
         )}
       </head>
-      <body className="min-h-full flex flex-col">
+      <body className="flex min-h-screen flex-col">
         <ThemeProvider>
-          <AmbientBackground />
           <AuthHashHandlerLoader />
           <TooltipProvider>{children}</TooltipProvider>
         </ThemeProvider>

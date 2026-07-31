@@ -1,7 +1,10 @@
-import { Mail, MailOpen, MessageCircle, Database, Clock } from "lucide-react";
+import Link from "next/link";
+import { Plus, Upload } from "lucide-react";
+
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getDashboardData, getSampleDashboardData } from "@/lib/data/dashboard";
 import { getProfile } from "@/lib/data/profile";
+import { buttonVariants } from "@/components/ui/button";
 import { StatCard } from "@/components/stat-card";
 import {
   GlassCard,
@@ -9,26 +12,23 @@ import {
   GlassCardHeader,
   GlassCardTitle,
 } from "@/components/glass-card";
-import {
-  OutreachActivityChartLoader,
-  DivisionBreakdownChartLoader,
-} from "@/components/dashboard/chart-loaders";
-import { OutboundFunnel } from "@/components/dashboard/outbound-funnel";
+import { DivisionBreakdownChartLoader } from "@/components/dashboard/chart-loaders";
+import { ActivityBars } from "@/components/dashboard/activity-bars";
+import { ProgressGauge } from "@/components/dashboard/progress-gauge";
 import { PerformanceMetrics } from "@/components/dashboard/performance-metrics";
 import { SentEmailsList } from "@/components/dashboard/sent-emails-list";
 import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
-import { getSampleProfile } from "@/lib/data/profile";
 
 async function loadDashboardData() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    return { data: getSampleDashboardData(), profileComplete: false, firstName: null, profile: null };
+    return { data: getSampleDashboardData(), profileComplete: false, firstName: null };
   }
 
   const supabase = await createSupabaseServerClient();
   const { data: auth } = await supabase.auth.getUser();
 
   if (!auth.user) {
-    return { data: getSampleDashboardData(), profileComplete: false, firstName: null, profile: null };
+    return { data: getSampleDashboardData(), profileComplete: false, firstName: null };
   }
 
   const [dashData, profile] = await Promise.all([
@@ -37,23 +37,46 @@ async function loadDashboardData() {
   ]);
 
   const firstName = profile?.name?.split(" ")[0] ?? null;
-  return { data: dashData, profileComplete: profile?.profile_complete ?? false, firstName, profile };
+  return {
+    data: dashData,
+    profileComplete: profile?.profile_complete ?? false,
+    firstName,
+  };
 }
 
 export default async function DashboardPage() {
-  const { data, profileComplete, firstName, profile } = await loadDashboardData();
+  const { data, profileComplete, firstName } = await loadDashboardData();
 
   const greeting = data.isSample
     ? "Sample data — sign in to see your real activity."
     : firstName
-      ? `Hey ${firstName} — here's your recruiting status.`
-      : "Here's your recruiting status.";
+      ? `Plan, prioritise, and reach coaches with ease, ${firstName}.`
+      : "Plan, prioritise, and reach coaches with ease.";
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">{greeting}</p>
+    <div className="flex flex-col gap-5">
+      {/* Page heading + primary actions */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-[28px] font-semibold leading-tight tracking-tight">
+            Dashboard
+          </h1>
+          <p className="text-sm text-muted-foreground">{greeting}</p>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-2.5">
+          <Link href="/compose" className={buttonVariants({ className: "rounded-full" })}>
+            <Plus className="size-4" />
+            New Email
+          </Link>
+          <Link
+            href="/contacts"
+            className={buttonVariants({ variant: "outline", className: "rounded-full" })}
+          >
+            <Upload className="size-4" />
+            Import Coaches
+          </Link>
+        </div>
       </div>
 
       {!data.isSample && (
@@ -64,67 +87,62 @@ export default async function DashboardPage() {
         />
       )}
 
-      {/* 2-up on phones, 5-up from lg — the Pending card spans the full
-          bottom row on small screens instead of orphaning centered. */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+      {/* Stat row — the coach database is the hero figure */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
-          label="Available"
+          featured
+          label="Coaches Available"
           value={data.stats.coaches.toLocaleString()}
-          icon={Database}
-          accent="#b8863f"
+          cta={{ label: "Browse database →", href: "/coaches" }}
         />
         <StatCard
-          label="Sent"
+          label="Emails Sent"
           value={data.stats.sent}
-          icon={Mail}
-          accent="#8a6f4d"
+          cta={{ label: "View sent →", href: "/inbox" }}
         />
         <StatCard
           label="Opened"
           value={data.stats.opened}
-          icon={MailOpen}
-          accent="#c9662d"
+          href="/inbox"
+          caption={
+            data.stats.sent > 0
+              ? `${((data.stats.opened / data.stats.sent) * 100).toFixed(0)}% of emails sent`
+              : "No emails sent yet"
+          }
         />
         <StatCard
           label="Replied"
           value={data.stats.replied}
-          icon={MessageCircle}
-          accent="#7d9159"
-        />
-        <StatCard
-          className="col-span-2 lg:col-span-1"
-          label="Pending"
-          value={data.stats.pending.toLocaleString()}
-          icon={Clock}
-          accent="#a85d43"
-          cta={{ label: "Start sending →", href: "/contacts" }}
+          cta={{ label: "Read replies →", href: "/inbox" }}
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      {/* Activity + response breakdown */}
+      <div className="grid gap-4 lg:grid-cols-3">
         <GlassCard className="lg:col-span-2">
           <GlassCardHeader>
-            <GlassCardTitle>7-Day Outreach Activity</GlassCardTitle>
+            <GlassCardTitle>Outreach Activity</GlassCardTitle>
           </GlassCardHeader>
           <GlassCardContent>
-            <OutreachActivityChartLoader data={data.activity} />
+            <ActivityBars data={data.activity} />
           </GlassCardContent>
         </GlassCard>
 
         <GlassCard>
           <GlassCardHeader>
-            <GlassCardTitle>Outbound Funnel</GlassCardTitle>
+            <GlassCardTitle>Response Breakdown</GlassCardTitle>
           </GlassCardHeader>
-          <GlassCardContent>
-            <OutboundFunnel stats={data.stats} />
+          <GlassCardContent className="pt-2">
+            <ProgressGauge stats={data.stats} />
           </GlassCardContent>
         </GlassCard>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      {/* Rates + division mix */}
+      <div className="grid gap-4 lg:grid-cols-3">
         <GlassCard>
           <GlassCardHeader>
-            <GlassCardTitle>Performance Metrics</GlassCardTitle>
+            <GlassCardTitle>Performance</GlassCardTitle>
           </GlassCardHeader>
           <GlassCardContent>
             <PerformanceMetrics rates={data.rates} />

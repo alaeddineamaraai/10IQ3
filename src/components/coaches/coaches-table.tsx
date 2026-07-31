@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronLeft, ChevronRight, Loader2, Mail, SlidersHorizontal, Star, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -85,7 +85,9 @@ function sortSampleCoaches(coaches: CoachWithOutreach[], sort: CoachSortKey) {
 
 export function CoachesTable({ initialCoaches, initialTotal, isSample }: Props) {
   const router = useRouter();
-  const [search, setSearch] = useState("");
+  // The topbar search navigates here with ?search=…, so seed from the URL.
+  const searchParams = useSearchParams();
+  const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
   const [division, setDivision] = useState(ALL);
   const [region, setRegion] = useState(ALL);
   const [status, setStatus] = useState<CoachStatus>("all");
@@ -166,6 +168,14 @@ export function CoachesTable({ initialCoaches, initialTotal, isSample }: Props) 
 
     return () => clearTimeout(timer);
   }, [isSample, page, sort, search, division, region, status, minUtr, maxUtr, minWtn, maxWtn]);
+
+  // Searching again from the topbar changes ?search= without remounting this
+  // component, so mirror the param back into local state when it moves.
+  const urlSearch = searchParams.get("search") ?? "";
+  useEffect(() => {
+    setSearch(urlSearch);
+    setPage(1);
+  }, [urlSearch]);
 
   function updateSearch(v: string) { setSearch(v); resetToFirstPage(); }
   function updateDivision(v: string) { setDivision(v); resetToFirstPage(); }

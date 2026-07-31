@@ -32,10 +32,9 @@ export function DivisionBreakdownChart({ data }: { data: DivisionBreakdown[] }) 
         <Tooltip
           cursor={{ fill: "var(--muted)" }}
           contentStyle={{
-            background: "var(--glass-bg-strong)",
-            border: "1px solid var(--glass-border)",
+            background: "var(--popover)",
+            border: "1px solid var(--border)",
             borderRadius: "var(--radius-md)",
-            backdropFilter: "blur(12px)",
           }}
         />
         <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} iconType="circle" iconSize={8} />

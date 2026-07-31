@@ -51,7 +51,7 @@ export function ProfileMenu({
   variant = "header",
 }: {
   profile: AthleteProfile;
-  variant?: "header" | "dock";
+  variant?: "header" | "dock" | "identity";
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -175,9 +175,10 @@ export function ProfileMenu({
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          "flex items-center justify-center gap-2 rounded-full transition-smooth hover:opacity-80",
-          variant === "dock" && "glass-dock h-14 w-14",
-          variant === "header" && "glass-chip size-11"
+          "flex items-center gap-2.5 transition-smooth hover:opacity-80",
+          variant === "dock" && "control-pill h-14 w-14 justify-center rounded-full",
+          variant === "header" && "control-pill size-11 justify-center rounded-full",
+          variant === "identity" && "rounded-full pl-1 pr-1 sm:pr-3"
         )}
       >
         <Avatar>
@@ -185,12 +186,22 @@ export function ProfileMenu({
             {initials(profile.name, profile.email)}
           </AvatarFallback>
         </Avatar>
+        {variant === "identity" && (
+          <span className="hidden min-w-0 flex-col items-start leading-tight sm:flex">
+            <span className="max-w-[10rem] truncate text-sm font-semibold">
+              {profile.name ?? "Your account"}
+            </span>
+            <span className="max-w-[10rem] truncate text-xs text-muted-foreground">
+              {profile.email}
+            </span>
+          </span>
+        )}
       </button>
 
       <div
         aria-hidden={!open}
         className={cn(
-          "glass-card-strong absolute z-[60] w-80 p-0 transition-smooth",
+          "surface-card absolute z-[60] w-80 overflow-hidden p-0 transition-smooth",
           variant === "dock" ? "left-full top-0 ml-3 origin-top-left" : "right-0 top-full mt-2 origin-top-right",
           open
             ? "pointer-events-auto translate-y-0 scale-100 opacity-100"

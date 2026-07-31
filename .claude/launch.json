@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "netset-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "netset-app",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd /Users/alaeddineamara/Downloads/netset-app && npm run dev"],
+      "port": 5173
+    }
+  ]
+}

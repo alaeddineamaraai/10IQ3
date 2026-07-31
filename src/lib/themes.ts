@@ -1,9 +1,9 @@
 export const THEMES = [
-  { id: "beige", label: "Beige", bg: "#eae4d3", accent: "#26211a" },
-  { id: "dark",  label: "Brown", bg: "#2e2a24", accent: "#ece5d3" },
+  { id: "white", label: "Light", bg: "#f4f4f4", accent: "#197a48" },
+  { id: "beige", label: "Beige", bg: "#f2ecdd", accent: "#b8863f" },
+  { id: "dark",  label: "Brown", bg: "#2e2a24", accent: "#d9bd93" },
   { id: "blue",  label: "Blue",  bg: "#0d1625", accent: "#6aacf5" },
-  { id: "black", label: "Black", bg: "#080808", accent: "#e5e5e5" },
-  { id: "white", label: "White", bg: "#f8f8f8", accent: "#111111" },
+  { id: "black", label: "Black", bg: "#0b0b0b", accent: "#e5e5e5" },
 ] as const;
 
 export type ThemeId = (typeof THEMES)[number]["id"];

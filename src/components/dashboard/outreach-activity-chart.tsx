@@ -72,10 +72,9 @@ export function OutreachActivityChart({ data }: { data: ActivityPoint[] }) {
           />
           <Tooltip
             contentStyle={{
-              background: "var(--glass-bg-strong)",
-              border: "1px solid var(--glass-border)",
+              background: "var(--popover)",
+              border: "1px solid var(--border)",
               borderRadius: "var(--radius-md)",
-              backdropFilter: "blur(12px)",
             }}
           />
           {filter === "all" && (

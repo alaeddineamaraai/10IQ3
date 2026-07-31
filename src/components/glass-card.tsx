@@ -11,16 +11,26 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+/**
+ * Flat surface card. The name is historical — this used to render
+ * glassmorphism, and every page imports it under these names, so the API is
+ * kept stable while the visual treatment moved to solid fills + soft shadows.
+ *
+ * `strong` is now a no-op modifier retained for call-site compatibility;
+ * there is only one card weight in the flat system. `accent` fills the card
+ * with the theme accent for the one hero stat per group.
+ */
 function GlassCard({
   className,
-  strong,
+  strong: _strong,
+  accent,
   ...props
-}: React.ComponentProps<"div"> & { strong?: boolean }) {
+}: React.ComponentProps<"div"> & { strong?: boolean; accent?: boolean }) {
   return (
     <Card
       className={cn(
         "transition-smooth ring-0",
-        strong ? "glass-card-strong" : "glass-card",
+        accent ? "surface-card-accent" : "surface-card",
         className
       )}
       {...props}

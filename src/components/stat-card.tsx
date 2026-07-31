@@ -1,8 +1,9 @@
 import * as React from "react";
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { GlassCard, GlassCardContent } from "@/components/glass-card";
 import { CountUp } from "@/components/count-up";
 
 type StatCardProps = {
@@ -11,53 +12,132 @@ type StatCardProps = {
   icon?: LucideIcon;
   trend?: { value: string; positive?: boolean };
   cta?: { label: string; href: string };
+  /** Small caption under the figure when there's no trend or CTA. */
+  caption?: string;
+  /** Target for the corner arrow. Falls back to `cta.href`. */
+  href?: string;
+  /** Fills the card with the theme accent — use for one hero stat per row. */
+  featured?: boolean;
   accent?: string;
   className?: string;
 };
 
-export function StatCard({ label, value, icon: Icon, trend, cta, accent, className }: StatCardProps) {
-  const iconStyle = accent
-    ? { backgroundColor: `${accent}18`, color: accent }
-    : undefined;
-  const valueStyle = accent ? { color: accent } : undefined;
+export function StatCard({
+  label,
+  value,
+  icon: Icon,
+  trend,
+  cta,
+  caption,
+  href,
+  featured,
+  accent,
+  className,
+}: StatCardProps) {
+  const arrowHref = href ?? cta?.href;
 
   return (
-    <GlassCard className={cn("p-0 hover:-translate-y-0.5 hover:shadow-lg", className)}>
-      <GlassCardContent className="flex items-center justify-between gap-4 px-5 py-5">
-        <div className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-muted-foreground">{label}</span>
-          <span className="text-2xl font-semibold tracking-tight tabular-nums" style={valueStyle}>
-            <CountUp value={String(value)} duration={900} />
-          </span>
-          {trend && (
+    <div
+      className={cn(
+        "group relative flex flex-col justify-between gap-6 p-5 transition-smooth",
+        featured
+          ? "surface-card-accent"
+          : "surface-card hover:shadow-[var(--shadow-card-hover)]",
+        className
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <span
+          className={cn(
+            "text-sm font-medium",
+            featured ? "text-primary-foreground/90" : "text-foreground/80"
+          )}
+        >
+          {label}
+        </span>
+
+        {arrowHref ? (
+          <Link
+            href={arrowHref}
+            aria-label={`${label} — view details`}
+            className={cn(
+              "flex size-7 shrink-0 items-center justify-center rounded-full border transition-smooth group-hover:scale-105",
+              featured
+                ? "border-white/35 bg-white/15 text-primary-foreground hover:bg-white/25"
+                : "border-border text-muted-foreground hover:border-foreground/25 hover:text-foreground"
+            )}
+          >
+            <ArrowUpRight className="size-3.5" />
+          </Link>
+        ) : (
+          Icon && (
+            <div
+              className={cn(
+                "flex size-7 shrink-0 items-center justify-center rounded-full",
+                featured ? "bg-white/15 text-primary-foreground" : "text-muted-foreground"
+              )}
+              style={!featured && accent ? { color: accent } : undefined}
+            >
+              <Icon className="size-4" />
+            </div>
+          )
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <span
+          className={cn(
+            "text-3xl font-semibold tracking-tight tabular-nums",
+            featured && "text-primary-foreground"
+          )}
+        >
+          <CountUp value={String(value)} duration={900} />
+        </span>
+
+        {trend ? (
+          <div className="flex items-center gap-1.5">
             <span
               className={cn(
-                "text-xs font-medium",
-                trend.positive ? "text-[#7d9159]" : "text-muted-foreground"
+                "rounded-md px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
+                featured
+                  ? "bg-white/20 text-primary-foreground"
+                  : trend.positive
+                    ? "bg-primary/10 text-primary"
+                    : "bg-muted text-muted-foreground"
               )}
             >
-              {trend.value}
+              {trend.positive ? "▲" : "▼"} {trend.value}
             </span>
-          )}
-          {cta && (
-            <a
-              href={cta.href}
-              className="mt-0.5 text-xs font-medium hover:underline"
-              style={{ color: accent ?? "var(--primary)" }}
+            <span
+              className={cn(
+                "truncate text-xs",
+                featured ? "text-primary-foreground/80" : "text-muted-foreground"
+              )}
             >
-              {cta.label}
-            </a>
-          )}
-        </div>
-        {Icon && (
-          <div
-            className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
-            style={iconStyle}
-          >
-            <Icon className="size-5" />
+              {trend.positive ? "up from last month" : "from last month"}
+            </span>
           </div>
-        )}
-      </GlassCardContent>
-    </GlassCard>
+        ) : cta ? (
+          <Link
+            href={cta.href}
+            className={cn(
+              "text-xs font-medium transition-smooth hover:underline",
+              featured ? "text-primary-foreground/90" : "text-primary"
+            )}
+          >
+            {cta.label}
+          </Link>
+        ) : caption ? (
+          <span
+            className={cn(
+              "text-xs",
+              featured ? "text-primary-foreground/80" : "text-muted-foreground"
+            )}
+          >
+            {caption}
+          </span>
+        ) : null}
+      </div>
+    </div>
   );
 }

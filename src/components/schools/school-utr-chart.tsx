@@ -36,10 +36,9 @@ export function SchoolUtrChart({ coaches }: { coaches: CoachUtr[] }) {
         <Tooltip
           cursor={{ fill: "var(--muted)" }}
           contentStyle={{
-            background: "var(--glass-bg-strong)",
-            border: "1px solid var(--glass-border)",
+            background: "var(--popover)",
+            border: "1px solid var(--border)",
             borderRadius: "var(--radius-md)",
-            backdropFilter: "blur(12px)",
           }}
           formatter={(value) => [value, "UTR"]}
         />
