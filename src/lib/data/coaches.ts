@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Coach, CoachWithOutreach, Outreach } from "@/lib/types/coach";
+import type { Coach, CoachWithOutreach, Outreach, OutreachReply } from "@/lib/types/coach";
 
 function toNumber(value: unknown): number | null {
   if (value == null || value === "") return null;
@@ -200,6 +200,67 @@ export async function getCoachesPage(
   }));
 
   return { coaches, total: count ?? 0 };
+}
+
+export async function getCoachProfile(
+  supabase: SupabaseClient,
+  userId: string,
+  coachEmail: string
+): Promise<import("@/lib/types/coach").CoachProfile | null> {
+  const [{ data: coach }, { data: outreach }] = await Promise.all([
+    supabase
+      .from("coaches_database")
+      .select("*")
+      .eq("email", coachEmail)
+      .maybeSingle<Coach>(),
+    supabase
+      .from("outreach")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("coach_email", coachEmail)
+      .maybeSingle<Outreach>(),
+  ]);
+
+  if (!coach) return null;
+
+  let replies: OutreachReply[] = [];
+  if (outreach) {
+    const { data: repliesData } = await supabase
+      .from("outreach_replies")
+      .select("*")
+      .eq("outreach_id", outreach.id)
+      .order("received_at", { ascending: true })
+      .returns<OutreachReply[]>();
+    replies = repliesData ?? [];
+  }
+
+  return {
+    ...normalizeCoach(coach),
+    outreach: outreach ? { ...outreach, replies } : null,
+  };
+}
+
+export function getSampleCoachProfile(coachEmail: string): import("@/lib/types/coach").CoachProfile | null {
+  const coaches = getSampleCoaches();
+  const coach = coaches.find((c) => c.email === coachEmail);
+  if (!coach) return null;
+  // Enrich with fake replies if this coach replied
+  const replies = coach.outreach?.replied
+    ? [
+        {
+          id: "r1",
+          outreach_id: coach.outreach!.id,
+          from_email: coachEmail,
+          subject: `Re: ${coach.outreach!.subject}`,
+          body: "Thanks for reaching out! Your profile looks interesting — could you send over a highlight reel and your fall tournament schedule?",
+          received_at: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(),
+        },
+      ]
+    : [];
+  return {
+    ...coach,
+    outreach: coach.outreach ? { ...coach.outreach, replies } : null,
+  };
 }
 
 export const REGIONS = ["Northeast", "Southeast", "Midwest", "West", "Southwest"];

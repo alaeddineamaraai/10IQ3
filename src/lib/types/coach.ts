@@ -42,3 +42,8 @@ export type OutreachReply = {
 export type CoachWithOutreach = Coach & {
   outreach: Outreach | null;
 };
+
+/** Full coach profile: coach data + outreach row with threaded replies. */
+export type CoachProfile = Coach & {
+  outreach: (Outreach & { replies: OutreachReply[] }) | null;
+};

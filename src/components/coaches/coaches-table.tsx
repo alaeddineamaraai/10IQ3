@@ -471,8 +471,12 @@ export function CoachesTable({ initialCoaches, initialTotal, isSample }: Props) 
         </TableHeader>
         <TableBody>
           {displayedCoaches.map((coach) => (
-            <TableRow key={coach.email} className="cursor-pointer transition-colors hover:bg-muted/40">
-              <TableCell>
+            <TableRow
+              key={coach.email}
+              className="cursor-pointer transition-colors hover:bg-muted/40"
+              onClick={() => router.push(`/coaches/${encodeURIComponent(coach.email)}`)}
+            >
+              <TableCell onClick={(e) => e.stopPropagation()}>
                 <Checkbox
                   checked={selected.has(coach.email)}
                   onCheckedChange={() => toggleOne(coach.email)}
@@ -522,7 +526,7 @@ export function CoachesTable({ initialCoaches, initialTotal, isSample }: Props) 
                   </span>
                 )}
               </TableCell>
-              <TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center gap-1">
                   <button
                     onClick={(e) => {
