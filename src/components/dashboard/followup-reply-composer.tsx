@@ -147,7 +147,7 @@ export function FollowUpReplyComposer({
   }
 
   if (status === "sent") {
-    return <p className="text-sm font-medium text-[#7d9159]">{copy.sentLabel}</p>;
+    return <p className="text-sm font-medium text-primary">{copy.sentLabel}</p>;
   }
 
   return (

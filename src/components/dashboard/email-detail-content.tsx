@@ -67,10 +67,13 @@ export function EmailDetailContent({ row }: { row: SentEmailRow }) {
               </GlassCardContent>
             </GlassCard>
           ))}
-          <FollowUpReplyComposer outreachId={row.id} coachEmail={row.coach_email} />
+          <FollowUpReplyComposer outreachId={row.id} coachEmail={row.coach_email} mode="reply" />
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">No reply yet.</p>
+        <div className="flex flex-col gap-2">
+          <p className="text-sm text-muted-foreground">No reply yet.</p>
+          <FollowUpReplyComposer outreachId={row.id} coachEmail={row.coach_email} mode="nudge" />
+        </div>
       )}
     </div>
   );

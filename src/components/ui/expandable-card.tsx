@@ -29,7 +29,7 @@ function badgeClasses(variant: ExpandableCardItem["badgeVariant"]) {
     // Unread replies get a distinct green so they stand out from the rest
     // of the (warm/neutral) palette — Von Restorff effect.
     case "unread":
-      return "bg-[#7d9159] text-white";
+      return "bg-primary text-primary-foreground";
     default:
       return "bg-muted text-muted-foreground";
   }
@@ -72,7 +72,7 @@ export function ExpandableCard({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[200] h-full w-full bg-black/20"
+                className="fixed inset-0 z-[200] h-full w-full bg-black/50"
               />
             )}
           </AnimatePresence>

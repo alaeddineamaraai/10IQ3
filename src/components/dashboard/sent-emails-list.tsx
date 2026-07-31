@@ -29,8 +29,6 @@ export function SentEmailsList({ rows }: { rows: SentEmailRow[] }) {
       badge: row.replied ? "Replied" : row.opened ? "Opened" : "Sent",
       badgeVariant: unread ? "unread" : row.replied ? "solid" : row.opened ? "muted" : "outline",
       icon: <Mail className="size-5" />,
-      ctaText: "Compose follow-up",
-      ctaHref: `/compose?coaches=${encodeURIComponent(row.coach_email)}`,
       content: <EmailDetailContent row={row} />,
     };
   });
