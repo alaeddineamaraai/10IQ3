@@ -100,34 +100,45 @@ export default async function LandingPage({
 
         {/* ── Hero ───────────────────────────────────────────── */}
         <section
-          className="relative flex min-h-screen overflow-hidden"
+          className="flex min-h-screen items-center overflow-hidden"
           style={{
             backgroundImage: "url(/hero-court.jpg)",
             backgroundSize: "cover",
-            backgroundPosition: "center",
+            backgroundPosition: "30% center",
+            position: "relative",
           }}
         >
-          {/* Subtle veil over full image */}
-          <div aria-hidden style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.12)" }} />
-          {/* Bottom fade into stats */}
+          {/* Dark left-to-right overlay */}
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "linear-gradient(90deg, rgba(0,0,0,.58) 0%, rgba(0,0,0,.38) 30%, rgba(0,0,0,.10) 60%, rgba(0,0,0,0) 100%)",
+            }}
+          />
+          {/* Bottom fade */}
           <div
             aria-hidden
             style={{
               position: "absolute",
               inset: "auto 0 0",
-              height: "10rem",
+              height: "12rem",
               background: "linear-gradient(to top, var(--background), transparent)",
             }}
           />
 
-          {/* Left panel — full height, edge-to-edge, dark glass */}
+          {/* Glass panel — left-aligned, max 640px */}
           <div
-            className="relative z-10 flex w-full flex-col justify-center px-8 py-24 sm:px-12 lg:w-[52%] lg:px-16"
-            style={{ background: "rgba(0,0,0,0.44)", backdropFilter: "blur(10px)" }}
+            className="relative w-full px-4 sm:px-8 lg:px-14"
+            style={{ zIndex: 10, maxWidth: "680px" }}
           >
-            <div className="max-w-lg">
+            <div
+              className="flex flex-col rounded-2xl p-5 sm:p-8"
+              style={{ background: "rgba(255,255,255,0.07)", backdropFilter: "blur(10px)" }}
+            >
               <span
-                className="mb-6 block text-xs font-normal text-white/50"
+                className="mb-5 sm:mb-7 text-xs font-normal text-white/55"
                 style={{ fontFamily: "'Times New Roman', Times, serif", letterSpacing: "0.2em" }}
               >
                 NETSET
@@ -137,9 +148,9 @@ export default async function LandingPage({
                 className="font-semibold text-white"
                 style={{
                   fontFamily: "'Times New Roman', Times, serif",
-                  fontSize: "clamp(30px, 4.5vw, 76px)",
+                  fontSize: "clamp(30px, 5.5vw, 54px)",
                   lineHeight: 1.05,
-                  textShadow: "0 2px 20px rgba(0,0,0,0.4)",
+                  textShadow: "0 2px 16px rgba(0,0,0,0.3)",
                   marginBottom: "20px",
                 }}
               >
@@ -148,7 +159,7 @@ export default async function LandingPage({
 
               <p
                 className="text-sm sm:text-base"
-                style={{ color: "rgba(255,255,255,0.72)", marginBottom: "36px" }}
+                style={{ color: "rgba(255,255,255,0.78)", marginBottom: "32px", maxWidth: "420px" }}
               >
                 Match with 1,800+ college coaches and send personalized recruiting emails in minutes.
               </p>
@@ -164,16 +175,13 @@ export default async function LandingPage({
                 <Link
                   href="/dashboard"
                   className={buttonVariants({ variant: "outline", size: "lg" })}
-                  style={{ borderColor: "rgba(255,255,255,0.4)", color: "white", background: "rgba(255,255,255,0.06)" }}
+                  style={{ borderColor: "rgba(255,255,255,0.45)", color: "white", background: "rgba(255,255,255,0.06)" }}
                 >
                   Watch Demo →
                 </Link>
               </div>
             </div>
           </div>
-
-          {/* Right — court shows through */}
-          <div className="hidden flex-1 lg:block" />
         </section>
 
         {/* ── Stats bar ──────────────────────────────────────── */}

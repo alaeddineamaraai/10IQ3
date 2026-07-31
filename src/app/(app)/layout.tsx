@@ -54,14 +54,7 @@ export default async function AppLayout({
 
   return (
     <TourRoot>
-      {/* Fixed-height app shell: the sidebar and top bar stay put and only
-          the content region scrolls. Document-level scrolling is avoided on
-          purpose — it interacts badly with the desktop `zoom` in globals.css.
-          Page gutter is full-bleed on phones, inset from lg. */}
-      <div className="h-screen bg-page lg:p-4">
-        <div className="shell-panel flex h-full overflow-hidden max-lg:rounded-none">
-          {/* Sidebar is transparent — the panel underneath supplies the fill,
-              so the panel's rounded corners stay unbroken. */}
+      <div className="shell-panel h-screen flex overflow-hidden rounded-none">
           <aside
             style={{ viewTransitionName: "site-sidebar" }}
             className="hidden w-[16.5rem] shrink-0 overflow-y-auto border-r border-border/60 lg:block"
@@ -72,8 +65,8 @@ export default async function AppLayout({
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             <AppTopbar profile={profile} unreadCount={unreadCount} />
 
-            <main className="flex-1 overflow-y-auto p-3 sm:p-4">
-              <div className="surface-inset p-4 sm:p-6">
+            <main className="flex-1 overflow-y-auto">
+              <div className="p-4 sm:p-6">
                 <ViewTransition name="page-content">
                   <div className="mx-auto w-full max-w-6xl">{children}</div>
                 </ViewTransition>
@@ -81,7 +74,6 @@ export default async function AppLayout({
             </main>
           </div>
         </div>
-      </div>
     </TourRoot>
   );
 }
