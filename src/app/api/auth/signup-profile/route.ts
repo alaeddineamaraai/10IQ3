@@ -11,7 +11,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
  * unconditionally before that check, so the row always exists.
  */
 export async function POST(request: Request) {
-  const { id, email } = await request.json();
+  const { id, email, marketing_consent } = await request.json();
 
   if (!id || !email) {
     return NextResponse.json({ error: "Missing id or email" }, { status: 400 });
@@ -35,6 +35,8 @@ export async function POST(request: Request) {
         plan: "free",
         emails_used: 0,
         profile_complete: false,
+        marketing_consent: marketing_consent ?? false,
+        marketing_consent_at: marketing_consent ? new Date().toISOString() : null,
       },
       { onConflict: "id", ignoreDuplicates: true }
     );

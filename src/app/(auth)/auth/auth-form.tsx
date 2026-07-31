@@ -35,6 +35,7 @@ export function AuthForm() {
   const [mode, setMode] = useState<Mode>("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [marketingConsent, setMarketingConsent] = useState(true);
   const [pending, setPending] = useState(false);
   const [oauthPending, setOauthPending] = useState<"google" | "apple" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -95,7 +96,7 @@ export function AuthForm() {
       await fetch("/api/auth/signup-profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: data.user.id, email: data.user.email }),
+        body: JSON.stringify({ id: data.user.id, email: data.user.email, marketing_consent: marketingConsent }),
       });
     }
 
@@ -301,6 +302,17 @@ export function AuthForm() {
                   />
                   <PasswordRequirements password={password} />
                 </div>
+                <label className="flex cursor-pointer items-start gap-2.5">
+                  <input
+                    type="checkbox"
+                    checked={marketingConsent}
+                    onChange={(e) => setMarketingConsent(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-primary"
+                  />
+                  <span className="text-xs leading-snug text-muted-foreground">
+                    Send me product updates, recruiting tips, and feature announcements. You can unsubscribe anytime.
+                  </span>
+                </label>
                 {error && <p className="text-sm text-destructive">{error}</p>}
                 <Button type="submit" disabled={pending} className="w-full">
                   {pending ? "Creating account…" : "Create account"}

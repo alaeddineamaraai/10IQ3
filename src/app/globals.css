@@ -376,7 +376,7 @@ html[data-theme="white"] {
 
   @media (min-width: 768px) {
     html {
-      zoom: 1.25;
+      zoom: 0.9;
     }
   }
 
