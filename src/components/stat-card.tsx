@@ -39,7 +39,7 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "group relative flex flex-col justify-between gap-6 p-5 transition-smooth",
+        "group relative flex flex-col justify-between gap-4 p-4 transition-smooth",
         featured
           ? "surface-card-accent"
           : "surface-card hover:shadow-[var(--shadow-card-hover)]",

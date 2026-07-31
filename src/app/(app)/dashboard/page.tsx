@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, Upload } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getDashboardData, getSampleDashboardData } from "@/lib/data/dashboard";
@@ -68,13 +68,6 @@ export default async function DashboardPage() {
           <Link href="/compose" className={buttonVariants({ className: "rounded-full" })}>
             <Plus className="size-4" />
             New Email
-          </Link>
-          <Link
-            href="/contacts"
-            className={buttonVariants({ variant: "outline", className: "rounded-full" })}
-          >
-            <Upload className="size-4" />
-            Import Coaches
           </Link>
         </div>
       </div>

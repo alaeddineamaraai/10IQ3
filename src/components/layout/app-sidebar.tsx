@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { ProfileMenu } from "@/components/layout/profile-menu";
 import {
   Bell,
   CircleHelp,
@@ -185,6 +186,11 @@ export function AppSidebar({
           </button>
         </div>
       </nav>
+
+      {/* Profile — always at the very bottom, above upgrade for paid users */}
+      <div className="border-t border-border/60 pt-3">
+        <ProfileMenu profile={profile} variant="sidebar" />
+      </div>
 
       {/* Upgrade card — only while the athlete is still on the free plan,
           so paying users don't stare at a dead promo slot. */}

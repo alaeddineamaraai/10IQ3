@@ -51,7 +51,7 @@ export function ProfileMenu({
   variant = "header",
 }: {
   profile: AthleteProfile;
-  variant?: "header" | "dock" | "identity";
+  variant?: "header" | "dock" | "identity" | "sidebar";
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -178,11 +178,15 @@ export function ProfileMenu({
           "flex items-center gap-2.5 transition-smooth hover:opacity-80",
           variant === "dock" && "control-pill h-14 w-14 justify-center rounded-full",
           variant === "header" && "control-pill size-11 justify-center rounded-full",
-          variant === "identity" && "rounded-full pl-1 pr-1 sm:pr-3"
+          variant === "identity" && "rounded-full pl-1 pr-1 sm:pr-3",
+          variant === "sidebar" && "w-full rounded-xl px-2 py-2 hover:bg-muted/60"
         )}
       >
-        <Avatar>
-          <AvatarFallback className="bg-primary/10 text-primary font-medium">
+        <Avatar className={cn(variant === "sidebar" && "size-8 shrink-0")}>
+          <AvatarFallback className={cn(
+            "bg-primary/10 text-primary font-medium",
+            variant === "sidebar" && "text-xs"
+          )}>
             {initials(profile.name, profile.email)}
           </AvatarFallback>
         </Avatar>
@@ -196,13 +200,25 @@ export function ProfileMenu({
             </span>
           </span>
         )}
+        {variant === "sidebar" && (
+          <span className="min-w-0 flex-1 flex-col items-start leading-tight flex">
+            <span className="max-w-full truncate text-sm font-medium">
+              {profile.name ?? "Your account"}
+            </span>
+            <span className="max-w-full truncate text-xs text-muted-foreground">
+              {profile.email}
+            </span>
+          </span>
+        )}
       </button>
 
       <div
         aria-hidden={!open}
         className={cn(
           "surface-card absolute z-[60] w-80 overflow-hidden p-0 transition-smooth",
-          variant === "dock" ? "left-full top-0 ml-3 origin-top-left" : "right-0 top-full mt-2 origin-top-right",
+          variant === "dock" ? "left-full top-0 ml-3 origin-top-left"
+          : variant === "sidebar" ? "bottom-full left-0 mb-2 origin-bottom-left"
+          : "right-0 top-full mt-2 origin-top-right",
           open
             ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
             : "pointer-events-none translate-y-1 scale-95 opacity-0"

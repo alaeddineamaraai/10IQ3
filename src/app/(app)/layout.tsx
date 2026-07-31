@@ -72,8 +72,8 @@ export default async function AppLayout({
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             <AppTopbar profile={profile} unreadCount={unreadCount} />
 
-            <main className="flex-1 overflow-y-auto px-3 pb-3 sm:px-4 sm:pb-4">
-              <div className="surface-inset min-h-full p-4 sm:p-6">
+            <main className="flex-1 overflow-y-auto p-3 sm:p-4">
+              <div className="surface-inset p-4 sm:p-6">
                 <ViewTransition name="page-content">
                   <div className="mx-auto w-full max-w-6xl">{children}</div>
                 </ViewTransition>

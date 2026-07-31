@@ -7,7 +7,6 @@ import { Bell, Mail, Menu, Search, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { AppSidebar } from "@/components/layout/app-sidebar";
-import { ProfileMenu } from "@/components/layout/profile-menu";
 import type { AthleteProfile } from "@/lib/types/profile";
 
 const PAGE_TITLES: [string, string][] = [
@@ -146,7 +145,6 @@ export function AppTopbar({
           <IconLink href="/notifications" label="Notifications" badge={unreadCount}>
             <Bell className="size-[18px]" />
           </IconLink>
-          <ProfileMenu profile={profile} variant="identity" />
         </div>
       </header>
 
