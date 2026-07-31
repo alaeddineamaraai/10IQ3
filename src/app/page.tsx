@@ -100,74 +100,59 @@ export default async function LandingPage({
 
         {/* ── Hero ───────────────────────────────────────────── */}
         <section
-          className="flex min-h-screen items-start overflow-hidden"
+          className="relative flex min-h-screen overflow-hidden"
           style={{
             backgroundImage: "url(/hero-court.jpg)",
             backgroundSize: "cover",
-            backgroundPosition: "30% center",
-            position: "relative",
+            backgroundPosition: "center",
           }}
         >
-          {/* Dark left-to-right overlay for readability */}
-          <div
-            aria-hidden
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "linear-gradient(90deg, rgba(0,0,0,.58) 0%, rgba(0,0,0,.38) 30%, rgba(0,0,0,.10) 60%, rgba(0,0,0,0) 100%)",
-            }}
-          />
-          {/* Bottom fade */}
+          {/* Subtle veil over full image */}
+          <div aria-hidden style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.12)" }} />
+          {/* Bottom fade into stats */}
           <div
             aria-hidden
             style={{
               position: "absolute",
               inset: "auto 0 0",
-              height: "12rem",
+              height: "10rem",
               background: "linear-gradient(to top, var(--background), transparent)",
             }}
           />
 
-          {/* Content — glass panel, left column */}
+          {/* Left panel — full height, edge-to-edge, dark glass */}
           <div
-            className="relative w-full px-4 sm:px-8 lg:px-14"
-            style={{ paddingTop: "80px", paddingBottom: "4rem", zIndex: 10, maxWidth: "640px" }}
+            className="relative z-10 flex w-full flex-col justify-center px-8 py-24 sm:px-12 lg:w-[52%] lg:px-16"
+            style={{ background: "rgba(0,0,0,0.44)", backdropFilter: "blur(10px)" }}
           >
-            <div
-              className="flex flex-col rounded-2xl p-5 sm:p-8"
-              style={{ background: "rgba(255,255,255,0.07)", backdropFilter: "blur(10px)" }}
-            >
-              {/* Small wordmark above headline */}
+            <div className="max-w-lg">
               <span
-                className="mb-5 sm:mb-7 text-xs font-normal text-white/55"
+                className="mb-6 block text-xs font-normal text-white/50"
                 style={{ fontFamily: "'Times New Roman', Times, serif", letterSpacing: "0.2em" }}
               >
                 NETSET
               </span>
 
-              {/* Big headline — clamped so it never blows up on narrow screens */}
               <h1
                 className="font-semibold text-white"
                 style={{
                   fontFamily: "'Times New Roman', Times, serif",
-                  fontSize: "clamp(30px, 5.5vw, 80px)",
+                  fontSize: "clamp(30px, 4.5vw, 76px)",
                   lineHeight: 1.05,
-                  textShadow: "0 2px 16px rgba(0,0,0,0.3)",
+                  textShadow: "0 2px 20px rgba(0,0,0,0.4)",
                   marginBottom: "20px",
                 }}
               >
                 Get Recruited by College Tennis Coaches
               </h1>
 
-              {/* Description */}
               <p
                 className="text-sm sm:text-base"
-                style={{ color: "rgba(255,255,255,0.78)", textShadow: "0 1px 4px rgba(0,0,0,0.4)", marginBottom: "32px", maxWidth: "420px" }}
+                style={{ color: "rgba(255,255,255,0.72)", marginBottom: "36px" }}
               >
                 Match with 1,800+ college coaches and send personalized recruiting emails in minutes.
               </p>
 
-              {/* CTAs */}
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/auth"
@@ -179,13 +164,16 @@ export default async function LandingPage({
                 <Link
                   href="/dashboard"
                   className={buttonVariants({ variant: "outline", size: "lg" })}
-                  style={{ borderColor: "rgba(255,255,255,0.45)", color: "white", background: "rgba(255,255,255,0.06)" }}
+                  style={{ borderColor: "rgba(255,255,255,0.4)", color: "white", background: "rgba(255,255,255,0.06)" }}
                 >
                   Watch Demo →
                 </Link>
               </div>
             </div>
           </div>
+
+          {/* Right — court shows through */}
+          <div className="hidden flex-1 lg:block" />
         </section>
 
         {/* ── Stats bar ──────────────────────────────────────── */}
