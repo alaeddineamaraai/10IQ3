@@ -188,19 +188,41 @@ export async function POST(request: Request) {
     outreachId
   );
 
-  const { error: outreachError } = await supabase
-    .from("outreach")
-    .update({
-      email_sent: true,
-      sent_at: new Date().toISOString(),
-      subject,
-      body,
-      resend_email_id: result.delivered ? result.emailId : null,
-    })
-    .eq("id", outreachId);
+  const sentAt = new Date().toISOString();
+  const isFollowUp = !!existingRow;
 
-  if (outreachError) {
-    return NextResponse.json({ error: outreachError.message }, { status: 500 });
+  if (isFollowUp) {
+    // Thread continues — record the athlete's reply without overwriting the
+    // original outreach body so the inbox can show the full conversation.
+    const { error: followupError } = await supabase
+      .from("outreach_followups")
+      .insert({
+        outreach_id: outreachId,
+        subject,
+        body,
+        sent_at: sentAt,
+        resend_email_id: result.delivered ? result.emailId : null,
+      });
+
+    if (followupError) {
+      return NextResponse.json({ error: followupError.message }, { status: 500 });
+    }
+  } else {
+    // First send — write subject/body onto the outreach row as before.
+    const { error: outreachError } = await supabase
+      .from("outreach")
+      .update({
+        email_sent: true,
+        sent_at: sentAt,
+        subject,
+        body,
+        resend_email_id: result.delivered ? result.emailId : null,
+      })
+      .eq("id", outreachId);
+
+    if (outreachError) {
+      return NextResponse.json({ error: outreachError.message }, { status: 500 });
+    }
   }
 
   await supabase

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Coach, Outreach, OutreachReply } from "@/lib/types/coach";
+import type { Coach, Outreach, OutreachFollowup, OutreachReply } from "@/lib/types/coach";
 import type { InboxConversation, InboxMessage, InboxStatus } from "@/lib/types/inbox";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -15,7 +15,8 @@ function truncate(text: string | null | undefined, max = 140): string {
 function buildConversation(
   row: Outreach,
   coach: Pick<Coach, "coach_name" | "school_name" | "division"> | undefined,
-  replies: OutreachReply[]
+  replies: OutreachReply[],
+  followups: OutreachFollowup[]
 ): InboxConversation {
   const messages: InboxMessage[] = [
     {
@@ -31,6 +32,13 @@ function buildConversation(
       subject: r.subject,
       body: r.body,
       at: r.received_at,
+    })),
+    ...followups.map((f) => ({
+      id: f.id,
+      direction: "sent" as const,
+      subject: f.subject,
+      body: f.body,
+      at: f.sent_at,
     })),
   ].sort((a, b) => a.at.localeCompare(b.at));
 
@@ -79,12 +87,22 @@ export async function getInboxConversations(
 
   const coachByEmail = new Map((coaches ?? []).map((c) => [c.email, c]));
 
-  const { data: replies } = await supabase
-    .from("outreach_replies")
-    .select("*")
-    .in("outreach_id", rows.map((r) => r.id))
-    .order("received_at", { ascending: true })
-    .returns<OutreachReply[]>();
+  const outreachIds = rows.map((r) => r.id);
+
+  const [{ data: replies }, { data: followups }] = await Promise.all([
+    supabase
+      .from("outreach_replies")
+      .select("*")
+      .in("outreach_id", outreachIds)
+      .order("received_at", { ascending: true })
+      .returns<OutreachReply[]>(),
+    supabase
+      .from("outreach_followups")
+      .select("*")
+      .in("outreach_id", outreachIds)
+      .order("sent_at", { ascending: true })
+      .returns<OutreachFollowup[]>(),
+  ]);
 
   const repliesByOutreachId = new Map<string, OutreachReply[]>();
   for (const reply of replies ?? []) {
@@ -93,9 +111,21 @@ export async function getInboxConversations(
     repliesByOutreachId.set(reply.outreach_id, list);
   }
 
+  const followupsByOutreachId = new Map<string, OutreachFollowup[]>();
+  for (const followup of followups ?? []) {
+    const list = followupsByOutreachId.get(followup.outreach_id) ?? [];
+    list.push(followup);
+    followupsByOutreachId.set(followup.outreach_id, list);
+  }
+
   return rows
     .map((row) =>
-      buildConversation(row, coachByEmail.get(row.coach_email), repliesByOutreachId.get(row.id) ?? [])
+      buildConversation(
+        row,
+        coachByEmail.get(row.coach_email),
+        repliesByOutreachId.get(row.id) ?? [],
+        followupsByOutreachId.get(row.id) ?? []
+      )
     )
     .sort((a, b) => b.lastActivityAt.localeCompare(a.lastActivityAt));
 }
@@ -209,6 +239,6 @@ export function getSampleInboxConversations(): InboxConversation[] {
   ];
 
   return raw
-    .map((r) => buildConversation(r.outreach, r.coach, r.replies))
+    .map((r) => buildConversation(r.outreach, r.coach, r.replies, []))
     .sort((a, b) => b.lastActivityAt.localeCompare(a.lastActivityAt));
 }

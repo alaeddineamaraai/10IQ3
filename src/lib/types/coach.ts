@@ -29,6 +29,16 @@ export type Outreach = {
 };
 
 /** A reply received via Resend Inbound, threaded to one outreach row. */
+export type OutreachFollowup = {
+  id: string;
+  outreach_id: string;
+  subject: string | null;
+  body: string | null;
+  sent_at: string;
+  resend_email_id: string | null;
+};
+
+/** A reply received via Resend Inbound, threaded to one outreach row. */
 export type OutreachReply = {
   id: string;
   outreach_id: string;
