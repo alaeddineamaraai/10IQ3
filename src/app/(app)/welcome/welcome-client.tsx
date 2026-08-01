@@ -1,16 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-import { useTour } from "@/components/welcome/tour-context";
-
-/** Landing at /welcome kicks off the hybrid product tour. The tour overlay and
- * state live in the (app) layout's TourRoot, so the tour keeps running as it
- * navigates through the real app pages after this route unmounts. */
 export function WelcomeClient() {
-  const { start } = useTour();
+  const router = useRouter();
   useEffect(() => {
-    start();
-  }, [start]);
+    router.replace("/dashboard");
+  }, [router]);
   return null;
 }
