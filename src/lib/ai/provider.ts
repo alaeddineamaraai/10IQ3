@@ -64,7 +64,7 @@ async function callNvidia(system: string, messages: ChatMessage[]): Promise<stri
       // emits a hidden "thinking" pass before its final answer; we only
       // want the final answer, and a smaller budget keeps latency sane
       // for interactive use (email drafts, chat replies).
-      chat_template_kwargs: { enable_thinking: true, reasoning_budget: 1024 },
+      chat_template_kwargs: { enable_thinking: false },
     }),
   });
 
@@ -74,12 +74,7 @@ async function callNvidia(system: string, messages: ChatMessage[]): Promise<stri
 
   const data = await res.json();
   const message = data.choices?.[0]?.message;
-  // Reasoning models return their chain-of-thought separately from the
-  // final answer (message.reasoning_content vs message.content) — only
-  // the final content should ever reach the user.
   let text: string = message?.content ?? "";
-  // Some reasoning models inline <think>...</think> instead of using a
-  // separate field; strip it defensively so it never leaks into output.
   text = text.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
   return text;
 }
@@ -264,7 +259,7 @@ async function* streamNvidia(system: string, messages: ChatMessage[]): AsyncGene
       temperature: 0.6,
       top_p: 0.95,
       max_tokens: 4096,
-      chat_template_kwargs: { enable_thinking: true, reasoning_budget: 1024 },
+      chat_template_kwargs: { enable_thinking: false },
       stream: true,
     }),
   });
