@@ -207,7 +207,7 @@ export function SettingsClient({ profile, stats }: { profile: AthleteProfile; st
           <p className="text-sm text-muted-foreground">
             Choose how Netset looks — your preference is saved on this device.
           </p>
-          <ThemeToggle variant="grid" />
+          <ThemeToggle variant="grid" plan={profile.plan} />
         </GlassCardContent>
       </GlassCard>
 
