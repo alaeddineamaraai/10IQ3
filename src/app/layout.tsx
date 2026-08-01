@@ -32,9 +32,9 @@ export const metadata: Metadata = {
   description:
     "AI-personalized recruiting emails to 1,800+ college tennis coaches.",
   icons: {
-    icon: "/logo.png",
-    shortcut: "/logo.png",
-    apple: "/logo.png",
+    icon: "/logo-green.png",
+    shortcut: "/logo-green.png",
+    apple: "/logo-green.png",
   },
 };
 
