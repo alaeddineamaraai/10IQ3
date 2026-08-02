@@ -57,7 +57,7 @@ export default async function AppLayout({
       <div className="shell-panel flex overflow-hidden rounded-none" style={{ height: "var(--full-h, 100vh)" }}>
           <aside
             style={{ viewTransitionName: "site-sidebar" }}
-            className="hidden w-[16.5rem] shrink-0 overflow-y-auto border-r border-border/60 lg:block"
+            className="hidden w-[16.5rem] shrink-0 overflow-visible border-r border-border/60 lg:block"
           >
             <AppSidebar profile={profile} unreadCount={unreadCount} />
           </aside>
