@@ -205,8 +205,13 @@ export function ProfileMenu({
             <span className="max-w-full truncate text-sm font-medium">
               {profile.name ?? "Your account"}
             </span>
-            <span className="max-w-full truncate text-xs text-muted-foreground">
-              {profile.email}
+            <span className="flex items-center gap-1.5">
+              <span className="max-w-full truncate text-xs text-muted-foreground">
+                {profile.email}
+              </span>
+              <span className="shrink-0 rounded-full bg-primary/15 px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-primary">
+                {profile.plan}
+              </span>
             </span>
           </span>
         )}

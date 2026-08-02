@@ -46,7 +46,7 @@ type CheckoutTarget =
   | { type: "plan"; plan: Plan }
   | { type: "credits"; quantity: number };
 
-export function PaywallClient({ currentPlan }: { currentPlan: Plan }) {
+export function PaywallClient({ currentPlan, promoExpiresAt }: { currentPlan: Plan; promoExpiresAt?: string | null }) {
   const { resolvedTheme } = useTheme();
   const [checkoutTarget, setCheckoutTarget] = useState<CheckoutTarget | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -171,6 +171,16 @@ export function PaywallClient({ currentPlan }: { currentPlan: Plan }) {
                   ${plan.priceMonthly}
                   <span className="text-sm font-normal tracking-normal text-muted-foreground">/mo</span>
                 </p>
+                {isCurrent && promoExpiresAt && plan.id !== "free" && (
+                  <p className="text-xs text-muted-foreground">
+                    Trial ends{" "}
+                    {new Date(promoExpiresAt).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </p>
+                )}
               </GlassCardHeader>
               <GlassCardContent>
                 <ul className="flex flex-col gap-2 text-sm">
