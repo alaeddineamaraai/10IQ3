@@ -76,7 +76,7 @@ export function ProfileMenu({
   }
 
   function closeSoon() {
-    closeTimer.current = setTimeout(() => setOpen(false), 150);
+    closeTimer.current = setTimeout(() => setOpen(false), 3000);
   }
 
   async function handleSignOut() {
@@ -220,7 +220,7 @@ export function ProfileMenu({
       <div
         aria-hidden={!open}
         className={cn(
-          "surface-card absolute z-[60] w-80 overflow-hidden p-0 transition-smooth",
+          "surface-card absolute z-[9999] w-80 overflow-hidden p-0 transition-smooth",
           variant === "dock" ? "left-full top-0 ml-3 origin-top-left"
           : variant === "sidebar" ? "bottom-full left-0 mb-2 origin-bottom-left"
           : "right-0 top-full mt-2 origin-top-right",
