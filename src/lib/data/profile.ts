@@ -1,7 +1,23 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import type { AthleteProfile } from "@/lib/types/profile";
+import type { AthleteProfile, Plan } from "@/lib/types/profile";
+
+const PLAN_RANK: Record<Plan, number> = { free: 0, pro: 1, elite: 2 };
+
+function applyPromo(profile: AthleteProfile): AthleteProfile {
+  if (
+    profile.promo_plan &&
+    profile.promo_expires_at &&
+    new Date(profile.promo_expires_at) > new Date()
+  ) {
+    const promoRank = PLAN_RANK[profile.promo_plan as Plan] ?? 0;
+    if (promoRank > PLAN_RANK[profile.plan]) {
+      return { ...profile, plan: profile.promo_plan as Plan };
+    }
+  }
+  return profile;
+}
 
 export async function getProfile(
   supabase: SupabaseClient,
@@ -14,7 +30,7 @@ export async function getProfile(
     .maybeSingle<AthleteProfile>();
 
   if (error) throw error;
-  if (data) return data;
+  if (data) return applyPromo(data);
 
   // Self-heal: the auth session is valid but the users row is missing
   // (failed insert during OAuth signup, partial account deletion, etc.).
@@ -39,7 +55,7 @@ export async function getProfile(
     .select("*")
     .single<AthleteProfile>();
 
-  if (!insertError) return created;
+  if (!insertError) return created ? applyPromo(created) : null;
 
   // 23505 = unique email violation: a row with this email already exists
   // under a previous auth identity (account deleted and re-created).
@@ -53,7 +69,7 @@ export async function getProfile(
       .single<AthleteProfile>();
 
     if (adoptError) throw adoptError;
-    return adopted;
+    return adopted ? applyPromo(adopted) : null;
   }
 
   throw insertError;
@@ -90,6 +106,8 @@ export function getSampleProfile(): AthleteProfile {
     stripe_customer_id: null,
     stripe_subscription_id: null,
     subscription_status: null,
+    promo_plan: null,
+    promo_expires_at: null,
     created_at: new Date().toISOString(),
   };
 }

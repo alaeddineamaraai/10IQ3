@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
-import { Check } from "lucide-react";
+import { Check, Tag } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import {
   GlassCard,
@@ -52,6 +53,9 @@ export function PaywallClient({ currentPlan }: { currentPlan: Plan }) {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [creditsQuantity, setCreditsQuantity] = useState(50);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoStatus, setPromoStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [promoMessage, setPromoMessage] = useState<string | null>(null);
 
   const currentPlanDef = getPlan(currentPlan);
   const canBuyCredits = currentPlanDef?.overagePricePerEmailCents != null;
@@ -109,6 +113,30 @@ export function PaywallClient({ currentPlan }: { currentPlan: Plan }) {
   }
 
   const creditsPriceCents = (currentPlanDef?.overagePricePerEmailCents ?? 0) * creditsQuantity;
+
+  async function redeemPromo() {
+    if (!promoCode.trim()) return;
+    setPromoStatus("loading");
+    setPromoMessage(null);
+
+    const res = await fetch("/api/promo/redeem", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: promoCode.trim() }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      setPromoStatus("error");
+      setPromoMessage(data.error ?? "Invalid code");
+    } else {
+      setPromoStatus("success");
+      const expires = new Date(data.expiresAt).toLocaleDateString("en-US", {
+        month: "short", day: "numeric", year: "numeric",
+      });
+      setPromoMessage(`Pro unlocked until ${expires} — refresh to see your updated plan.`);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -213,6 +241,46 @@ export function PaywallClient({ currentPlan }: { currentPlan: Plan }) {
           </GlassCardContent>
         </GlassCard>
       )}
+
+      <GlassCard>
+        <GlassCardHeader>
+          <div className="flex items-center gap-2">
+            <Tag className="size-4 text-muted-foreground" />
+            <GlassCardTitle>Promo code</GlassCardTitle>
+          </div>
+          <GlassCardDescription>Have a code? Enter it below to unlock a free trial.</GlassCardDescription>
+        </GlassCardHeader>
+        <GlassCardContent>
+          {promoStatus === "success" ? (
+            <p className="text-sm font-medium text-primary">{promoMessage}</p>
+          ) : (
+            <div className="flex gap-2">
+              <Input
+                placeholder="e.g. SUMMER25"
+                value={promoCode}
+                onChange={(e) => {
+                  setPromoCode(e.target.value);
+                  setPromoStatus("idle");
+                  setPromoMessage(null);
+                }}
+                onKeyDown={(e) => e.key === "Enter" && redeemPromo()}
+                className="max-w-xs"
+                disabled={promoStatus === "loading"}
+              />
+              <Button
+                variant="outline"
+                onClick={redeemPromo}
+                disabled={!promoCode.trim() || promoStatus === "loading"}
+              >
+                {promoStatus === "loading" ? "Applying…" : "Apply"}
+              </Button>
+            </div>
+          )}
+          {promoStatus === "error" && promoMessage && (
+            <p className="mt-2 text-xs text-destructive">{promoMessage}</p>
+          )}
+        </GlassCardContent>
+      </GlassCard>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 

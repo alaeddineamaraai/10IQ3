@@ -30,6 +30,8 @@ export type AthleteProfile = {
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   subscription_status: string | null;
+  promo_plan: string | null;
+  promo_expires_at: string | null;
   created_at: string;
 };
 
