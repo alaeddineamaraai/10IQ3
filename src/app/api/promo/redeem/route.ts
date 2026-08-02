@@ -7,7 +7,7 @@ type PromoCode = {
 };
 
 const PROMO_CODES: Record<string, PromoCode> = {
-  NASHITA10: { plan: "pro", durationDays: 7 },
+  TFORT: { plan: "pro", durationDays: 7 },
 };
 
 export async function POST(request: Request) {
