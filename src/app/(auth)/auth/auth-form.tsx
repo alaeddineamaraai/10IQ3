@@ -36,6 +36,7 @@ export function AuthForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [marketingConsent, setMarketingConsent] = useState(true);
+  const [tosAccepted, setTosAccepted] = useState(false);
   const [pending, setPending] = useState(false);
   const [oauthPending, setOauthPending] = useState<"google" | "apple" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -305,6 +306,25 @@ export function AuthForm() {
                 <label className="flex cursor-pointer items-start gap-2.5">
                   <input
                     type="checkbox"
+                    required
+                    checked={tosAccepted}
+                    onChange={(e) => setTosAccepted(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-primary"
+                  />
+                  <span className="text-xs leading-snug text-muted-foreground">
+                    I agree to the{" "}
+                    <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">
+                      Terms of Service
+                    </a>{" "}
+                    and{" "}
+                    <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">
+                      Privacy Policy
+                    </a>.
+                  </span>
+                </label>
+                <label className="flex cursor-pointer items-start gap-2.5">
+                  <input
+                    type="checkbox"
                     checked={marketingConsent}
                     onChange={(e) => setMarketingConsent(e.target.checked)}
                     className="mt-0.5 h-4 w-4 shrink-0 accent-primary"
@@ -314,7 +334,7 @@ export function AuthForm() {
                   </span>
                 </label>
                 {error && <p className="text-sm text-destructive">{error}</p>}
-                <Button type="submit" disabled={pending} className="w-full">
+                <Button type="submit" disabled={pending || !tosAccepted} className="w-full">
                   {pending ? "Creating account…" : "Create account"}
                 </Button>
               </form>

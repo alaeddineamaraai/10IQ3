@@ -64,10 +64,47 @@ const SECTIONS: { title: string; body: React.ReactNode }[] = [
   {
     title: "Cookies",
     body: (
-      <p>
-        We use a small number of cookies, all functional: Supabase Auth sets a session cookie so you stay signed in.
-        We don&apos;t use advertising or third-party tracking cookies.
-      </p>
+      <>
+        <p>We use a small number of strictly necessary cookies. We do not use advertising or third-party tracking cookies.</p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-border text-left text-foreground">
+                <th className="pb-2 pr-4 font-semibold">Cookie</th>
+                <th className="pb-2 pr-4 font-semibold">Type</th>
+                <th className="pb-2 pr-4 font-semibold">Purpose</th>
+                <th className="pb-2 pr-4 font-semibold">Duration</th>
+                <th className="pb-2 font-semibold">How to opt out</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              <tr>
+                <td className="py-2 pr-4 font-mono">sb-*-auth-token</td>
+                <td className="py-2 pr-4">Essential</td>
+                <td className="py-2 pr-4">Keeps you signed in (Supabase Auth session)</td>
+                <td className="py-2 pr-4">Session / up to 1 week</td>
+                <td className="py-2">Sign out, or clear site data in your browser settings — note this will sign you out</td>
+              </tr>
+              <tr>
+                <td className="py-2 pr-4 font-mono">sb-*-auth-token-code-verifier</td>
+                <td className="py-2 pr-4">Essential</td>
+                <td className="py-2 pr-4">PKCE code verifier for OAuth sign-in security</td>
+                <td className="py-2 pr-4">Session</td>
+                <td className="py-2">Deleted automatically after sign-in completes</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Netset does not currently respond to Do Not Track (DNT) browser signals, as no uniform standard for DNT
+          exists. You can manage or delete cookies at any time through your browser settings — instructions for{" "}
+          <a className="text-primary hover:underline" href="https://support.google.com/chrome/answer/95647" target="_blank" rel="noopener noreferrer">Chrome</a>,{" "}
+          <a className="text-primary hover:underline" href="https://support.mozilla.org/en-US/kb/clear-cookies-and-site-data-firefox" target="_blank" rel="noopener noreferrer">Firefox</a>,{" "}
+          <a className="text-primary hover:underline" href="https://support.apple.com/guide/safari/manage-cookies-sfri11471/mac" target="_blank" rel="noopener noreferrer">Safari</a>, and{" "}
+          <a className="text-primary hover:underline" href="https://support.microsoft.com/en-us/microsoft-edge/delete-cookies-in-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09" target="_blank" rel="noopener noreferrer">Edge</a>.
+          Disabling essential cookies will sign you out and prevent you from using the Service.
+        </p>
+      </>
     ),
   },
   {
@@ -81,11 +118,48 @@ const SECTIONS: { title: string; body: React.ReactNode }[] = [
     ),
   },
   {
+    title: "Security",
+    body: (
+      <p>
+        All data is transmitted over HTTPS/TLS. Data at rest is encrypted by Supabase (AES-256). We do not store
+        your payment card details — payments are processed entirely by PayPal. In the event of a data breach that
+        affects your personal information, we will notify you by email within a reasonable time and, where required
+        by law, within 72 hours of becoming aware of the breach.
+      </p>
+    ),
+  },
+  {
+    title: "International transfers",
+    body: (
+      <p>
+        Netset is operated from the United States. Your data is stored and processed in the US by Supabase (hosted
+        on AWS). If you access the Service from the European Economic Area, UK, or other regions with data-transfer
+        restrictions, your information may be transferred to and processed in the US. By using the Service, you
+        consent to this transfer. We rely on standard contractual clauses and, where applicable, adequacy decisions
+        as the legal mechanism for such transfers.
+      </p>
+    ),
+  },
+  {
     title: "Changes to this policy",
     body: (
       <p>
         If we make material changes to this policy, we&apos;ll update the effective date below and, where required,
         notify you directly.
+      </p>
+    ),
+  },
+  {
+    title: "California residents (CCPA)",
+    body: (
+      <p>
+        Netset does not sell or share personal information as defined under the California Consumer Privacy Act
+        (CCPA/CPRA). California residents have the right to know what personal information we collect, request
+        deletion of their data, and opt out of any sale or sharing (none occurs). To exercise these rights, email{" "}
+        <a className="text-primary hover:underline" href="mailto:privacy@netset.pro">
+          privacy@netset.pro
+        </a>
+        . We will respond within 45 days.
       </p>
     ),
   },
@@ -97,7 +171,7 @@ const SECTIONS: { title: string; body: React.ReactNode }[] = [
         <a className="text-primary hover:underline" href="mailto:privacy@netset.pro">
           privacy@netset.pro
         </a>
-        .
+        . We respond within 30 days.
       </p>
     ),
   },
