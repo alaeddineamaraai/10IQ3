@@ -140,7 +140,7 @@ export function SchoolsGrid({ schools }: { schools: SchoolDetail[] }) {
             onChange={(e) => setSearch(e.target.value)}
             className="h-9 min-w-[160px] flex-1"
           />
-          <Select value={division} onValueChange={setDivision}>
+          <Select value={division} onValueChange={(v) => setDivision(v ?? ALL)}>
             <SelectTrigger className="h-9 w-[140px]">
               <SelectValue placeholder="All divisions" />
             </SelectTrigger>

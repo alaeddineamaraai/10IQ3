@@ -58,7 +58,7 @@ export function SchoolClimateChart({ data }: { data: ClimateData }) {
             borderRadius: "var(--radius-md)",
             fontSize: 12,
           }}
-          formatter={(value: number) => [`${value}°F`, "Avg temp"]}
+          formatter={(value) => [`${value}°F`, "Avg temp"]}
         />
         <Bar dataKey="temp" radius={[6, 6, 0, 0]}>
           {chartData.map((entry) => (

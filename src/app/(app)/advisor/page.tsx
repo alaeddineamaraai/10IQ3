@@ -4,7 +4,6 @@ import { Sparkles } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getDashboardData, getSampleDashboardData } from "@/lib/data/dashboard";
 import { getProfile } from "@/lib/data/profile";
-import { Button } from "@/components/ui/button";
 import { GlassCard, GlassCardContent } from "@/components/glass-card";
 import { AdvisorClient, AdvisorModeNotice } from "./advisor-client";
 
@@ -49,9 +48,12 @@ export default async function AdvisorPage() {
                 powered by AI — available on Pro and Elite plans.
               </p>
             </div>
-            <Button asChild size="lg">
-              <Link href="/paywall">Upgrade to Pro</Link>
-            </Button>
+            <Link
+              href="/paywall"
+              className="inline-flex items-center justify-center rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-smooth hover:opacity-90"
+            >
+              Upgrade to Pro
+            </Link>
           </GlassCardContent>
         </GlassCard>
       ) : (

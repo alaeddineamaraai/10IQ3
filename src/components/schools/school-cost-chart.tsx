@@ -64,7 +64,7 @@ export function SchoolCostChart({ data }: { data: CostData }) {
             borderRadius: "var(--radius-md)",
             fontSize: 12,
           }}
-          formatter={(value: number) => [fmt.format(value)]}
+          formatter={(value) => [fmt.format(Number(value))]}
         />
         <Legend
           wrapperStyle={{ fontSize: 11, color: "var(--muted-foreground)", paddingTop: 4 }}
