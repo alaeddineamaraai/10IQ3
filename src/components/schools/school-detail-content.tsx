@@ -27,6 +27,8 @@ import {
 } from "@/components/glass-card";
 import { StatCard } from "@/components/stat-card";
 import { SchoolUtrChart } from "@/components/schools/school-utr-chart";
+import { SchoolCostChart } from "@/components/schools/school-cost-chart";
+import { SchoolClimateChart } from "@/components/schools/school-climate-chart";
 import type { SchoolCoach, SchoolDetail, SchoolInfo } from "@/lib/types/school";
 
 const currency = new Intl.NumberFormat("en-US", {
@@ -257,6 +259,16 @@ function AcademicsCard({ info }: { info: SchoolInfo }) {
       </GlassCardHeader>
       <GlassCardContent className="flex flex-col gap-4">
         {hasCosts && (
+          <SchoolCostChart
+            data={{
+              tuition_in_state: info.tuition_in_state,
+              tuition_out_of_state: info.tuition_out_of_state,
+              room_and_board: info.room_and_board,
+            }}
+          />
+        )}
+
+        {hasCosts && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div className="flex flex-col gap-0.5">
               <span className="text-xs text-muted-foreground">In-state</span>
@@ -333,6 +345,13 @@ function LocationCard({ info }: { info: SchoolInfo }) {
         </GlassCardTitle>
       </GlassCardHeader>
       <GlassCardContent className="flex flex-col gap-3 text-sm">
+        <SchoolClimateChart
+          data={{
+            avg_temp_jan_f: info.avg_temp_jan_f,
+            avg_temp_july_f: info.avg_temp_july_f,
+          }}
+        />
+
         {hasAirport && (
           <div className="flex items-start gap-2">
             <Plane className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
