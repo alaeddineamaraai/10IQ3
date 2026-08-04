@@ -6,13 +6,13 @@ import {
   Thermometer,
 } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import {
   GlassCard,
   GlassCardContent,
   GlassCardHeader,
   GlassCardTitle,
 } from "@/components/glass-card";
-import { StatCard } from "@/components/stat-card";
 import { SchoolCostChart } from "@/components/schools/school-cost-chart";
 import { SchoolClimateChart } from "@/components/schools/school-climate-chart";
 import { SchoolProgramTabs } from "@/components/schools/school-program-tabs";
@@ -264,12 +264,70 @@ export function SchoolDetailContent({ detail }: { detail: SchoolDetail }) {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="Coaches" value={detail.coach_count} />
-        <StatCard label="Sent" value={sentCount} />
-        <StatCard label="Opened" value={openedCount} />
-        <StatCard label="Replied" value={repliedCount} />
-      </div>
+      {/* Engagement summary */}
+      <GlassCard>
+        <GlassCardContent className="p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+            {/* Primary: coaches count */}
+            <div className="flex flex-col">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Coaches on Staff
+              </span>
+              <span className="mt-1 text-5xl font-bold tracking-tight tabular-nums">
+                {detail.coach_count}
+              </span>
+            </div>
+
+            {/* Divider */}
+            <div className="hidden w-px self-stretch bg-border sm:block" />
+            <div className="h-px w-full bg-border sm:hidden" />
+
+            {/* Outreach stats */}
+            <div className="flex flex-1 flex-col gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Outreach
+              </span>
+              <div className="flex gap-5">
+                {(
+                  [
+                    { label: "Sent", value: sentCount, active: "text-blue-500" },
+                    { label: "Opened", value: openedCount, active: "text-emerald-500" },
+                    { label: "Replied", value: repliedCount, active: "text-primary" },
+                  ] as const
+                ).map(({ label, value, active }) => (
+                  <div key={label} className="flex flex-col">
+                    <span
+                      className={cn(
+                        "text-2xl font-semibold tabular-nums",
+                        value > 0 ? active : "text-foreground"
+                      )}
+                    >
+                      {value}
+                    </span>
+                    <span className="text-xs text-muted-foreground">{label}</span>
+                  </div>
+                ))}
+              </div>
+
+              {detail.coach_count > 0 && (
+                <div className="flex flex-col gap-1">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary/70 transition-all"
+                      style={{
+                        width: `${Math.min(100, Math.round((sentCount / detail.coach_count) * 100))}%`,
+                      }}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {Math.round((sentCount / detail.coach_count) * 100)}% of coaches contacted
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </GlassCardContent>
+      </GlassCard>
 
       <SchoolProgramTabs programs={programs} />
 
