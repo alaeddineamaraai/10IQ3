@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, ChevronDown, ChevronUp, Circle, X } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronUp, X } from "lucide-react";
 
 import { GlassCard, GlassCardContent } from "@/components/glass-card";
 import { cn } from "@/lib/utils";
@@ -136,43 +136,63 @@ export function OnboardingChecklist({ profileComplete, emailsSent, replied }: Pr
 
         {/* Step list */}
         {!collapsed && (
-          <div className="flex flex-col divide-y divide-border/50">
-            {steps.map((step) => (
-              <div
-                key={step.id}
-                className={cn(
-                  "flex items-start gap-3 py-3 first:pt-0 last:pb-0",
-                  step.done && "opacity-50",
-                )}
-              >
-                {step.done ? (
-                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
-                ) : (
-                  <Circle className="mt-0.5 size-4 shrink-0 text-muted-foreground/40" />
-                )}
-                <div className="min-w-0 flex-1">
-                  <p
-                    className={cn(
-                      "text-sm font-medium leading-snug",
-                      step.done && "line-through decoration-muted-foreground/40",
+          <div className="flex flex-col gap-1">
+            {steps.map((step, index) => {
+              const nextIndex = steps.findIndex((s) => !s.done);
+              const isNext = index === nextIndex;
+              const isPast = step.done;
+
+              return (
+                <div
+                  key={step.id}
+                  className={cn(
+                    "flex items-start gap-3 rounded-xl p-3 transition-colors",
+                    isNext && "bg-primary/5 ring-1 ring-inset ring-primary/10",
+                    isPast && "opacity-50",
+                  )}
+                >
+                  {isPast ? (
+                    <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/15">
+                      <CheckCircle2 className="size-3 text-primary" />
+                    </div>
+                  ) : (
+                    <div
+                      className={cn(
+                        "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold",
+                        isNext
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground/60",
+                      )}
+                    >
+                      {index + 1}
+                    </div>
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className={cn(
+                        "text-sm font-medium leading-snug",
+                        isPast && "line-through decoration-muted-foreground/40",
+                      )}
+                    >
+                      {step.title}
+                    </p>
+                    {isNext && (
+                      <p className="mt-0.5 text-xs text-muted-foreground">{step.description}</p>
                     )}
-                  >
-                    {step.title}
-                  </p>
-                  {!step.done && (
-                    <p className="mt-0.5 text-xs text-muted-foreground">{step.description}</p>
+                  </div>
+
+                  {isNext && (
+                    <Link
+                      href={step.href}
+                      className="shrink-0 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                    >
+                      {step.cta.replace(" →", "")}
+                    </Link>
                   )}
                 </div>
-                {!step.done && (
-                  <Link
-                    href={step.href}
-                    className="shrink-0 text-xs font-medium text-primary transition-smooth hover:underline"
-                  >
-                    {step.cta}
-                  </Link>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </GlassCardContent>

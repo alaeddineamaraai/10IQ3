@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 import type { ActivityPoint } from "@/lib/types/dashboard";
@@ -90,22 +91,29 @@ export function ActivityBars({ data }: { data: ActivityPoint[] }) {
 
               <span
                 className={cn(
-                  "text-xs tabular-nums transition-smooth",
+                  "text-[10px] tabular-nums transition-smooth",
                   isActive ? "font-semibold text-foreground" : "text-muted-foreground"
                 )}
               >
-                {point.label.slice(0, 1)}
+                {point.label.slice(0, 3)}
               </span>
             </div>
           );
         })}
       </div>
 
-      <div className="flex items-baseline gap-2 border-t border-border pt-3">
-        <span className="text-lg font-semibold tabular-nums">{total}</span>
-        <span className="text-xs text-muted-foreground">
-          {METRICS.find((m) => m.key === metric)?.label.toLowerCase()} in the last 7 days
-        </span>
+      <div className="flex items-center justify-between border-t border-border pt-3">
+        <div className="flex items-baseline gap-2">
+          <span className="text-lg font-semibold tabular-nums">{total}</span>
+          <span className="text-xs text-muted-foreground">
+            {METRICS.find((m) => m.key === metric)?.label.toLowerCase()} in the last 7 days
+          </span>
+        </div>
+        {total === 0 && (
+          <Link href="/compose" className="text-xs font-medium text-primary transition-colors hover:underline">
+            Send first email →
+          </Link>
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,9 @@
 "use client";
 
-import { Mail } from "lucide-react";
+import Link from "next/link";
+import { Mail, Plus } from "lucide-react";
 
+import { buttonVariants } from "@/components/ui/button";
 import { ExpandableCard, type ExpandableCardItem } from "@/components/ui/expandable-card";
 import { EmailDetailContent } from "@/components/dashboard/email-detail-content";
 import type { SentEmailRow } from "@/lib/types/dashboard";
@@ -11,8 +13,23 @@ const isSampleMode = !process.env.NEXT_PUBLIC_SUPABASE_URL;
 export function SentEmailsList({ rows }: { rows: SentEmailRow[] }) {
   if (rows.length === 0) {
     return (
-      <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
-        No emails sent yet.
+      <div className="flex flex-col items-center gap-3 py-10 text-center">
+        <div className="flex size-11 items-center justify-center rounded-full bg-muted">
+          <Mail className="size-5 text-muted-foreground" />
+        </div>
+        <div className="flex flex-col gap-1">
+          <p className="text-sm font-medium">No outreach yet</p>
+          <p className="max-w-[240px] text-xs text-muted-foreground">
+            Your sent emails and coach responses will appear here once you start reaching out.
+          </p>
+        </div>
+        <Link
+          href="/compose"
+          className={buttonVariants({ size: "sm", variant: "outline", className: "mt-1 rounded-full" })}
+        >
+          <Plus className="size-3.5" />
+          Send your first email
+        </Link>
       </div>
     );
   }

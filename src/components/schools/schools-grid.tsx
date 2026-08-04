@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Filter, Mail, Search, Star, X } from "lucide-react";
@@ -140,6 +140,30 @@ export function SchoolsGrid({
   const [sort, setSort]               = useState<SortKey>("div_asc");
   const [showFavOnly, setShowFavOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [filterVisible, setFilterVisible] = useState(true);
+  const barRef = useRef<HTMLDivElement>(null);
+  const lastScrollY = useRef(0);
+  const ticking = useRef(false);
+
+  useEffect(() => {
+    const scrollEl = barRef.current?.closest<HTMLElement>(".overflow-y-auto") ?? null;
+    if (!scrollEl) return;
+
+    function onScroll() {
+      if (ticking.current) return;
+      ticking.current = true;
+      requestAnimationFrame(() => {
+        const y = scrollEl!.scrollTop;
+        if (y - lastScrollY.current > 6 && y > 80) setFilterVisible(false);
+        else if (lastScrollY.current - y > 2) setFilterVisible(true);
+        lastScrollY.current = y;
+        ticking.current = false;
+      });
+    }
+
+    scrollEl.addEventListener("scroll", onScroll, { passive: true });
+    return () => scrollEl.removeEventListener("scroll", onScroll);
+  }, []);
 
   const { favorites, toggle: toggleFav } = useFavoriteSchools();
 
@@ -310,7 +334,15 @@ export function SchoolsGrid({
       </div>
 
       {/* ── Sticky filter bar ──────────────────────────────── */}
-      <div className="sticky top-16 z-30 -mx-4 flex flex-col gap-2 px-4 pb-3 pt-1 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
+      <div
+        ref={barRef}
+        className={cn(
+          "sticky top-16 z-30 -mx-4 flex flex-col gap-2 px-4 pb-3 pt-1 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10",
+          "transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+          filterVisible ? "translate-y-0" : "-translate-y-[200%]",
+        )}
+        style={{ background: "var(--panel)" }}
+      >
 
         {/* Top row: mobile toggle + desktop filters + shortlist */}
         <div className="flex items-center gap-2">

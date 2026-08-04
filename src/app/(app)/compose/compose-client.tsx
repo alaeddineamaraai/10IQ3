@@ -3,18 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { PartyPopper, PenSquare, Send, Sparkles, X } from "lucide-react";
+import { ChevronRight, PartyPopper, PenSquare, Send, Sparkles, X } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   GlassCard,
@@ -40,11 +33,6 @@ type Draft = {
 const ALL = "all";
 const MAX_VISIBLE = 100;
 
-// Five distinct, full-length variants so the demo doesn't look like the same
-// email copy-pasted to every coach — each leads with a different angle
-// (competitive results, academics, film, program fit, recruiting timeline).
-// Picked deterministically per coach (stable across re-generates for the
-// same coach, varied across different coaches) via a simple string hash.
 const SAMPLE_VARIANTS: ((coach: Coach, lastName: string) => { subject: string; body: string })[] = [
   (coach, lastName) => ({
     subject: `${coach.school_name} ${coach.division} — recruiting interest from a [grad year] player`,
@@ -119,10 +107,6 @@ const SAMPLE_VARIANTS: ((coach: Coach, lastName: string) => { subject: string; b
   }),
 ];
 
-// FNV-1a, not a plain "hash*31+c" accumulator — with 5 variants, a
-// multiplier of 31 (≡ 1 mod 5) makes the multiply step contribute nothing to
-// the result mod 5, so nearly every sample email clustered onto the same
-// variant instead of spreading across all five.
 function sampleVariantIndex(email: string): number {
   let hash = 0x811c9dc5;
   for (let i = 0; i < email.length; i++) {
@@ -143,6 +127,19 @@ function outreachStatus(coach: CoachWithOutreach) {
   if (coach.outreach?.opened) return "opened";
   if (coach.outreach?.email_sent) return "sent";
   return null;
+}
+
+const DIV_LABELS: Record<string, string> = {
+  all: "All",
+  "NCAA Division I": "D1",
+  "NCAA Division II": "D2",
+  "NCAA Division III": "D3",
+  NAIA: "NAIA",
+  JUCO: "JUCO",
+};
+
+function divLabel(d: string) {
+  return DIV_LABELS[d] ?? d;
 }
 
 export function ComposeClient({
@@ -194,10 +191,25 @@ export function ComposeClient({
 
   const visible = filtered.slice(0, MAX_VISIBLE);
 
+  const allVisibleSelected =
+    visible.length > 0 && visible.every((c) => selected.has(c.email));
+  const someVisibleSelected =
+    visible.some((c) => selected.has(c.email)) && !allVisibleSelected;
+
+  function toggleAllVisible() {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allVisibleSelected) {
+        visible.forEach((c) => next.delete(c.email));
+      } else {
+        visible.forEach((c) => next.add(c.email));
+        if (visible.length > 0) setMobileTab("drafts");
+      }
+      return next;
+    });
+  }
+
   useEffect(() => {
-    // Sync drafts to the selected-coach set while preserving in-progress edits
-    // for coaches that stay selected — not expressible as a pure render-time
-    // derivation since draft.subject/body are independently user-editable.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setDrafts((prev) => {
       const prevMap = new Map(prev.map((d) => [d.coach.email, d]));
@@ -254,7 +266,6 @@ export function ComposeClient({
         return;
       }
 
-      // Subject arrives instantly via header — no need to wait for the body stream
       const subject = decodeURIComponent(res.headers.get("X-Draft-Subject") ?? "");
       if (subject) updateDraft(email, { subject });
 
@@ -327,307 +338,422 @@ export function ComposeClient({
 
   return (
     <>
-    <TourDemoCompose />
-    <div className="flex flex-col gap-3 md:h-[calc(100dvh-172px)] md:flex-row md:gap-4">
+      <TourDemoCompose />
+      <div className="flex flex-col gap-3 md:h-[calc(100dvh-172px)] md:flex-row md:gap-4">
 
-      {/* Mobile tab switcher */}
-      <div className="glass-card flex shrink-0 gap-1 p-1 md:hidden">
-        <button
-          onClick={() => setMobileTab("coaches")}
-          className={cn(
-            "flex-1 rounded-xl py-2 text-sm font-medium transition-smooth",
-            mobileTab === "coaches"
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground",
-          )}
-        >
-          Coaches{selected.size > 0 && ` (${selected.size})`}
-        </button>
-        <button
-          onClick={() => setMobileTab("drafts")}
-          className={cn(
-            "flex-1 rounded-xl py-2 text-sm font-medium transition-smooth",
-            mobileTab === "drafts"
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground",
-          )}
-        >
-          Drafts{drafts.length > 0 && ` (${drafts.length})`}
-        </button>
-      </div>
-
-      {/* ── LEFT: Coach selector ─────────────────────────── */}
-      <div
-        className={cn(
-          "glass-card h-[calc(100dvh-320px)] w-full flex-col overflow-hidden md:h-auto md:w-72 md:shrink-0 md:flex",
-          mobileTab === "coaches" ? "flex" : "hidden",
-        )}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <span className="text-sm font-semibold">
-            Coaches
-            {filtered.length !== coaches.length && (
-              <span className="ml-1 text-xs font-normal text-muted-foreground">
-                ({filtered.length})
-              </span>
+        {/* Mobile tab switcher */}
+        <div className="glass-card flex shrink-0 gap-1 p-1 md:hidden">
+          <button
+            onClick={() => setMobileTab("coaches")}
+            className={cn(
+              "flex-1 rounded-xl py-2 text-sm font-medium transition-smooth",
+              mobileTab === "coaches"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground",
             )}
-          </span>
-          {selected.size > 0 && (
-            <div className="flex items-center gap-1.5">
-              <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
+          >
+            Coaches{selected.size > 0 && ` (${selected.size})`}
+          </button>
+          <button
+            onClick={() => setMobileTab("drafts")}
+            className={cn(
+              "flex-1 rounded-xl py-2 text-sm font-medium transition-smooth",
+              mobileTab === "drafts"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground",
+            )}
+          >
+            Drafts{drafts.length > 0 && ` (${drafts.length})`}
+          </button>
+        </div>
+
+        {/* ── LEFT: Coach selector ─────────────────────────── */}
+        <div
+          className={cn(
+            "glass-card h-[calc(100dvh-320px)] w-full flex-col overflow-hidden md:h-auto md:w-72 md:shrink-0 md:flex",
+            mobileTab === "coaches" ? "flex" : "hidden",
+          )}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold">Coaches</span>
+              <span
+                className={cn(
+                  "rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums transition-smooth",
+                  selected.size > 0
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground",
+                )}
+              >
                 {selected.size}
               </span>
+            </div>
+            {selected.size > 0 && (
               <button
                 onClick={() => setSelected(new Set())}
-                className="rounded-full p-0.5 text-muted-foreground transition-smooth hover:text-foreground"
-                title="Clear selection"
+                className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] text-muted-foreground transition-smooth hover:text-foreground"
+                title="Clear all selections"
               >
-                <X className="size-3.5" />
+                <X className="size-3" />
+                Clear
               </button>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
 
-        {/* Filters */}
-        <div className="flex flex-col gap-2 border-b border-border p-3">
-          <Input
-            placeholder="Search coach or school…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="h-8 text-sm"
-          />
-          <Select
-            items={{ [ALL]: "All divisions", ...Object.fromEntries(divisions.map((d) => [d, d])) }}
-            value={division}
-            onValueChange={(v) => setDivision(v ?? ALL)}
-          >
-            <SelectTrigger className="h-8 text-sm">
-              <SelectValue placeholder="Division" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>All divisions</SelectItem>
-              {divisions.map((d) => (
-                <SelectItem key={d} value={d}>
-                  {d}
-                </SelectItem>
+          {/* Filters */}
+          <div className="flex flex-col gap-2 border-b border-border p-3">
+            <Input
+              placeholder="Search by name, school, or region…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-9 text-sm"
+            />
+            {/* Division pills */}
+            <div className="flex flex-wrap gap-1">
+              {[ALL, ...divisions].map((d) => (
+                <button
+                  key={d}
+                  onClick={() => setDivision(d)}
+                  className={cn(
+                    "rounded-full px-2.5 py-0.5 text-[11px] font-medium transition-smooth",
+                    division === d
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {divLabel(d)}
+                </button>
               ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Coach list */}
-        <div className="flex-1 overflow-y-auto">
-          {visible.map((coach) => {
-            const isSelected = selected.has(coach.email);
-            const status = outreachStatus(coach);
-            return (
-              <label
-                key={coach.email}
-                className={cn(
-                  "flex cursor-pointer items-start gap-3 border-b border-border/40 px-4 py-3 transition-smooth last:border-0 hover:bg-muted/40",
-                  isSelected && "bg-primary/5",
-                )}
-              >
-                <Checkbox
-                  checked={isSelected}
-                  onCheckedChange={() => toggleCoach(coach.email)}
-                  className="mt-0.5 shrink-0"
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium leading-tight">{coach.coach_name}</p>
-                  <p className="truncate text-xs text-muted-foreground">{coach.school_name}</p>
-                  <div className="mt-1 flex items-center gap-1.5">
-                    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                      {coach.division}
-                    </span>
-                    {status === "replied" && <span className="size-1.5 shrink-0 rounded-full bg-[var(--chart-1)]" />}
-                    {status === "opened"  && <span className="size-1.5 shrink-0 rounded-full bg-orange-400" />}
-                    {status === "sent"    && <span className="size-1.5 shrink-0 rounded-full bg-amber-400" />}
-                  </div>
-                </div>
-              </label>
-            );
-          })}
-          {filtered.length > MAX_VISIBLE && (
-            <p className="p-3 text-center text-xs text-muted-foreground">
-              Showing {MAX_VISIBLE} of {filtered.length} — refine your search
-            </p>
-          )}
-          {filtered.length === 0 && (
-            <p className="p-6 text-center text-xs text-muted-foreground">No coaches match.</p>
-          )}
-        </div>
-      </div>
-
-      {/* ── RIGHT: Draft panel ───────────────────────────── */}
-      <div
-        className={cn(
-          "flex-1 flex-col gap-4 overflow-y-auto pb-2 md:flex",
-          mobileTab === "drafts" ? "flex" : "hidden",
-        )}
-      >
-        {drafts.length === 0 ? (
-          <div className="glass-card flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl p-12 text-center">
-            <PenSquare className="size-8 text-muted-foreground/40" />
-            <p className="font-medium">No coaches selected</p>
-            <p className="max-w-xs text-sm text-muted-foreground">
-              Check coaches in the left panel to start drafting personalized emails.
+            </div>
+            {/* Filter summary */}
+            <p className="text-[11px] text-muted-foreground">
+              {filtered.length === coaches.length
+                ? `${coaches.length.toLocaleString()} coaches`
+                : `${filtered.length.toLocaleString()} of ${coaches.length.toLocaleString()} coaches`}
+              {filtered.length > MAX_VISIBLE && ` · showing first ${MAX_VISIBLE}`}
             </p>
           </div>
-        ) : (
-          <>
-            {/* Toolbar */}
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="text-xs text-muted-foreground">
-                {isSampleMode && "Sample mode — Send won't deliver real email."}
-                {planLimitReached && (
-                  <span className="text-destructive">
-                    Free limit reached.{" "}
-                    <a href="/paywall" className="underline">Upgrade →</a>
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                {/* Goal-gradient: show momentum on multi-coach sends */}
-                {drafts.length > 1 && sentCount > 0 ? (
-                  <div className="flex items-center gap-2">
-                    <div className="h-1.5 w-20 overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="h-full rounded-full bg-primary transition-all duration-500"
-                        style={{ width: `${(sentCount / drafts.length) * 100}%` }}
-                      />
+
+          {/* Select-all row */}
+          {visible.length > 0 && (
+            <label className="flex cursor-pointer items-center gap-3 border-b border-border/60 bg-muted/30 px-4 py-2 hover:bg-muted/50">
+              <Checkbox
+                checked={allVisibleSelected || (someVisibleSelected ? "indeterminate" : false)}
+                onCheckedChange={toggleAllVisible}
+                className="shrink-0"
+              />
+              <span className="text-[11px] text-muted-foreground">
+                {allVisibleSelected ? "Deselect" : "Select"} all {visible.length} visible
+              </span>
+            </label>
+          )}
+
+          {/* Coach list */}
+          <div className="flex-1 overflow-y-auto">
+            {visible.map((coach) => {
+              const isSelected = selected.has(coach.email);
+              const status = outreachStatus(coach);
+              return (
+                <label
+                  key={coach.email}
+                  className={cn(
+                    "flex cursor-pointer items-start gap-3 border-b border-border/40 px-4 py-3.5 transition-smooth last:border-0",
+                    isSelected
+                      ? "bg-primary/10 hover:bg-primary/10"
+                      : "hover:bg-muted/40",
+                  )}
+                >
+                  <Checkbox
+                    checked={isSelected}
+                    onCheckedChange={() => toggleCoach(coach.email)}
+                    className="mt-0.5 shrink-0"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium leading-tight">{coach.coach_name}</p>
+                    <p className="truncate text-xs text-muted-foreground">{coach.school_name}</p>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                      <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                        {divLabel(coach.division)}
+                      </span>
+                      {status === "replied" && (
+                        <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                          Replied
+                        </span>
+                      )}
+                      {status === "opened" && (
+                        <span className="rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+                          Opened
+                        </span>
+                      )}
+                      {status === "sent" && (
+                        <span className="rounded-full bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:text-blue-400">
+                          Sent
+                        </span>
+                      )}
                     </div>
-                    <span className="text-xs font-medium text-muted-foreground">
-                      {sentCount} of {drafts.length} sent
-                    </span>
                   </div>
-                ) : (
-                  <span className="text-xs text-muted-foreground">
-                    {drafts.length} coach{drafts.length === 1 ? "" : "es"}
-                  </span>
-                )}
-                <Button variant="outline" size="sm" onClick={generateAll}>
-                  <Sparkles className="size-3.5" />
-                  Generate all
-                </Button>
-                <Button size="sm" onClick={sendAll} disabled={allSent}>
-                  <Send className="size-3.5" />
-                  Send all
-                </Button>
+                </label>
+              );
+            })}
+            {filtered.length > MAX_VISIBLE && (
+              <p className="p-3 text-center text-xs text-muted-foreground">
+                Refine your search to see more coaches
+              </p>
+            )}
+            {filtered.length === 0 && (
+              <p className="p-6 text-center text-xs text-muted-foreground">No coaches match.</p>
+            )}
+          </div>
+        </div>
+
+        {/* ── RIGHT: Draft panel ───────────────────────────── */}
+        <div
+          className={cn(
+            "flex-1 flex-col gap-4 overflow-y-auto pb-2 md:flex",
+            mobileTab === "drafts" ? "flex" : "hidden",
+          )}
+        >
+          {drafts.length === 0 ? (
+            /* ── Empty state ── */
+            <div className="glass-card flex flex-1 flex-col items-center justify-center gap-6 rounded-2xl p-10 text-center">
+              <PenSquare className="size-8 text-muted-foreground/30" />
+
+              {/* Workflow steps */}
+              <div className="flex items-center gap-1 text-muted-foreground/50">
+                {(["Select", "Draft", "Generate", "Send"] as const).map((step, i) => (
+                  <div key={step} className="flex items-center gap-1">
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="flex size-7 items-center justify-center rounded-full bg-muted text-[11px] font-bold tabular-nums">
+                        {i + 1}
+                      </div>
+                      <span className="text-[10px] font-medium">{step}</span>
+                    </div>
+                    {i < 3 && <ChevronRight className="mb-3.5 size-3.5 shrink-0 opacity-40" />}
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <p className="text-base font-semibold">Ready to reach out?</p>
+                <p className="max-w-xs text-sm text-muted-foreground">
+                  Select coaches on the left to start drafting personalized emails. Use AI to write a strong first draft in seconds.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2 rounded-xl bg-muted/50 px-4 py-3 text-left">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Personalization tokens</p>
+                <p className="text-xs text-muted-foreground">
+                  Use <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">[Your Name]</code>,{" "}
+                  <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">[UTR]</code>,{" "}
+                  <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">[grad year]</code> in your draft — AI fills these automatically.
+                </p>
               </div>
             </div>
-
-            {/* Peak-end: celebrate when every selected email is out the door */}
-            {allSent && (
-              <div className="animate-in fade-in-0 zoom-in-95 glass-card flex items-center justify-between gap-4 rounded-2xl border-primary/40 p-4 duration-300">
-                <div className="flex items-center gap-3">
-                  <PartyPopper className="size-5 shrink-0 text-primary" />
-                  <div>
-                    <p className="text-sm font-semibold">
-                      {drafts.length === 1 ? "Email sent!" : `All ${drafts.length} emails sent!`}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Coaches usually reply within a few days — you&apos;ll see opens and replies on your dashboard.
-                    </p>
-                  </div>
+          ) : (
+            <>
+              {/* Toolbar */}
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="text-xs text-muted-foreground">
+                  {isSampleMode && "Sample mode — Send won't deliver real email."}
+                  {planLimitReached && (
+                    <span className="text-destructive">
+                      Free limit reached.{" "}
+                      <a href="/paywall" className="underline">Upgrade →</a>
+                    </span>
+                  )}
                 </div>
-                <Link href="/dashboard" className={buttonVariants({ variant: "outline", size: "sm" })}>
-                  View dashboard →
-                </Link>
+                <div className="flex items-center gap-2">
+                  {drafts.length > 1 && sentCount > 0 ? (
+                    <div className="flex items-center gap-2">
+                      <div className="h-1.5 w-20 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full bg-primary transition-all duration-500"
+                          style={{ width: `${(sentCount / drafts.length) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {sentCount} of {drafts.length} sent
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      {drafts.length} coach{drafts.length === 1 ? "" : "es"} selected
+                    </span>
+                  )}
+                  <Button variant="outline" size="sm" onClick={generateAll}>
+                    <Sparkles className="size-3.5" />
+                    AI Draft all
+                  </Button>
+                  <Button size="sm" onClick={sendAll} disabled={allSent}>
+                    <Send className="size-3.5" />
+                    Send all
+                  </Button>
+                </div>
               </div>
-            )}
 
-            {/* Draft cards */}
-            {drafts.map((draft) => (
-              <GlassCard
-                key={draft.coach.email}
-                // Without shrink-0, these cards are flex children of a
-                // fixed-height, overflow-y-auto column — flexbox's default
-                // flex-shrink: 1 squishes every card to fit the viewport
-                // instead of letting the column scroll, and each card's own
-                // overflow-hidden then clips the body Textarea and the
-                // Generate/Send footer right off (no way to send).
-                className={cn(
-                  "shrink-0",
-                  draft.status === "sent" && "border-[#7d9159]/40 opacity-80",
-                )}
-              >
-                <GlassCardHeader>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <GlassCardTitle className="truncate">{draft.coach.coach_name}</GlassCardTitle>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {draft.coach.school_name} · {draft.coach.division}
+              {/* All-sent celebration */}
+              {allSent && (
+                <div className="animate-in fade-in-0 zoom-in-95 glass-card flex items-center justify-between gap-4 rounded-2xl border-primary/40 p-4 duration-300">
+                  <div className="flex items-center gap-3">
+                    <PartyPopper className="size-5 shrink-0 text-primary" />
+                    <div>
+                      <p className="text-sm font-semibold">
+                        {drafts.length === 1 ? "Email sent!" : `All ${drafts.length} emails sent!`}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Coaches usually reply within a few days — you&apos;ll see opens and replies on your dashboard.
                       </p>
                     </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <StatusLabel status={draft.status} />
-                      <button
-                        onClick={() => toggleCoach(draft.coach.email)}
-                        className="rounded-full p-1 text-muted-foreground transition-smooth hover:text-foreground"
-                        title="Remove"
-                      >
-                        <X className="size-3.5" />
-                      </button>
-                    </div>
                   </div>
-                </GlassCardHeader>
-                <GlassCardContent className="flex flex-col gap-3">
-                  <Input
-                    placeholder="Subject"
-                    value={draft.subject}
-                    onChange={(e) => updateDraft(draft.coach.email, { subject: e.target.value })}
-                  />
-                  <Textarea
-                    placeholder={draft.status === "loading" ? "Writing a personalized draft…" : "Email body"}
-                    rows={6}
-                    value={draft.body}
-                    onChange={(e) => updateDraft(draft.coach.email, { body: e.target.value })}
-                    className={cn(
-                      draft.status === "loading" && "animate-pulse bg-muted/40",
-                      draft.status === "streaming" && "opacity-80",
-                    )}
-                    disabled={draft.status === "loading" || draft.status === "streaming"}
-                  />
-                  {draft.error && <p className="text-xs text-destructive">{draft.error}</p>}
-                </GlassCardContent>
-                <GlassCardFooter className="flex justify-between bg-transparent">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => generate(draft.coach.email)}
-                    disabled={draft.status === "loading" || draft.status === "streaming" || draft.status === "sending"}
-                  >
-                    <Sparkles className="size-3.5" />
-                    {draft.status === "loading" || draft.status === "streaming" ? "Generating…" : "Generate"}
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => send(draft.coach.email)}
-                    disabled={
-                      !draft.subject ||
-                      !draft.body ||
-                      draft.status === "loading" ||
-                      draft.status === "streaming" ||
-                      draft.status === "sending" ||
-                      draft.status === "sent"
-                    }
-                  >
-                    <Send className="size-3.5" />
-                    {draft.status === "sending"
-                      ? "Sending…"
-                      : draft.status === "sent"
-                        ? "Sent ✓"
-                        : "Send"}
-                  </Button>
-                </GlassCardFooter>
-              </GlassCard>
-            ))}
-          </>
-        )}
+                  <Link href="/dashboard" className={buttonVariants({ variant: "outline", size: "sm" })}>
+                    View dashboard →
+                  </Link>
+                </div>
+              )}
+
+              {/* Draft cards */}
+              {drafts.map((draft) => (
+                <GlassCard
+                  key={draft.coach.email}
+                  className={cn(
+                    "shrink-0",
+                    draft.status === "sent" && "border-[#7d9159]/40 opacity-80",
+                  )}
+                >
+                  <GlassCardHeader>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <GlassCardTitle className="truncate">{draft.coach.coach_name}</GlassCardTitle>
+                        <div className="mt-0.5 flex items-center gap-2">
+                          <p className="truncate text-xs text-muted-foreground">
+                            {draft.coach.school_name}
+                          </p>
+                          <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                            {divLabel(draft.coach.division)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <StatusLabel status={draft.status} />
+                        <button
+                          onClick={() => toggleCoach(draft.coach.email)}
+                          className="rounded-full p-1 text-muted-foreground transition-smooth hover:text-foreground"
+                          title="Remove"
+                        >
+                          <X className="size-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </GlassCardHeader>
+
+                  <GlassCardContent className="flex flex-col gap-4">
+                    {/* Subject field */}
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          Subject
+                        </label>
+                        <span
+                          className={cn(
+                            "text-[11px] tabular-nums",
+                            draft.subject.length > 80
+                              ? "text-amber-500"
+                              : "text-muted-foreground/40",
+                          )}
+                        >
+                          {draft.subject.length}/100
+                        </span>
+                      </div>
+                      <Input
+                        placeholder="What's your email about?"
+                        value={draft.subject}
+                        onChange={(e) => updateDraft(draft.coach.email, { subject: e.target.value })}
+                      />
+                    </div>
+
+                    {/* Body field */}
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          Email body
+                        </label>
+                        <span
+                          className={cn(
+                            "text-[11px] tabular-nums",
+                            draft.body.length > 0 && draft.body.length < 50
+                              ? "text-amber-500"
+                              : "text-muted-foreground/40",
+                          )}
+                        >
+                          {draft.body.length} chars
+                          {draft.body.length > 0 && draft.body.length < 50 && " · too short"}
+                        </span>
+                      </div>
+                      <Textarea
+                        placeholder={
+                          draft.status === "loading"
+                            ? "Writing a personalized draft…"
+                            : "Write your email here, or use AI Draft to generate a personalized intro."
+                        }
+                        rows={7}
+                        value={draft.body}
+                        onChange={(e) => updateDraft(draft.coach.email, { body: e.target.value })}
+                        className={cn(
+                          draft.status === "loading" && "animate-pulse bg-muted/40",
+                          draft.status === "streaming" && "opacity-80",
+                        )}
+                        disabled={draft.status === "loading" || draft.status === "streaming"}
+                      />
+                      {draft.error && (
+                        <p className="text-xs text-destructive">{draft.error}</p>
+                      )}
+                    </div>
+                  </GlassCardContent>
+
+                  <GlassCardFooter className="flex items-center justify-between gap-3 bg-transparent">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => generate(draft.coach.email)}
+                      disabled={
+                        draft.status === "loading" ||
+                        draft.status === "streaming" ||
+                        draft.status === "sending"
+                      }
+                    >
+                      <Sparkles className="size-3.5" />
+                      {draft.status === "loading" || draft.status === "streaming"
+                        ? "Generating…"
+                        : "AI Draft"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => send(draft.coach.email)}
+                      disabled={
+                        !draft.subject ||
+                        !draft.body ||
+                        draft.status === "loading" ||
+                        draft.status === "streaming" ||
+                        draft.status === "sending" ||
+                        draft.status === "sent"
+                      }
+                      className="gap-1.5"
+                    >
+                      <Send className="size-3.5" />
+                      {draft.status === "sending"
+                        ? "Sending…"
+                        : draft.status === "sent"
+                          ? "Sent ✓"
+                          : "Send"}
+                    </Button>
+                  </GlassCardFooter>
+                </GlassCard>
+              ))}
+            </>
+          )}
+        </div>
       </div>
-    </div>
     </>
   );
 }
@@ -640,6 +766,6 @@ function StatusLabel({ status }: { status: Status }) {
     case "loading":   return <span className="text-xs text-muted-foreground">Generating…</span>;
     case "streaming": return <span className="text-xs text-muted-foreground">Writing…</span>;
     case "error":     return <span className="text-xs text-destructive">Error</span>;
-    default:        return null;
+    default:          return null;
   }
 }
