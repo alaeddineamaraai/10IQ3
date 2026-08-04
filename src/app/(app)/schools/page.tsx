@@ -1,22 +1,27 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSchoolDetails, getSampleSchoolDetails } from "@/lib/data/schools";
+import { getProfile } from "@/lib/data/profile";
 import { SchoolsGrid } from "@/components/schools/schools-grid";
 
 async function loadSchools() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    return { schools: getSampleSchoolDetails(), isSample: true };
+    return { schools: getSampleSchoolDetails(), isSample: true, profileGender: null };
   }
 
   const supabase = await createSupabaseServerClient();
   const { data: auth } = await supabase.auth.getUser();
-  return {
-    schools: await getSchoolDetails(supabase, auth.user?.id ?? null),
-    isSample: false,
-  };
+  const userId = auth.user?.id ?? null;
+
+  const [schools, profile] = await Promise.all([
+    getSchoolDetails(supabase, userId),
+    userId ? getProfile(supabase, userId) : null,
+  ]);
+
+  return { schools, isSample: false, profileGender: profile?.gender ?? null };
 }
 
 export default async function SchoolsPage() {
-  const { schools, isSample } = await loadSchools();
+  const { schools, isSample, profileGender } = await loadSchools();
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
@@ -29,7 +34,7 @@ export default async function SchoolsPage() {
         </p>
       </div>
 
-      <SchoolsGrid schools={schools} />
+      <SchoolsGrid schools={schools} profileGender={profileGender} />
     </div>
   );
 }

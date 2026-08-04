@@ -27,6 +27,12 @@ export type DivisionBreakdown = {
   replied: number;
 };
 
+export type RegionBreakdown = {
+  region: string;
+  total: number;
+  sent: number;
+};
+
 export type SentEmailReply = {
   id: string;
   from_email: string;
@@ -56,6 +62,7 @@ export type DashboardData = {
   rates: DashboardRates;
   activity: ActivityPoint[];
   divisions: DivisionBreakdown[];
+  regions: RegionBreakdown[];
   sentEmails: SentEmailRow[];
   isSample: boolean;
 };

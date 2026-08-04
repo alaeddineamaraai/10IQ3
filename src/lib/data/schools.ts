@@ -74,6 +74,7 @@ function extractSchoolInfo(coach: Coach): SchoolInfo {
   return {
     city: coach.city,
     state: coach.state,
+    region: coach.region,
     website: coach.website,
     tuition_in_state: coach.tuition_in_state,
     tuition_out_of_state: coach.tuition_out_of_state,
@@ -208,6 +209,7 @@ export async function getSchoolDetails(
 const NULL_SCHOOL_INFO: SchoolInfo = {
   city: null,
   state: null,
+  region: null,
   website: null,
   tuition_in_state: null,
   tuition_out_of_state: null,

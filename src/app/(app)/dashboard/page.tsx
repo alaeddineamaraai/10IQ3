@@ -12,7 +12,7 @@ import {
   GlassCardHeader,
   GlassCardTitle,
 } from "@/components/glass-card";
-import { DivisionBreakdownChartLoader } from "@/components/dashboard/chart-loaders";
+import { DivisionBreakdownChartLoader, RegionChartLoader } from "@/components/dashboard/chart-loaders";
 import { ActivityBars } from "@/components/dashboard/activity-bars";
 import { ProgressGauge } from "@/components/dashboard/progress-gauge";
 import { PerformanceMetrics } from "@/components/dashboard/performance-metrics";
@@ -151,6 +151,19 @@ export default async function DashboardPage() {
           </GlassCardContent>
         </GlassCard>
       </div>
+
+      {/* Region coverage */}
+      <GlassCard>
+        <GlassCardHeader>
+          <GlassCardTitle>Region Coverage</GlassCardTitle>
+        </GlassCardHeader>
+        <GlassCardContent>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Gray bars = total schools per region · Colored bars = contacted
+          </p>
+          <RegionChartLoader data={data.regions} />
+        </GlassCardContent>
+      </GlassCard>
 
       <GlassCard>
         <GlassCardHeader>

@@ -13,3 +13,8 @@ export const DivisionBreakdownChartLoader = dynamic(
   () => import("./division-breakdown-chart").then((m) => ({ default: m.DivisionBreakdownChart })),
   { ssr: false, loading: Skeleton }
 );
+
+export const RegionChartLoader = dynamic(
+  () => import("./region-chart").then((m) => ({ default: m.RegionChart })),
+  { ssr: false, loading: Skeleton }
+);

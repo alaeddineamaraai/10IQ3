@@ -24,7 +24,7 @@ export async function getDashboardData(
 ): Promise<DashboardData> {
   const [{ count: coachesCount }, coaches, { data: outreach }] = await Promise.all([
     supabase.from("coaches_database").select("*", { count: "exact", head: true }),
-    fetchAllCoaches<Coach>(supabase, "email, coach_name, school_name, division"),
+    fetchAllCoaches<Coach>(supabase, "email, coach_name, school_name, division, region"),
     supabase
       .from("outreach")
       .select("*")
@@ -88,6 +88,21 @@ export async function getDashboardData(
     ...divisionCounts.get(division)!,
   }));
 
+  // Region breakdown: total coaches per region and how many have been contacted
+  const regionTotals = new Map<string, number>();
+  const regionSent = new Map<string, number>();
+  for (const coach of coaches) {
+    const r = coach.region ?? "Other";
+    regionTotals.set(r, (regionTotals.get(r) ?? 0) + 1);
+  }
+  for (const row of sentRows) {
+    const r = coachByEmail.get(row.coach_email)?.region ?? "Other";
+    regionSent.set(r, (regionSent.get(r) ?? 0) + 1);
+  }
+  const regions = [...regionTotals.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([region, total]) => ({ region, total, sent: regionSent.get(region) ?? 0 }));
+
   const sentEmails = sentRows
     .slice()
     .sort((a, b) => (b.sent_at ?? "").localeCompare(a.sent_at ?? ""))
@@ -125,6 +140,7 @@ export async function getDashboardData(
     },
     activity,
     divisions,
+    regions,
     sentEmails,
     isSample: false,
   };
@@ -149,6 +165,14 @@ export function getSampleDashboardData(): DashboardData {
       opened: openedByDay[i],
       replied: repliedByDay[i],
     })),
+    regions: [
+      { region: "Southeast", total: 420, sent: 14 },
+      { region: "Northeast", total: 310, sent: 9 },
+      { region: "Midwest",   total: 290, sent: 8 },
+      { region: "West",      total: 380, sent: 7 },
+      { region: "Southwest", total: 250, sent: 4 },
+      { region: "New England", total: 170, sent: 0 },
+    ],
     divisions: [
       { division: "D1", sent: 18, opened: 9, replied: 3 },
       { division: "D2", sent: 11, opened: 5, replied: 1 },

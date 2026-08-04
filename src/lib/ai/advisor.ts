@@ -5,12 +5,18 @@ import type { DashboardData } from "@/lib/types/dashboard";
 function buildOutreachLine(outreach?: DashboardData) {
   if (!outreach) return "Outreach history: not yet available.";
 
-  const { stats, divisions } = outreach;
+  const { stats, divisions, regions } = outreach;
   const sentPct = stats.coaches ? ((stats.sent / stats.coaches) * 100).toFixed(1) : "0";
   const replyPct = stats.sent ? ((stats.replied / stats.sent) * 100).toFixed(0) : null;
   const topDivisions = divisions
+    .filter((d) => d.sent > 0)
     .slice(0, 3)
     .map((d) => `${d.division} (${d.sent} sent)`)
+    .join(", ");
+  const topRegions = (regions ?? [])
+    .filter((r) => r.sent > 0)
+    .slice(0, 3)
+    .map((r) => `${r.region} (${r.sent}/${r.total})`)
     .join(", ");
 
   return (
@@ -18,20 +24,27 @@ function buildOutreachLine(outreach?: DashboardData) {
     `database (${sentPct}%). ${stats.opened} opened, ${stats.replied} replied` +
     (replyPct ? ` (${replyPct}% reply rate)` : "") +
     `. ${stats.pending.toLocaleString()} coaches not yet contacted.` +
-    (topDivisions
-      ? ` Outreach so far is concentrated in: ${topDivisions}.`
-      : " No outreach sent yet.")
+    (topDivisions ? ` Division mix contacted: ${topDivisions}.` : " No outreach sent yet.") +
+    (topRegions ? ` Region coverage: ${topRegions}.` : "")
   );
 }
 
 function buildSystemPrompt(athlete: AthleteProfile, outreach?: DashboardData) {
   const facts = [
     athlete.grad_year != null ? `grad year ${athlete.grad_year}` : null,
+    athlete.gender ? `gender ${athlete.gender}` : null,
     athlete.utr != null ? `UTR ${athlete.utr}` : null,
     athlete.wtn != null ? `WTN ${athlete.wtn}` : null,
     athlete.gpa != null ? `GPA ${athlete.gpa}` : null,
+    athlete.rank != null ? `national ranking #${athlete.rank}` : null,
+    athlete.singles_record ? `singles record ${athlete.singles_record}` : null,
+    athlete.doubles_record ? `doubles record ${athlete.doubles_record}` : null,
+    athlete.style ? `play style: ${athlete.style}` : null,
     athlete.target_div ? `target division ${athlete.target_div}` : null,
     athlete.region ? `target region ${athlete.region}` : null,
+    athlete.location ? `current location ${athlete.location}` : null,
+    athlete.school ? `current school ${athlete.school}` : null,
+    athlete.academy ? `academy ${athlete.academy}` : null,
     `plan ${athlete.plan}`,
   ]
     .filter((f): f is string => f !== null)

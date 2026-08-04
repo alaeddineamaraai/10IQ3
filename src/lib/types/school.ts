@@ -29,6 +29,7 @@ export type SchoolCoach = {
 export type SchoolInfo = {
   city: string | null;
   state: string | null;
+  region: string | null;
   website: string | null;
   tuition_in_state: number | null;
   tuition_out_of_state: number | null;

@@ -98,8 +98,17 @@ function OutreachBadge({ coach }: { coach: SchoolCoach }) {
   return <Badge variant="ghost">Not contacted</Badge>;
 }
 
+function utrToWtn(utr: number): number {
+  return Math.round(Math.max(0, Math.min(40, 43.5 - 3 * utr)) * 10) / 10;
+}
+
+function wtnToUtr(wtn: number): number {
+  return Math.round(Math.max(0, Math.min(16, (43.5 - wtn) / 3)) * 10) / 10;
+}
+
 function ProgramSection({ program }: { program: Program }) {
   const { label, coaches } = program;
+  const namedCoaches = coaches.filter((c) => c.coach_name?.trim());
   const first = coaches[0]!;
   const avgUtr = average(coaches.map((c) => c.team_utr));
   const avgWtn = average(coaches.map((c) => c.team_wtn));
@@ -107,11 +116,27 @@ function ProgramSection({ program }: { program: Program }) {
   const rosterSize = first.roster_size;
   const itaRank = first.ita_team_ranking;
   const conference = first.conference;
-  const indoor = first.indoor_courts;
-  const outdoor = first.outdoor_courts;
   const scholarships = first.scholarships_offered;
+  const assistants = first.assistant_coaches;
 
   const hasStats = avgUtr != null || avgWtn != null || rosterSize != null || itaRank != null;
+  const hasUtrData = coaches.some((c) => c.team_utr != null);
+
+  const wtnDisplay =
+    avgWtn != null
+      ? avgWtn.toFixed(1)
+      : avgUtr != null
+      ? `~${utrToWtn(avgUtr).toFixed(1)}`
+      : "—";
+
+  const utrDisplay =
+    avgUtr != null
+      ? avgUtr.toFixed(1)
+      : avgWtn != null
+      ? `~${wtnToUtr(avgWtn).toFixed(1)}`
+      : "—";
+
+  if (namedCoaches.length === 0 && !hasStats) return null;
 
   return (
     <div className="flex flex-col gap-3">
@@ -131,107 +156,102 @@ function ProgramSection({ program }: { program: Program }) {
         )}
       </div>
 
+      {assistants && (
+        <p className="text-xs text-muted-foreground">
+          Assistant coaches: {assistants}
+        </p>
+      )}
+
       {hasStats && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard
-            label="Avg UTR"
-            value={avgUtr != null ? avgUtr.toFixed(1) : "—"}
-          />
-          <StatCard
-            label="Avg WTN"
-            value={avgWtn != null ? avgWtn.toFixed(1) : "—"}
-          />
-          <StatCard
-            label="Roster"
-            value={rosterSize ?? "—"}
-          />
-          <StatCard
-            label="Courts"
-            value={
-              indoor != null || outdoor != null
-                ? `${indoor ?? 0}+${outdoor ?? 0}`
-                : "—"
-            }
-            caption={
-              indoor != null || outdoor != null
-                ? `${indoor ?? 0} indoor · ${outdoor ?? 0} outdoor`
-                : undefined
-            }
-          />
+          <StatCard label="Avg UTR" value={utrDisplay} />
+          <StatCard label="Avg WTN" value={wtnDisplay} />
+          <StatCard label="Roster" value={rosterSize ?? "—"} />
+          <StatCard label="ITA Rank" value={itaRank != null ? `#${itaRank}` : "—"} />
         </div>
       )}
 
-      <GlassCard>
-        <GlassCardHeader>
-          <GlassCardTitle>UTR by Coach</GlassCardTitle>
-        </GlassCardHeader>
-        <GlassCardContent>
-          <SchoolUtrChart coaches={coaches} />
-        </GlassCardContent>
-      </GlassCard>
+      {hasUtrData && (
+        <GlassCard>
+          <GlassCardHeader>
+            <GlassCardTitle>UTR by Coach</GlassCardTitle>
+          </GlassCardHeader>
+          <GlassCardContent>
+            <SchoolUtrChart coaches={namedCoaches} />
+          </GlassCardContent>
+        </GlassCard>
+      )}
 
-      <GlassCard>
-        <GlassCardHeader>
-          <GlassCardTitle>Coaching Staff</GlassCardTitle>
-        </GlassCardHeader>
-        <GlassCardContent className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Coach</TableHead>
-                <TableHead>UTR</TableHead>
-                <TableHead>WTN</TableHead>
-                <TableHead>Notes</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-10" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {coaches.map((coach) => {
-                const isHead =
-                  coach.head_coach_name != null &&
-                  coach.coach_name === coach.head_coach_name;
-                return (
-                  <TableRow key={coach.email}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{coach.coach_name}</span>
-                        {isHead && (
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                            HC
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {coach.team_utr?.toFixed(1) ?? "—"}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {coach.team_wtn?.toFixed(1) ?? "—"}
-                    </TableCell>
-                    <TableCell className="max-w-64 truncate text-muted-foreground">
-                      {coach.notes ?? "—"}
-                    </TableCell>
-                    <TableCell>
-                      <OutreachBadge coach={coach} />
-                    </TableCell>
-                    <TableCell>
-                      <Link
-                        href={`/compose?coaches=${encodeURIComponent(coach.email)}`}
-                        className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
-                        title={`Compose email to ${coach.coach_name}`}
-                        aria-label={`Compose email to ${coach.coach_name}`}
-                      >
-                        <Mail className="size-4" />
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </GlassCardContent>
-      </GlassCard>
+      {namedCoaches.length > 0 && (
+        <GlassCard>
+          <GlassCardHeader>
+            <GlassCardTitle>Coaching Staff</GlassCardTitle>
+          </GlassCardHeader>
+          <GlassCardContent className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Coach</TableHead>
+                  <TableHead>UTR</TableHead>
+                  <TableHead>WTN</TableHead>
+                  <TableHead>Notes</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-10" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {namedCoaches.map((coach) => {
+                  const isHead =
+                    coach.head_coach_name != null &&
+                    coach.coach_name === coach.head_coach_name;
+                  const dispUtr = coach.team_utr != null
+                    ? coach.team_utr.toFixed(1)
+                    : coach.team_wtn != null
+                    ? `~${wtnToUtr(coach.team_wtn).toFixed(1)}`
+                    : "—";
+                  const dispWtn = coach.team_wtn != null
+                    ? coach.team_wtn.toFixed(1)
+                    : coach.team_utr != null
+                    ? `~${utrToWtn(coach.team_utr).toFixed(1)}`
+                    : "—";
+                  return (
+                    <TableRow key={coach.email}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{coach.coach_name}</span>
+                          {isHead && (
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                              HC
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{dispUtr}</TableCell>
+                      <TableCell className="text-muted-foreground">{dispWtn}</TableCell>
+                      <TableCell className="max-w-64 truncate text-muted-foreground">
+                        {coach.notes ?? "—"}
+                      </TableCell>
+                      <TableCell>
+                        <OutreachBadge coach={coach} />
+                      </TableCell>
+                      <TableCell>
+                        <Link
+                          href={`/compose?coaches=${encodeURIComponent(coach.email)}`}
+                          className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
+                          title={`Compose email to ${coach.coach_name}`}
+                          aria-label={`Compose email to ${coach.coach_name}`}
+                        >
+                          <Mail className="size-4" />
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </GlassCardContent>
+        </GlassCard>
+      )}
     </div>
   );
 }
@@ -398,7 +418,7 @@ export function SchoolDetailContent({ detail }: { detail: SchoolDetail }) {
 
   return (
     <div className="flex flex-col gap-5">
-      {(info.city || info.state || info.website || info.setting) && (
+      {(info.city || info.state || info.region || info.website || info.setting) && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
           {(info.city || info.state) && (
             <span className="flex items-center gap-1">
@@ -406,6 +426,8 @@ export function SchoolDetailContent({ detail }: { detail: SchoolDetail }) {
               {[info.city, info.state].filter(Boolean).join(", ")}
             </span>
           )}
+          {info.region && !info.city && <span className="flex items-center gap-1"><MapPin className="size-3.5" />{info.region}</span>}
+          {info.region && info.city && <span>{info.region}</span>}
           {info.setting && <span>{info.setting}</span>}
           {info.website && (
             <a

@@ -19,6 +19,14 @@ import type { SchoolDetail } from "@/lib/types/school";
 
 const ALL = "all";
 
+function defaultGenderFilter(gender?: string | null): string {
+  if (!gender) return ALL;
+  const g = gender.toLowerCase();
+  if (g.includes("female") || g.includes("woman") || g === "f") return "Women";
+  if (g.includes("male") || g.includes("man") || g === "m") return "Men";
+  return ALL;
+}
+
 type SortKey = "div_asc" | "utr_desc" | "utr_asc" | "coaches_desc" | "name_asc";
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
@@ -98,10 +106,12 @@ const DIV_COLORS: Record<string, string> = {
   D3: "bg-muted text-muted-foreground",
 };
 
-export function SchoolsGrid({ schools }: { schools: SchoolDetail[] }) {
+export function SchoolsGrid({ schools, profileGender }: { schools: SchoolDetail[]; profileGender?: string | null }) {
   const router = useRouter();
   const [search, setSearch]         = useState("");
   const [division, setDivision]     = useState(ALL);
+  const [gender, setGender]         = useState(() => defaultGenderFilter(profileGender));
+  const [region, setRegion]         = useState(ALL);
   const [minUtr, setMinUtr]         = useState("");
   const [maxUtr, setMaxUtr]         = useState("");
   const [sort, setSort]             = useState<SortKey>("div_asc");
@@ -113,6 +123,11 @@ export function SchoolsGrid({ schools }: { schools: SchoolDetail[] }) {
     [schools],
   );
 
+  const regions = useMemo(
+    () => [...new Set(schools.map((s) => s.info.region).filter(Boolean) as string[])].sort(),
+    [schools],
+  );
+
   const minUtrNum = minUtr ? Number(minUtr) : null;
   const maxUtrNum = maxUtr ? Number(maxUtr) : null;
 
@@ -121,13 +136,20 @@ export function SchoolsGrid({ schools }: { schools: SchoolDetail[] }) {
     const result = schools.filter((s) => {
       if (q && !s.school_name.toLowerCase().includes(q)) return false;
       if (division !== ALL && s.division !== division) return false;
+      if (region !== ALL && s.info.region !== region) return false;
+      if (gender !== ALL) {
+        const hasGender = s.coaches.some((c) =>
+          c.gender != null && c.gender.toLowerCase().includes(gender.toLowerCase())
+        );
+        if (!hasGender) return false;
+      }
       if (minUtrNum != null && (s.avg_utr ?? -Infinity) < minUtrNum) return false;
       if (maxUtrNum != null && (s.avg_utr ?? Infinity) > maxUtrNum) return false;
       if (showFavOnly && !favorites.has(s.school_name)) return false;
       return true;
     });
     return sortSchools(result, sort);
-  }, [schools, search, division, minUtrNum, maxUtrNum, sort, showFavOnly, favorites]);
+  }, [schools, search, division, region, gender, minUtrNum, maxUtrNum, sort, showFavOnly, favorites]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -151,6 +173,29 @@ export function SchoolsGrid({ schools }: { schools: SchoolDetail[] }) {
               ))}
             </SelectContent>
           </Select>
+          <Select value={gender} onValueChange={(v) => setGender(v ?? ALL)}>
+            <SelectTrigger className="h-9 w-[130px]">
+              <SelectValue placeholder="All programs" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>All programs</SelectItem>
+              <SelectItem value="Women">Women&apos;s</SelectItem>
+              <SelectItem value="Men">Men&apos;s</SelectItem>
+            </SelectContent>
+          </Select>
+          {regions.length > 0 && (
+            <Select value={region} onValueChange={(v) => setRegion(v ?? ALL)}>
+              <SelectTrigger className="h-9 w-[140px]">
+                <SelectValue placeholder="All regions" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>All regions</SelectItem>
+                {regions.map((r) => (
+                  <SelectItem key={r} value={r}>{r}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <Input
             type="number"
             placeholder="Min UTR"
