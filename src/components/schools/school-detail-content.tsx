@@ -38,6 +38,13 @@ function fmtPct(n: number | null) {
 
 type Program = { label: string; coaches: SchoolCoach[] };
 
+function genderLabel(gender: string): string {
+  const g = gender.toLowerCase();
+  if (g.includes("women") || g.includes("female") || g === "f") return "Women's Tennis";
+  if (g.includes("men") || g.includes("male") || g === "m") return "Men's Tennis";
+  return "Tennis Program";
+}
+
 function buildPrograms(coaches: SchoolCoach[]): Program[] {
   const withGender = coaches.filter((c) => c.gender != null);
   if (withGender.length === 0) {
@@ -60,12 +67,7 @@ function buildPrograms(coaches: SchoolCoach[]): Program[] {
   });
 
   return entries.map(([gender, list]) => ({
-    label:
-      gender.includes("Men") && !gender.includes("Women")
-        ? "Men's Tennis"
-        : gender.includes("Women")
-        ? "Women's Tennis"
-        : `${gender} Tennis`,
+    label: genderLabel(gender),
     coaches: list,
   }));
 }
