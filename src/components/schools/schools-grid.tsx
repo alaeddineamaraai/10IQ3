@@ -163,33 +163,42 @@ export function SchoolsGrid({ schools, profileGender }: { schools: SchoolDetail[
             className="h-9 min-w-[160px] flex-1"
           />
           <Select value={division} onValueChange={(v) => setDivision(v ?? ALL)}>
-            <SelectTrigger className="h-9 w-[140px]">
-              <SelectValue placeholder="All divisions" />
+            <SelectTrigger className="h-9 w-auto min-w-[120px]">
+              <span className="truncate text-sm">
+                <span className="text-muted-foreground">Division: </span>
+                {division === ALL ? "All" : division}
+              </span>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL}>All divisions</SelectItem>
+              <SelectItem value={ALL}>All</SelectItem>
               {divisions.map((d) => (
                 <SelectItem key={d} value={d}>{d}</SelectItem>
               ))}
             </SelectContent>
           </Select>
           <Select value={gender} onValueChange={(v) => setGender(v ?? ALL)}>
-            <SelectTrigger className="h-9 w-[130px]">
-              <SelectValue placeholder="All programs" />
+            <SelectTrigger className="h-9 w-auto min-w-[120px]">
+              <span className="truncate text-sm">
+                <span className="text-muted-foreground">Program: </span>
+                {gender === ALL ? "All" : gender === "Women" ? "Women's" : "Men's"}
+              </span>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL}>All programs</SelectItem>
+              <SelectItem value={ALL}>All</SelectItem>
               <SelectItem value="Women">Women&apos;s</SelectItem>
               <SelectItem value="Men">Men&apos;s</SelectItem>
             </SelectContent>
           </Select>
           {regions.length > 0 && (
             <Select value={region} onValueChange={(v) => setRegion(v ?? ALL)}>
-              <SelectTrigger className="h-9 w-[140px]">
-                <SelectValue placeholder="All regions" />
+              <SelectTrigger className="h-9 w-auto min-w-[120px]">
+                <span className="truncate text-sm">
+                  <span className="text-muted-foreground">Region: </span>
+                  {region === ALL ? "All" : region}
+                </span>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ALL}>All regions</SelectItem>
+                <SelectItem value={ALL}>All</SelectItem>
                 {regions.map((r) => (
                   <SelectItem key={r} value={r}>{r}</SelectItem>
                 ))}
@@ -211,8 +220,11 @@ export function SchoolsGrid({ schools, profileGender }: { schools: SchoolDetail[
             className="h-9 w-24"
           />
           <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
-            <SelectTrigger className="h-9 w-[180px]">
-              <SelectValue />
+            <SelectTrigger className="h-9 w-auto min-w-[140px]">
+              <span className="truncate text-sm">
+                <span className="text-muted-foreground">Sort: </span>
+                {SORT_OPTIONS.find((o) => o.value === sort)?.label ?? sort}
+              </span>
             </SelectTrigger>
             <SelectContent>
               {SORT_OPTIONS.map((o) => (
