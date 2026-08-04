@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
 import { Check, Tag } from "lucide-react";
-import { PayPalCheckout } from "./paypal-checkout";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,8 +21,6 @@ import { PLANS, getPlan, PAID_TIERS_LOCKED } from "@/lib/stripe/plans";
 import type { Plan } from "@/lib/types/profile";
 
 const isSampleMode = !process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-const hasPayPal = !!process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
-
 
 // @stripe/stripe-js + @stripe/react-stripe-js only download once a checkout
 // actually starts (clientSecret is set), instead of on every /paywall load.
@@ -49,13 +46,10 @@ type CheckoutTarget =
   | { type: "plan"; plan: Plan }
   | { type: "credits"; quantity: number };
 
-type PaymentMethod = "stripe" | "paypal";
-
 export function PaywallClient({ currentPlan, promoExpiresAt }: { currentPlan: Plan; promoExpiresAt?: string | null }) {
   const { resolvedTheme } = useTheme();
   const [checkoutTarget, setCheckoutTarget] = useState<CheckoutTarget | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("stripe");
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [creditsQuantity, setCreditsQuantity] = useState(50);
@@ -66,17 +60,10 @@ export function PaywallClient({ currentPlan, promoExpiresAt }: { currentPlan: Pl
   const currentPlanDef = getPlan(currentPlan);
   const canBuyCredits = currentPlanDef?.overagePricePerEmailCents != null;
 
-  async function startPlanCheckout(planId: Plan, method: PaymentMethod = paymentMethod) {
+  async function startPlanCheckout(planId: Plan) {
     setError(null);
     setDone(false);
-    setPaymentMethod(method);
     setCheckoutTarget({ type: "plan", plan: planId });
-
-    if (method === "paypal") {
-      // PayPalCheckout handles the order creation internally; no client secret needed.
-      setClientSecret("paypal");
-      return;
-    }
 
     if (isSampleMode) {
       setClientSecret("sample");
@@ -205,35 +192,24 @@ export function PaywallClient({ currentPlan, promoExpiresAt }: { currentPlan: Pl
                   ))}
                 </ul>
               </GlassCardContent>
-              <GlassCardFooter className="flex flex-col gap-2 bg-transparent">
+              <GlassCardFooter className="bg-transparent">
                 {plan.id === "free" ? (
                   <Button variant="outline" className="w-full" disabled>
                     {isCurrent ? "Current plan" : "Downgrade"}
                   </Button>
                 ) : (
-                  <div className="flex w-full flex-col gap-2">
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      disabled={isCurrent || PAID_TIERS_LOCKED}
-                      onClick={() => startPlanCheckout(plan.id, "stripe")}
-                    >
-                      {isCurrent
-                        ? "Current plan"
-                        : PAID_TIERS_LOCKED
-                          ? "Coming soon"
-                          : `Pay with card`}
-                    </Button>
-                    {!isCurrent && !PAID_TIERS_LOCKED && hasPayPal && (
-                      <Button
-                        variant="ghost"
-                        className="w-full text-[#003087] dark:text-[#009cde]"
-                        onClick={() => startPlanCheckout(plan.id, "paypal")}
-                      >
-                        Pay with PayPal
-                      </Button>
-                    )}
-                  </div>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    disabled={isCurrent || PAID_TIERS_LOCKED}
+                    onClick={() => startPlanCheckout(plan.id)}
+                  >
+                    {isCurrent
+                      ? "Current plan"
+                      : PAID_TIERS_LOCKED
+                        ? "Coming soon"
+                        : `Upgrade to ${plan.name}`}
+                  </Button>
                 )}
               </GlassCardFooter>
             </GlassCard>
@@ -335,12 +311,6 @@ export function PaywallClient({ currentPlan, promoExpiresAt }: { currentPlan: Pl
                   ? "Payment confirmed — your plan will update once the webhook processes it."
                   : "Payment confirmed — your email credits will land once the webhook processes it."}
               </p>
-            ) : paymentMethod === "paypal" && checkoutTarget.type === "plan" ? (
-              <PayPalCheckout
-                plan={checkoutTarget.plan}
-                onSuccess={() => setDone(true)}
-                onError={(msg) => setError(msg)}
-              />
             ) : isSampleMode ? (
               <div className="flex flex-col gap-4">
                 <p className="text-sm text-muted-foreground">
