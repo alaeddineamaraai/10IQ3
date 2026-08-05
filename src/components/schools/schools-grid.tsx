@@ -182,12 +182,19 @@ export function SchoolsGrid({
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     const result = schools.filter((s) => {
-      if (q && !s.school_name.toLowerCase().includes(q)) return false;
+      if (q) {
+        const haystack = [
+          s.school_name,
+          s.info.city,
+          s.info.state,
+        ].filter(Boolean).join(" ").toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
       if (division !== ALL && s.division !== division) return false;
       if (region !== ALL && s.info.region !== region) return false;
       if (gender !== ALL) {
         const ok = s.coaches.some(
-          (c) => c.gender != null && c.gender.toLowerCase().includes(gender.toLowerCase()),
+          (c) => c.gender?.toLowerCase() === gender.toLowerCase(),
         );
         if (!ok) return false;
       }
