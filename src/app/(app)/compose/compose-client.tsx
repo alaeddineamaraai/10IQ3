@@ -196,7 +196,7 @@ export function ComposeClient({
         if (division !== ALL && c.division !== division) return false;
         return true;
       })
-      .sort((a, b) => (DIV_ORDER[a.division] ?? 9) - (DIV_ORDER[b.division] ?? 9));
+      .sort((a, b) => (DIV_ORDER[a.division ?? ""] ?? 9) - (DIV_ORDER[b.division ?? ""] ?? 9));
   }, [coaches, search, division]);
 
   const visible = filtered.slice(0, MAX_VISIBLE);
@@ -424,7 +424,7 @@ export function ComposeClient({
               {[ALL, ...divisions].map((d) => (
                 <button
                   key={d}
-                  onClick={() => setDivision(d)}
+                  onClick={() => setDivision(d ?? ALL)}
                   className={cn(
                     "rounded-full px-2.5 py-0.5 text-[11px] font-medium transition-smooth",
                     division === d
@@ -432,7 +432,7 @@ export function ComposeClient({
                       : "bg-muted text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  {divLabel(d)}
+                  {divLabel(d ?? ALL)}
                 </button>
               ))}
             </div>
@@ -449,7 +449,7 @@ export function ComposeClient({
           {visible.length > 0 && (
             <label className="flex cursor-pointer items-center gap-3 border-b border-border/60 bg-muted/30 px-4 py-2 hover:bg-muted/50">
               <Checkbox
-                checked={allVisibleSelected || (someVisibleSelected ? "indeterminate" : false)}
+                checked={someVisibleSelected ? undefined : allVisibleSelected}
                 onCheckedChange={toggleAllVisible}
                 className="shrink-0"
               />
@@ -484,7 +484,7 @@ export function ComposeClient({
                     <p className="truncate text-xs text-muted-foreground">{coach.school_name}</p>
                     <div className="mt-1.5 flex flex-wrap items-center gap-1">
                       <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                        {divLabel(coach.division)}
+                        {divLabel(coach.division ?? "")}
                       </span>
                       {status === "replied" && (
                         <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
@@ -678,7 +678,7 @@ export function ComposeClient({
                             {draft.coach.school_name}
                           </p>
                           <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                            {divLabel(draft.coach.division)}
+                            {divLabel(draft.coach.division ?? "")}
                           </span>
                         </div>
                       </div>
