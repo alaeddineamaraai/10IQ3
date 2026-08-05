@@ -27,12 +27,12 @@ function defaultGenderFilter(gender?: string | null): string {
   return ALL;
 }
 
-type SortKey = "div_asc" | "utr_desc" | "utr_asc" | "coaches_desc" | "name_asc";
+type SortKey = "div_asc" | "wtn_asc" | "wtn_desc" | "coaches_desc" | "name_asc";
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: "div_asc",      label: "Division: D1 first" },
-  { value: "utr_desc",     label: "UTR: high to low" },
-  { value: "utr_asc",      label: "UTR: low to high" },
+  { value: "wtn_asc",      label: "WTN: best first" },
+  { value: "wtn_desc",     label: "WTN: lowest first" },
   { value: "coaches_desc", label: "Most coaches" },
   { value: "name_asc",     label: "School (A–Z)" },
 ];
@@ -88,8 +88,8 @@ function sortSchools(schools: SchoolDetail[], sort: SortKey) {
         const db = DIV_ORDER[b.division] ?? 9;
         return da !== db ? da - db : a.school_name.localeCompare(b.school_name);
       }
-      case "utr_desc": return (b.avg_utr ?? -Infinity) - (a.avg_utr ?? -Infinity);
-      case "utr_asc":  return (a.avg_utr ?? Infinity)  - (b.avg_utr ?? Infinity);
+      case "wtn_asc":  return (a.avg_wtn ?? Infinity)  - (b.avg_wtn ?? Infinity);
+      case "wtn_desc": return (b.avg_wtn ?? -Infinity) - (a.avg_wtn ?? -Infinity);
       case "coaches_desc": return b.coach_count - a.coach_count;
       case "name_asc": return a.school_name.localeCompare(b.school_name);
     }
@@ -141,8 +141,8 @@ export function SchoolsGrid({
   const [scholarships, setScholarships] = useState(ALL);
   const [setting, setSetting]         = useState(ALL);
   const [stateFilter, setStateFilter] = useState(ALL);
-  const [minUtr, setMinUtr]           = useState("");
-  const [maxUtr, setMaxUtr]           = useState("");
+  const [minWtn, setMinWtn]           = useState("");
+  const [maxWtn, setMaxWtn]           = useState("");
   const [maxCost, setMaxCost]         = useState("");
   const [sort, setSort]               = useState<SortKey>("div_asc");
   const [showFavOnly, setShowFavOnly] = useState(false);
@@ -195,8 +195,8 @@ export function SchoolsGrid({
     [schools],
   );
 
-  const minUtrNum = minUtr ? Number(minUtr) : null;
-  const maxUtrNum = maxUtr ? Number(maxUtr) : null;
+  const minWtnNum = minWtn ? Number(minWtn) : null;
+  const maxWtnNum = maxWtn ? Number(maxWtn) : null;
   const maxCostNum = maxCost ? Number(maxCost) * 1000 : null;
 
   const filtered = useMemo(() => {
@@ -225,15 +225,15 @@ export function SchoolsGrid({
         );
         if (!ok) return false;
       }
-      // Only filter by UTR when the school actually has UTR data
-      if (minUtrNum != null && s.avg_utr != null && s.avg_utr < minUtrNum) return false;
-      if (maxUtrNum != null && s.avg_utr != null && s.avg_utr > maxUtrNum) return false;
+      // Only filter by WTN when the school actually has WTN data
+      if (minWtnNum != null && s.avg_wtn != null && s.avg_wtn < minWtnNum) return false;
+      if (maxWtnNum != null && s.avg_wtn != null && s.avg_wtn > maxWtnNum) return false;
       if (maxCostNum != null && s.info.total_annual_cost != null && s.info.total_annual_cost > maxCostNum) return false;
       if (showFavOnly && !favorites.has(s.school_name)) return false;
       return true;
     });
     return sortSchools(result, sort);
-  }, [schools, search, division, region, conference, setting, stateFilter, scholarships, gender, minUtrNum, maxUtrNum, maxCostNum, sort, showFavOnly, favorites]);
+  }, [schools, search, division, region, conference, setting, stateFilter, scholarships, gender, minWtnNum, maxWtnNum, maxCostNum, sort, showFavOnly, favorites]);
 
   // Active filter chips (excluding search — shown separately in the search bar)
   const activeChips = useMemo(() => {
@@ -254,16 +254,16 @@ export function SchoolsGrid({
       chips.push({ label: "Scholarships", clear: () => setScholarships(ALL) });
     if (scholarships === "no")
       chips.push({ label: "No scholarships", clear: () => setScholarships(ALL) });
-    if (minUtr)
-      chips.push({ label: `UTR ≥ ${minUtr}`, clear: () => setMinUtr("") });
-    if (maxUtr)
-      chips.push({ label: `UTR ≤ ${maxUtr}`, clear: () => setMaxUtr("") });
+    if (minWtn)
+      chips.push({ label: `WTN ≥ ${minWtn}`, clear: () => setMinWtn("") });
+    if (maxWtn)
+      chips.push({ label: `WTN ≤ ${maxWtn}`, clear: () => setMaxWtn("") });
     if (maxCost)
       chips.push({ label: `Cost ≤ $${maxCost}k/yr`, clear: () => setMaxCost("") });
     if (showFavOnly)
       chips.push({ label: "Shortlisted", clear: () => setShowFavOnly(false) });
     return chips;
-  }, [division, gender, region, conference, setting, stateFilter, scholarships, minUtr, maxUtr, maxCost, showFavOnly]);
+  }, [division, gender, region, conference, setting, stateFilter, scholarships, minWtn, maxWtn, maxCost, showFavOnly]);
 
   const activeFilterCount = activeChips.length;
   const favCount = favorites.size;
@@ -277,8 +277,8 @@ export function SchoolsGrid({
     setSetting(ALL);
     setStateFilter(ALL);
     setScholarships(ALL);
-    setMinUtr("");
-    setMaxUtr("");
+    setMinWtn("");
+    setMaxWtn("");
     setMaxCost("");
     setShowFavOnly(false);
   }
@@ -387,24 +387,24 @@ export function SchoolsGrid({
         </Select>
       )}
 
-      {/* UTR range */}
+      {/* WTN range (lower = stronger) */}
       <div className="flex items-center gap-1.5">
         <Input
           type="number"
-          placeholder="UTR min"
-          value={minUtr}
-          onChange={(e) => setMinUtr(e.target.value)}
+          placeholder="WTN min"
+          value={minWtn}
+          onChange={(e) => setMinWtn(e.target.value)}
           className="h-9 w-[72px] text-sm"
-          aria-label="Minimum team UTR"
+          aria-label="Minimum team WTN"
         />
         <span className="text-xs text-muted-foreground">–</span>
         <Input
           type="number"
           placeholder="max"
-          value={maxUtr}
-          onChange={(e) => setMaxUtr(e.target.value)}
+          value={maxWtn}
+          onChange={(e) => setMaxWtn(e.target.value)}
           className="h-9 w-[60px] text-sm"
-          aria-label="Maximum team UTR"
+          aria-label="Maximum team WTN"
         />
       </div>
 
@@ -566,7 +566,7 @@ export function SchoolsGrid({
 
           const meta = [
             `${school.coach_count} coach${school.coach_count === 1 ? "" : "es"}`,
-            school.avg_utr != null ? `UTR ${school.avg_utr.toFixed(1)}` : null,
+            school.avg_wtn != null ? `WTN ${school.avg_wtn.toFixed(1)}` : null,
             conference,
             location || null,
           ].filter(Boolean).join(" · ");
