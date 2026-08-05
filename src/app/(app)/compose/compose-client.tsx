@@ -138,6 +138,14 @@ const DIV_LABELS: Record<string, string> = {
   JUCO: "JUCO",
 };
 
+const DIV_ORDER: Record<string, number> = {
+  "NCAA Division I": 0, D1: 0,
+  "NCAA Division II": 1, D2: 1,
+  "NCAA Division III": 2, D3: 2,
+  NAIA: 3,
+  JUCO: 4,
+};
+
 function divLabel(d: string) {
   return DIV_LABELS[d] ?? d;
 }
@@ -182,11 +190,13 @@ export function ComposeClient({
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return coaches.filter((c) => {
-      if (q && !`${c.coach_name} ${c.school_name}`.toLowerCase().includes(q)) return false;
-      if (division !== ALL && c.division !== division) return false;
-      return true;
-    });
+    return coaches
+      .filter((c) => {
+        if (q && !`${c.coach_name} ${c.school_name}`.toLowerCase().includes(q)) return false;
+        if (division !== ALL && c.division !== division) return false;
+        return true;
+      })
+      .sort((a, b) => (DIV_ORDER[a.division] ?? 9) - (DIV_ORDER[b.division] ?? 9));
   }, [coaches, search, division]);
 
   const visible = filtered.slice(0, MAX_VISIBLE);
