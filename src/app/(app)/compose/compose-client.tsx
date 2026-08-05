@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight, PartyPopper, PenSquare, Send, Sparkles, X } from "lucide-react";
+import { ChevronRight, PartyPopper, Send, Sparkles, X } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -516,38 +516,76 @@ export function ComposeClient({
         >
           {drafts.length === 0 ? (
             /* ── Empty state ── */
-            <div className="glass-card flex flex-1 flex-col items-center justify-center gap-6 rounded-2xl p-10 text-center">
-              <PenSquare className="size-8 text-muted-foreground/30" />
+            <div className="glass-card flex flex-1 flex-col items-center justify-center gap-6 rounded-2xl p-8 sm:p-10 text-center">
 
-              {/* Workflow steps */}
-              <div className="flex items-center gap-1 text-muted-foreground/50">
-                {(["Select", "Draft", "Generate", "Send"] as const).map((step, i) => (
+              {/* Workflow steps — step 1 active */}
+              <div className="flex items-center gap-1">
+                {(["Select", "AI Draft", "Edit", "Send"] as const).map((step, i) => (
                   <div key={step} className="flex items-center gap-1">
-                    <div className="flex flex-col items-center gap-1">
-                      <div className="flex size-7 items-center justify-center rounded-full bg-muted text-[11px] font-bold tabular-nums">
+                    <div className="flex flex-col items-center gap-1.5">
+                      <div
+                        className={cn(
+                          "flex size-7 items-center justify-center rounded-full text-[11px] font-bold tabular-nums transition-smooth",
+                          i === 0
+                            ? "bg-primary text-primary-foreground ring-4 ring-primary/20"
+                            : "bg-muted text-muted-foreground/40",
+                        )}
+                      >
                         {i + 1}
                       </div>
-                      <span className="text-[10px] font-medium">{step}</span>
+                      <span
+                        className={cn(
+                          "text-[10px] font-medium",
+                          i === 0 ? "text-primary" : "text-muted-foreground/35",
+                        )}
+                      >
+                        {step}
+                      </span>
                     </div>
-                    {i < 3 && <ChevronRight className="mb-3.5 size-3.5 shrink-0 opacity-40" />}
+                    {i < 3 && (
+                      <ChevronRight className="mb-4 size-3.5 shrink-0 text-muted-foreground/20" />
+                    )}
                   </div>
                 ))}
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <p className="text-base font-semibold">Ready to reach out?</p>
+                <p className="text-base font-semibold">Select coaches to get started</p>
                 <p className="max-w-xs text-sm text-muted-foreground">
-                  Select coaches on the left to start drafting personalized emails. Use AI to write a strong first draft in seconds.
+                  Choose coaches from the{" "}
+                  <span className="font-medium text-foreground/70 md:hidden">Coaches tab</span>
+                  <span className="hidden font-medium text-foreground/70 md:inline">list on the left</span>
+                  {" "}— AI drafts a personalized email for each one in seconds.
                 </p>
               </div>
 
-              <div className="flex flex-col gap-2 rounded-xl bg-muted/50 px-4 py-3 text-left">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Personalization tokens</p>
-                <p className="text-xs text-muted-foreground">
-                  Use <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">[Your Name]</code>,{" "}
-                  <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">[UTR]</code>,{" "}
-                  <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">[grad year]</code> in your draft — AI fills these automatically.
+              {/* Sample email preview */}
+              <div
+                aria-hidden
+                className="pointer-events-none w-full max-w-sm select-none rounded-xl border border-border bg-card p-4 text-left opacity-40"
+              >
+                <p className="mb-2 truncate text-[11px] font-semibold text-muted-foreground">
+                  Duke University D1 — recruiting interest from a 2025 player
                 </p>
+                <p className="text-xs leading-relaxed text-muted-foreground line-clamp-3">
+                  Hi Coach Mitchell, my name is Alex and I&apos;m a 2025 tennis player currently
+                  ranked around 450 nationally with a UTR of 12.5. I&apos;ve been following Duke&apos;s D1
+                  program for a while and the level of competition your team plays at is exactly
+                  what I&apos;m looking for at the next level…
+                </p>
+              </div>
+
+              {/* Token hint */}
+              <div className="flex flex-wrap items-center justify-center gap-1.5">
+                {["[Your Name]", "[UTR]", "[grad year]"].map((t) => (
+                  <code
+                    key={t}
+                    className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground"
+                  >
+                    {t}
+                  </code>
+                ))}
+                <span className="text-[11px] text-muted-foreground/50">auto-filled by AI</span>
               </div>
             </div>
           ) : (

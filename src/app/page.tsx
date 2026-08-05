@@ -78,12 +78,27 @@ export default async function LandingPage({
         className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 sm:px-10"
         style={{ background: "rgba(0,0,0,0.18)", backdropFilter: "blur(8px)" }}
       >
+        {/* Logo — visible on mobile, hidden on desktop where the hero glass panel shows the brand */}
+        <Link
+          href="/"
+          className="flex items-center gap-2 sm:hidden"
+          aria-label="Netset home"
+        >
+          <span
+            className="flex size-7 items-center justify-center rounded-lg text-xs font-bold text-white"
+            style={{ background: "#197a48" }}
+          >
+            N
+          </span>
+          <span className="text-sm font-semibold text-white">Netset</span>
+        </Link>
+
         <nav className="hidden items-center gap-6 text-sm sm:flex" style={{ color: "rgba(255,255,255,0.78)" }}>
           <a href="#how-it-works" className="transition-opacity hover:opacity-100">How it works</a>
           <a href="#features" className="transition-opacity hover:opacity-100">Features</a>
         </nav>
-        <div className="ml-auto flex items-center gap-3">
-          <Link href="/auth" className="hidden text-sm transition-opacity hover:opacity-100 sm:block" style={{ color: "rgba(255,255,255,0.78)" }}>
+        <div className="flex items-center gap-3 sm:ml-auto">
+          <Link href="/auth" className="text-sm transition-opacity hover:opacity-100 sm:block" style={{ color: "rgba(255,255,255,0.78)" }}>
             Sign in
           </Link>
           <Link

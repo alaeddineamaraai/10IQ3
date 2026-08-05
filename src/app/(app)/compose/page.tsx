@@ -33,7 +33,8 @@ export default async function ComposePage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Compose</h1>
         <p className="text-sm text-muted-foreground">
-          Select coaches on the left, draft and send on the right.
+          <span className="hidden md:inline">Select coaches on the left, draft and send on the right.</span>
+          <span className="md:hidden">Pick coaches, then switch to Drafts to generate and send.</span>
         </p>
       </div>
 
