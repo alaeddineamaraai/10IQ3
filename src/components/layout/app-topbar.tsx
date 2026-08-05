@@ -89,7 +89,9 @@ export function AppTopbar({
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     const q = query.trim();
-    router.push(q ? `/coaches?search=${encodeURIComponent(q)}` : "/coaches");
+    const onSchools = pathname?.startsWith("/schools");
+    const base = onSchools ? "/schools" : "/coaches";
+    router.push(q ? `${base}?search=${encodeURIComponent(q)}` : base);
   }
 
   return (

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSchoolDetails, getSampleSchoolDetails } from "@/lib/data/schools";
 import { getProfile } from "@/lib/data/profile";
@@ -34,7 +35,9 @@ export default async function SchoolsPage() {
         </p>
       </div>
 
-      <SchoolsGrid schools={schools} profileGender={profileGender} />
+      <Suspense>
+        <SchoolsGrid schools={schools} profileGender={profileGender} />
+      </Suspense>
     </div>
   );
 }

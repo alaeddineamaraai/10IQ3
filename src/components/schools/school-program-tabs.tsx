@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { BarChart3, Building2, GraduationCap, Mail, Sun, Trophy, Users } from "lucide-react";
+import { BarChart3, Building2, GraduationCap, Mail, Sun, Trophy } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -159,13 +159,12 @@ function ProgramSection({ program }: { program: Program }) {
 
   const avgUtr = average(coaches.map((c) => c.team_utr));
   const avgWtn = average(coaches.map((c) => c.team_wtn));
-  const rosterSize = first.roster_size;
   const itaRank = first.ita_team_ranking;
   const conference = first.conference;
   const scholarships = first.scholarships_offered;
   const assistants = first.assistant_coaches;
 
-  const hasStats = avgUtr != null || avgWtn != null || rosterSize != null || itaRank != null;
+  const hasStats = avgUtr != null || avgWtn != null || itaRank != null;
   const hasUtrData = coaches.some((c) => c.team_utr != null);
 
   const wtnDisplay =
@@ -228,12 +227,6 @@ function ProgramSection({ program }: { program: Program }) {
             value={wtnDisplay}
             helpText="World Tennis Number — 0 to 40, lower is stronger"
             icon={BarChart3}
-          />
-          <MetricTile
-            label="Roster Size"
-            value={rosterSize != null ? String(rosterSize) : "—"}
-            helpText="Players on the current team roster"
-            icon={Users}
           />
           <MetricTile
             label="ITA Rank"

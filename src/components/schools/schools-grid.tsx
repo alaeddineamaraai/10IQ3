@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Filter, Mail, Search, Star, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -131,13 +131,19 @@ export function SchoolsGrid({
   profileGender?: string | null;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const [search, setSearch]           = useState("");
+  const [search, setSearch]           = useState(() => searchParams.get("search") ?? "");
   const [division, setDivision]       = useState(ALL);
   const [gender, setGender]           = useState(() => defaultGenderFilter(profileGender));
   const [region, setRegion]           = useState(ALL);
+  const [conference, setConference]   = useState(ALL);
+  const [scholarships, setScholarships] = useState(ALL);
+  const [setting, setSetting]         = useState(ALL);
+  const [stateFilter, setStateFilter] = useState(ALL);
   const [minUtr, setMinUtr]           = useState("");
   const [maxUtr, setMaxUtr]           = useState("");
+  const [maxCost, setMaxCost]         = useState("");
   const [sort, setSort]               = useState<SortKey>("div_asc");
   const [showFavOnly, setShowFavOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -176,9 +182,22 @@ export function SchoolsGrid({
     () => [...new Set(schools.map((s) => s.info.region).filter(Boolean) as string[])].sort(),
     [schools],
   );
+  const conferences = useMemo(
+    () => [...new Set(schools.flatMap((s) => s.coaches.map((c) => c.conference)).filter(Boolean) as string[])].sort(),
+    [schools],
+  );
+  const settings = useMemo(
+    () => [...new Set(schools.map((s) => s.info.setting).filter(Boolean) as string[])].sort(),
+    [schools],
+  );
+  const states = useMemo(
+    () => [...new Set(schools.map((s) => s.info.state).filter(Boolean) as string[])].sort(),
+    [schools],
+  );
 
   const minUtrNum = minUtr ? Number(minUtr) : null;
   const maxUtrNum = maxUtr ? Number(maxUtr) : null;
+  const maxCostNum = maxCost ? Number(maxCost) * 1000 : null;
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -188,24 +207,33 @@ export function SchoolsGrid({
           s.school_name,
           s.info.city,
           s.info.state,
+          s.info.setting,
+          ...s.coaches.map((c) => c.conference),
         ].filter(Boolean).join(" ").toLowerCase();
         if (!haystack.includes(q)) return false;
       }
       if (division !== ALL && s.division !== division) return false;
       if (region !== ALL && s.info.region !== region) return false;
+      if (conference !== ALL && !s.coaches.some((c) => c.conference === conference)) return false;
+      if (setting !== ALL && s.info.setting !== setting) return false;
+      if (stateFilter !== ALL && s.info.state !== stateFilter) return false;
+      if (scholarships === "yes" && !s.coaches.some((c) => c.scholarships_offered === true)) return false;
+      if (scholarships === "no" && s.coaches.some((c) => c.scholarships_offered === true)) return false;
       if (gender !== ALL) {
         const ok = s.coaches.some(
           (c) => c.gender?.toLowerCase() === gender.toLowerCase(),
         );
         if (!ok) return false;
       }
-      if (minUtrNum != null && (s.avg_utr ?? -Infinity) < minUtrNum) return false;
-      if (maxUtrNum != null && (s.avg_utr ?? Infinity)  > maxUtrNum) return false;
+      // Only filter by UTR when the school actually has UTR data
+      if (minUtrNum != null && s.avg_utr != null && s.avg_utr < minUtrNum) return false;
+      if (maxUtrNum != null && s.avg_utr != null && s.avg_utr > maxUtrNum) return false;
+      if (maxCostNum != null && s.info.total_annual_cost != null && s.info.total_annual_cost > maxCostNum) return false;
       if (showFavOnly && !favorites.has(s.school_name)) return false;
       return true;
     });
     return sortSchools(result, sort);
-  }, [schools, search, division, region, gender, minUtrNum, maxUtrNum, sort, showFavOnly, favorites]);
+  }, [schools, search, division, region, conference, setting, stateFilter, scholarships, gender, minUtrNum, maxUtrNum, maxCostNum, sort, showFavOnly, favorites]);
 
   // Active filter chips (excluding search — shown separately in the search bar)
   const activeChips = useMemo(() => {
@@ -216,14 +244,26 @@ export function SchoolsGrid({
       chips.push({ label: gender === "Women" ? "Women's" : "Men's", clear: () => setGender(ALL) });
     if (region !== ALL)
       chips.push({ label: region, clear: () => setRegion(ALL) });
+    if (conference !== ALL)
+      chips.push({ label: conference, clear: () => setConference(ALL) });
+    if (setting !== ALL)
+      chips.push({ label: setting, clear: () => setSetting(ALL) });
+    if (stateFilter !== ALL)
+      chips.push({ label: stateFilter, clear: () => setStateFilter(ALL) });
+    if (scholarships === "yes")
+      chips.push({ label: "Scholarships", clear: () => setScholarships(ALL) });
+    if (scholarships === "no")
+      chips.push({ label: "No scholarships", clear: () => setScholarships(ALL) });
     if (minUtr)
       chips.push({ label: `UTR ≥ ${minUtr}`, clear: () => setMinUtr("") });
     if (maxUtr)
       chips.push({ label: `UTR ≤ ${maxUtr}`, clear: () => setMaxUtr("") });
+    if (maxCost)
+      chips.push({ label: `Cost ≤ $${maxCost}k/yr`, clear: () => setMaxCost("") });
     if (showFavOnly)
       chips.push({ label: "Shortlisted", clear: () => setShowFavOnly(false) });
     return chips;
-  }, [division, gender, region, minUtr, maxUtr, showFavOnly]);
+  }, [division, gender, region, conference, setting, stateFilter, scholarships, minUtr, maxUtr, maxCost, showFavOnly]);
 
   const activeFilterCount = activeChips.length;
   const favCount = favorites.size;
@@ -233,8 +273,13 @@ export function SchoolsGrid({
     setDivision(ALL);
     setGender(defaultGenderFilter(profileGender));
     setRegion(ALL);
+    setConference(ALL);
+    setSetting(ALL);
+    setStateFilter(ALL);
+    setScholarships(ALL);
     setMinUtr("");
     setMaxUtr("");
+    setMaxCost("");
     setShowFavOnly(false);
   }
 
@@ -242,7 +287,7 @@ export function SchoolsGrid({
   const filterControls = (
     <>
       <Select value={division} onValueChange={(v) => setDivision(v ?? ALL)}>
-        <SelectTrigger className="h-9 w-auto min-w-[110px]">
+        <SelectTrigger className="h-9 w-auto min-w-[100px]">
           <span className="truncate text-sm">
             <span className="text-muted-foreground">Division: </span>
             {division === ALL ? "All" : division}
@@ -255,7 +300,7 @@ export function SchoolsGrid({
       </Select>
 
       <Select value={gender} onValueChange={(v) => setGender(v ?? ALL)}>
-        <SelectTrigger className="h-9 w-auto min-w-[110px]">
+        <SelectTrigger className="h-9 w-auto min-w-[100px]">
           <span className="truncate text-sm">
             <span className="text-muted-foreground">Program: </span>
             {gender === ALL ? "All" : gender === "Women" ? "Women's" : "Men's"}
@@ -268,9 +313,38 @@ export function SchoolsGrid({
         </SelectContent>
       </Select>
 
+      <Select value={scholarships} onValueChange={(v) => setScholarships(v ?? ALL)}>
+        <SelectTrigger className="h-9 w-auto min-w-[120px]">
+          <span className="truncate text-sm">
+            <span className="text-muted-foreground">Scholarships: </span>
+            {scholarships === ALL ? "Any" : scholarships === "yes" ? "Offered" : "None"}
+          </span>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={ALL}>Any</SelectItem>
+          <SelectItem value="yes">Offered</SelectItem>
+          <SelectItem value="no">None</SelectItem>
+        </SelectContent>
+      </Select>
+
+      {conferences.length > 0 && (
+        <Select value={conference} onValueChange={(v) => setConference(v ?? ALL)}>
+          <SelectTrigger className="h-9 w-auto min-w-[110px]">
+            <span className="truncate text-sm">
+              <span className="text-muted-foreground">Conference: </span>
+              {conference === ALL ? "All" : conference}
+            </span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>All</SelectItem>
+            {conferences.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      )}
+
       {regions.length > 0 && (
         <Select value={region} onValueChange={(v) => setRegion(v ?? ALL)}>
-          <SelectTrigger className="h-9 w-auto min-w-[110px]">
+          <SelectTrigger className="h-9 w-auto min-w-[100px]">
             <span className="truncate text-sm">
               <span className="text-muted-foreground">Region: </span>
               {region === ALL ? "All" : region}
@@ -283,6 +357,36 @@ export function SchoolsGrid({
         </Select>
       )}
 
+      {states.length > 0 && (
+        <Select value={stateFilter} onValueChange={(v) => setStateFilter(v ?? ALL)}>
+          <SelectTrigger className="h-9 w-auto min-w-[90px]">
+            <span className="truncate text-sm">
+              <span className="text-muted-foreground">State: </span>
+              {stateFilter === ALL ? "All" : stateFilter}
+            </span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>All</SelectItem>
+            {states.map((st) => <SelectItem key={st} value={st}>{st}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      )}
+
+      {settings.length > 0 && (
+        <Select value={setting} onValueChange={(v) => setSetting(v ?? ALL)}>
+          <SelectTrigger className="h-9 w-auto min-w-[100px]">
+            <span className="truncate text-sm">
+              <span className="text-muted-foreground">Setting: </span>
+              {setting === ALL ? "All" : setting}
+            </span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>All</SelectItem>
+            {settings.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      )}
+
       {/* UTR range */}
       <div className="flex items-center gap-1.5">
         <Input
@@ -291,7 +395,7 @@ export function SchoolsGrid({
           value={minUtr}
           onChange={(e) => setMinUtr(e.target.value)}
           className="h-9 w-[72px] text-sm"
-          aria-label="Minimum UTR"
+          aria-label="Minimum team UTR"
         />
         <span className="text-xs text-muted-foreground">–</span>
         <Input
@@ -299,8 +403,20 @@ export function SchoolsGrid({
           placeholder="max"
           value={maxUtr}
           onChange={(e) => setMaxUtr(e.target.value)}
-          className="h-9 w-[68px] text-sm"
-          aria-label="Maximum UTR"
+          className="h-9 w-[60px] text-sm"
+          aria-label="Maximum team UTR"
+        />
+      </div>
+
+      {/* Max annual cost */}
+      <div className="flex items-center gap-1.5">
+        <Input
+          type="number"
+          placeholder="Max cost $k"
+          value={maxCost}
+          onChange={(e) => setMaxCost(e.target.value)}
+          className="h-9 w-[100px] text-sm"
+          aria-label="Maximum annual cost in thousands"
         />
       </div>
 

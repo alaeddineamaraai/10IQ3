@@ -245,7 +245,6 @@ export function SchoolDetailContent({ detail }: { detail: SchoolDetail }) {
   const noScholarships = detail.coaches.every((c) => c.scholarships_offered === false);
   const indoorCourts = firstCoach?.indoor_courts ?? null;
   const outdoorCourts = firstCoach?.outdoor_courts ?? null;
-  const rosterSize = firstCoach?.roster_size ?? null;
   const studentPop = info.student_population;
 
   return (
@@ -269,7 +268,7 @@ export function SchoolDetailContent({ detail }: { detail: SchoolDetail }) {
           {info.setting && <span>{info.setting}</span>}
           {info.website && (
             <a
-              href={info.website}
+              href={info.website.startsWith("http") ? info.website : `https://${info.website}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1 transition-colors hover:text-foreground"
@@ -283,7 +282,7 @@ export function SchoolDetailContent({ detail }: { detail: SchoolDetail }) {
 
       {/* Quick-glance recruiting facts */}
       {(conference || itaRank != null || hasScholarships || noScholarships ||
-        indoorCourts != null || outdoorCourts != null || rosterSize != null ||
+        indoorCourts != null || outdoorCourts != null ||
         studentPop != null || info.acceptance_rate != null || info.total_annual_cost != null) && (
         <div className="flex flex-wrap gap-2">
           {conference && (
@@ -325,11 +324,6 @@ export function SchoolDetailContent({ detail }: { detail: SchoolDetail }) {
             <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs font-medium text-foreground">
               <Users className="size-3 text-muted-foreground" />
               {fmt(studentPop)} students
-            </span>
-          )}
-          {rosterSize != null && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs font-medium text-foreground">
-              {rosterSize} on roster
             </span>
           )}
           {indoorCourts != null && (
