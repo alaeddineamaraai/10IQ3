@@ -1,9 +1,14 @@
 import {
+  BadgeDollarSign,
+  Building2,
   ExternalLink,
   GraduationCap,
   MapPin,
   Plane,
+  Sun,
   Thermometer,
+  Trophy,
+  Users,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -232,8 +237,20 @@ export function SchoolDetailContent({ detail }: { detail: SchoolDetail }) {
   const programs = buildPrograms(detail.coaches);
   const { info } = detail;
 
+  // Derive program-level facts from coaches (consistent per school)
+  const firstCoach = detail.coaches[0];
+  const conference = firstCoach?.conference ?? null;
+  const itaRank = firstCoach?.ita_team_ranking ?? null;
+  const hasScholarships = detail.coaches.some((c) => c.scholarships_offered === true);
+  const noScholarships = detail.coaches.every((c) => c.scholarships_offered === false);
+  const indoorCourts = firstCoach?.indoor_courts ?? null;
+  const outdoorCourts = firstCoach?.outdoor_courts ?? null;
+  const rosterSize = firstCoach?.roster_size ?? null;
+  const studentPop = info.student_population;
+
   return (
     <div className="flex flex-col gap-5">
+      {/* Location + links bar */}
       {(info.city || info.state || info.region || info.website || info.setting) && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
           {(info.city || info.state) && (
@@ -260,6 +277,72 @@ export function SchoolDetailContent({ detail }: { detail: SchoolDetail }) {
               <ExternalLink className="size-3" />
               Website
             </a>
+          )}
+        </div>
+      )}
+
+      {/* Quick-glance recruiting facts */}
+      {(conference || itaRank != null || hasScholarships || noScholarships ||
+        indoorCourts != null || outdoorCourts != null || rosterSize != null ||
+        studentPop != null || info.acceptance_rate != null || info.total_annual_cost != null) && (
+        <div className="flex flex-wrap gap-2">
+          {conference && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs font-medium text-foreground">
+              <Trophy className="size-3 text-muted-foreground" />
+              {conference}
+            </span>
+          )}
+          {itaRank != null && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs font-medium text-foreground">
+              <Trophy className="size-3 text-amber-500" />
+              ITA #{itaRank}
+            </span>
+          )}
+          {hasScholarships && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/8 px-3 py-1 text-xs font-semibold text-primary">
+              <GraduationCap className="size-3" />
+              Scholarships offered
+            </span>
+          )}
+          {noScholarships && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs font-medium text-muted-foreground">
+              <GraduationCap className="size-3" />
+              No scholarships
+            </span>
+          )}
+          {info.total_annual_cost != null && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs font-medium text-foreground">
+              <BadgeDollarSign className="size-3 text-muted-foreground" />
+              {fmtCurrency(info.total_annual_cost)}/yr total
+            </span>
+          )}
+          {info.acceptance_rate != null && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs font-medium text-foreground">
+              {fmtPct(info.acceptance_rate)} acceptance
+            </span>
+          )}
+          {studentPop != null && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs font-medium text-foreground">
+              <Users className="size-3 text-muted-foreground" />
+              {fmt(studentPop)} students
+            </span>
+          )}
+          {rosterSize != null && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs font-medium text-foreground">
+              {rosterSize} on roster
+            </span>
+          )}
+          {indoorCourts != null && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs font-medium text-foreground">
+              <Building2 className="size-3 text-muted-foreground" />
+              {indoorCourts} indoor courts
+            </span>
+          )}
+          {outdoorCourts != null && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs font-medium text-foreground">
+              <Sun className="size-3 text-muted-foreground" />
+              {outdoorCourts} outdoor courts
+            </span>
           )}
         </div>
       )}

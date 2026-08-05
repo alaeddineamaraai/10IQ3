@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { BarChart3, Mail, Trophy, Users } from "lucide-react";
+import { BarChart3, Building2, GraduationCap, Mail, Sun, Trophy, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -214,7 +214,7 @@ function ProgramSection({ program }: { program: Program }) {
         </p>
       )}
 
-      {/* Metrics 2×2 */}
+      {/* Metrics grid */}
       {hasStats && (
         <div className="grid grid-cols-2 gap-3">
           <MetricTile
@@ -241,6 +241,38 @@ function ProgramSection({ program }: { program: Program }) {
             helpText="Intercollegiate Tennis Association national ranking"
             icon={Trophy}
           />
+          {first.indoor_courts != null && (
+            <MetricTile
+              label="Indoor Courts"
+              value={String(first.indoor_courts)}
+              helpText="Climate-controlled indoor tennis courts on campus"
+              icon={Building2}
+            />
+          )}
+          {first.outdoor_courts != null && (
+            <MetricTile
+              label="Outdoor Courts"
+              value={String(first.outdoor_courts)}
+              helpText="Outdoor tennis courts available to the program"
+              icon={Sun}
+            />
+          )}
+          {scholarships === true && (
+            <MetricTile
+              label="Scholarships"
+              value="Offered"
+              helpText="This program offers athletic scholarships"
+              icon={GraduationCap}
+            />
+          )}
+          {scholarships === false && (
+            <MetricTile
+              label="Scholarships"
+              value="No"
+              helpText="This program does not offer athletic scholarships"
+              icon={GraduationCap}
+            />
+          )}
         </div>
       )}
 

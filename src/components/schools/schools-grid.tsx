@@ -7,6 +7,7 @@ import { Filter, Mail, Search, Star, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useFavoriteSchools } from "@/hooks/use-favorite-schools";
+import { GraduationCap } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -443,10 +444,14 @@ export function SchoolsGrid({
           const href = `/schools/${encodeURIComponent(school.school_name)}`;
           const location = [school.info.city, school.info.state].filter(Boolean).join(", ");
           const divBadge = DIV_BADGE[school.division] ?? "bg-muted text-muted-foreground";
+          const conference = school.coaches[0]?.conference ?? null;
+          const itaRank = school.coaches[0]?.ita_team_ranking ?? null;
+          const hasScholarships = school.coaches.some((c) => c.scholarships_offered === true);
 
           const meta = [
             `${school.coach_count} coach${school.coach_count === 1 ? "" : "es"}`,
             school.avg_utr != null ? `UTR ${school.avg_utr.toFixed(1)}` : null,
+            conference,
             location || null,
           ].filter(Boolean).join(" · ");
 
@@ -462,7 +467,7 @@ export function SchoolsGrid({
                   <SchoolAvatar name={school.school_name} />
 
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <span className="font-semibold text-foreground">{name}</span>
                       <span className={cn(
                         "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
@@ -470,6 +475,17 @@ export function SchoolsGrid({
                       )}>
                         {school.division}
                       </span>
+                      {itaRank != null && (
+                        <span className="hidden shrink-0 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400 sm:inline">
+                          ITA #{itaRank}
+                        </span>
+                      )}
+                      {hasScholarships && (
+                        <span className="hidden shrink-0 items-center gap-0.5 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary sm:inline-flex">
+                          <GraduationCap className="size-2.5" />
+                          Scholarships
+                        </span>
+                      )}
                       {hasContacted && (
                         <span className="hidden text-[11px] text-primary sm:inline">
                           Contacted
