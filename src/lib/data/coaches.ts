@@ -137,7 +137,7 @@ function statusOfRow(row: Outreach | undefined): Exclude<CoachStatus, "all"> {
  */
 export async function getCoachesPage(
   supabase: SupabaseClient,
-  userId: string,
+  userId: string | null,
   filters: CoachesPageFilters
 ): Promise<{ coaches: CoachWithOutreach[]; total: number }> {
   const {
@@ -145,11 +145,9 @@ export async function getCoachesPage(
     minUtr, maxUtr, minWtn, maxWtn, sort = "utr_desc", page, pageSize,
   } = filters;
 
-  const { data: outreachRows, error: outreachError } = await supabase
-    .from("outreach")
-    .select("*")
-    .eq("user_id", userId)
-    .returns<Outreach[]>();
+  const { data: outreachRows, error: outreachError } = userId
+    ? await supabase.from("outreach").select("*").eq("user_id", userId).returns<Outreach[]>()
+    : { data: [] as Outreach[], error: null };
 
   if (outreachError) throw outreachError;
 

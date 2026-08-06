@@ -1,33 +1,28 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getSchoolDetails, getSampleSchoolDetails } from "@/lib/data/schools";
-import { getCoachesPage, getSampleCoaches } from "@/lib/data/coaches";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getSchoolDetails } from "@/lib/data/schools";
+import { getCoachesPage } from "@/lib/data/coaches";
 import { ContactsClient } from "./contacts-client";
 
 const COACHES_PAGE_SIZE = 50;
 
 async function loadData() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    const coaches = getSampleCoaches();
-    return {
-      schools: getSampleSchoolDetails(),
-      coaches,
-      coachesTotal: coaches.length,
-      schoolsSample: true,
-      coachesSample: true,
-    };
-  }
-
   const supabase = await createSupabaseServerClient();
   const { data: auth } = await supabase.auth.getUser();
 
   if (!auth.user) {
-    const coaches = getSampleCoaches();
+    // Demo: real data from DB, no outreach overlay
+    const admin = createSupabaseAdminClient();
+    const [schools, coachesPage] = await Promise.all([
+      getSchoolDetails(admin, null),
+      getCoachesPage(admin, null, { page: 1, pageSize: COACHES_PAGE_SIZE, sort: "utr_desc" }),
+    ]);
     return {
-      schools: getSampleSchoolDetails(),
-      coaches,
-      coachesTotal: coaches.length,
-      schoolsSample: true,
-      coachesSample: true,
+      schools,
+      coaches: coachesPage.coaches,
+      coachesTotal: coachesPage.total,
+      schoolsSample: false,
+      coachesSample: false,
     };
   }
 
