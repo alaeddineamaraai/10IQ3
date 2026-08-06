@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 import { TourDemoCompose } from "@/components/welcome/tour-demo";
 import type { Coach, CoachWithOutreach } from "@/lib/types/coach";
 
-type Status = "idle" | "loading" | "streaming" | "ready" | "sending" | "sent" | "error";
+type Status = "idle" | "loading" | "streaming" | "ready" | "sending" | "sent" | "template" | "error";
 
 type Draft = {
   coach: Coach;
@@ -186,7 +186,7 @@ export function ComposeClient({
     [coaches],
   );
 
-  const sentCount = drafts.filter((d) => d.status === "sent").length;
+  const sentCount = drafts.filter((d) => d.status === "sent" || d.status === "template").length;
   const allSent = drafts.length > 0 && sentCount === drafts.length;
 
   const filtered = useMemo(() => {
@@ -324,8 +324,8 @@ export function ComposeClient({
     updateDraft(email, { status: "sending" });
 
     if (isSampleMode) {
-      await new Promise((r) => setTimeout(r, 500));
-      updateDraft(email, { status: "sent" });
+      await new Promise((r) => setTimeout(r, 400));
+      updateDraft(email, { status: "template" });
       return;
     }
 
@@ -702,6 +702,40 @@ export function ComposeClient({
                   </GlassCardHeader>
 
                   <GlassCardContent className="flex flex-col gap-4">
+                    {/* Demo template preview — replaces edit fields when "sent" in sample mode */}
+                    {draft.status === "template" ? (
+                      <div className="flex flex-col gap-4">
+                        <div className="flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/8 px-4 py-3">
+                          <span className="mt-0.5 shrink-0 text-base">⚠️</span>
+                          <div className="flex flex-col gap-0.5">
+                            <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+                              This is a demo preview — real emails don&apos;t look like this
+                            </p>
+                            <p className="text-xs text-amber-700/80 dark:text-amber-400/80">
+                              When you send for real, your email lands in the coach&apos;s inbox as a normal email — no banners, no templates, just your message.{" "}
+                              <a href="/auth" className="font-semibold underline">Sign up free →</a>
+                            </p>
+                          </div>
+                        </div>
+                        <div className="rounded-xl border border-border bg-muted/30 px-4 py-4">
+                          <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            To: {draft.coach.coach_name} · {draft.coach.school_name}
+                          </p>
+                          <p className="mb-3 text-sm font-semibold">{draft.subject || "(no subject)"}</p>
+                          <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground/80">
+                            {draft.body || "(empty)"}
+                          </pre>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => updateDraft(draft.coach.email, { status: "ready" })}
+                          className="self-start text-xs text-muted-foreground underline hover:text-foreground"
+                        >
+                          ← Back to editing
+                        </button>
+                      </div>
+                    ) : (
+                    <>
                     {/* Subject field */}
                     <div className="flex flex-col gap-1.5">
                       <div className="flex items-center justify-between">
@@ -763,9 +797,11 @@ export function ComposeClient({
                         <p className="text-xs text-destructive">{draft.error}</p>
                       )}
                     </div>
+                    </>
+                    )}
                   </GlassCardContent>
 
-                  <GlassCardFooter className="flex flex-col gap-3 bg-transparent">
+                  {draft.status !== "template" && <GlassCardFooter className="flex flex-col gap-3 bg-transparent">
                     {/* Schedule picker */}
                     <SchedulePicker
                       value={draft.scheduled_for ?? ""}
@@ -809,7 +845,7 @@ export function ComposeClient({
                           : draft.scheduled_for ? "Schedule" : "Send"}
                     </Button>
                     </div>
-                  </GlassCardFooter>
+                  </GlassCardFooter>}
                 </GlassCard>
               ))}
             </>
@@ -823,6 +859,7 @@ export function ComposeClient({
 function StatusLabel({ status }: { status: Status }) {
   switch (status) {
     case "sent":      return <span className="text-xs font-medium text-primary">Sent ✓</span>;
+    case "template":  return <span className="text-xs font-medium text-amber-600 dark:text-amber-400">Demo preview</span>;
     case "sending":   return <span className="text-xs text-muted-foreground">Sending…</span>;
     case "ready":     return <span className="text-xs text-muted-foreground">Draft ready</span>;
     case "loading":   return <span className="text-xs text-muted-foreground">Generating…</span>;

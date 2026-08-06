@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Coach, CoachWithOutreach, Outreach, OutreachReply } from "@/lib/types/coach";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 function toNumber(value: unknown): number | null {
   if (value == null || value === "") return null;
@@ -58,6 +59,17 @@ export async function fetchAllCoaches<T = Coach>(
  * the two so a coach already emailed by User A doesn't show as "contacted"
  * for User B — the bug the old single shared-row design had.
  */
+/**
+ * Returns real coaches from the DB with outreach set to null on every row —
+ * used for the unauthenticated demo so visitors see actual schools instead
+ * of generated placeholder names.
+ */
+export async function getDemoCoaches(): Promise<CoachWithOutreach[]> {
+  const admin = createSupabaseAdminClient();
+  const coaches = await fetchAllCoaches<Coach>(admin);
+  return coaches.map((coach) => ({ ...normalizeCoach(coach), outreach: null }));
+}
+
 export async function getCoachesWithOutreach(
   supabase: SupabaseClient,
   userId: string

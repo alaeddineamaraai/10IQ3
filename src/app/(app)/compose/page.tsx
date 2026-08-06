@@ -3,18 +3,18 @@ import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getCoachesWithOutreach, getSampleCoaches } from "@/lib/data/coaches";
+import { getDemoCoaches, getCoachesWithOutreach } from "@/lib/data/coaches";
 import { getProfile } from "@/lib/data/profile";
 import { ComposeClient } from "./compose-client";
 
 async function loadData() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    return { coaches: getSampleCoaches(), isSampleMode: true, missingFields: [] as string[] };
-  }
-
   const supabase = await createSupabaseServerClient();
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return { coaches: getSampleCoaches(), isSampleMode: true, missingFields: [] as string[] };
+  if (!auth.user) return { coaches: await getDemoCoaches(), isSampleMode: true, missingFields: [] as string[] };
+
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return { coaches: await getDemoCoaches(), isSampleMode: true, missingFields: [] as string[] };
+  }
 
   const [coaches, profile] = await Promise.all([
     getCoachesWithOutreach(supabase, auth.user.id),
