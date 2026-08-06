@@ -21,8 +21,6 @@ async function loadData() {
       schools,
       coaches: coachesPage.coaches,
       coachesTotal: coachesPage.total,
-      schoolsSample: false,
-      coachesSample: false,
     };
   }
 
@@ -39,21 +37,17 @@ async function loadData() {
     schools,
     coaches: coachesPage.coaches,
     coachesTotal: coachesPage.total,
-    schoolsSample: false,
-    coachesSample: false,
   };
 }
 
 export default async function ContactsPage() {
-  const { schools, coaches, coachesTotal, schoolsSample, coachesSample } = await loadData();
+  const { schools, coaches, coachesTotal } = await loadData();
 
   return (
     <ContactsClient
       schools={schools}
       coaches={coaches}
       coachesTotal={coachesTotal}
-      schoolsSample={schoolsSample}
-      coachesSample={coachesSample}
     />
   );
 }

@@ -14,21 +14,15 @@ type Props = {
   schools: SchoolDetail[];
   coaches: CoachWithOutreach[];
   coachesTotal: number;
-  schoolsSample: boolean;
-  coachesSample: boolean;
 };
 
-export function ContactsClient({ schools, coaches, coachesTotal, schoolsSample, coachesSample }: Props) {
+export function ContactsClient({ schools, coaches, coachesTotal }: Props) {
   const [tab, setTab] = useState<Tab>("schools");
 
   const subtitle =
     tab === "schools"
-      ? schoolsSample
-        ? "Sample data — showing a preview of the schools directory."
-        : `${schools.length} schools with coaches in the database.`
-      : coachesSample
-        ? "Sample data — showing a preview of the coaches directory."
-        : `${coachesTotal.toLocaleString()} coaches in the database.`;
+      ? `${schools.length} schools with coaches in the database.`
+      : `${coachesTotal.toLocaleString()} coaches in the database.`;
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
@@ -62,7 +56,7 @@ export function ContactsClient({ schools, coaches, coachesTotal, schoolsSample, 
       {tab === "schools" ? (
         <SchoolsGrid schools={schools} />
       ) : (
-        <CoachesTable initialCoaches={coaches} initialTotal={coachesTotal} isSample={coachesSample} />
+        <CoachesTable initialCoaches={coaches} initialTotal={coachesTotal} isSample={false} />
       )}
     </div>
   );
