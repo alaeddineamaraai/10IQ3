@@ -85,26 +85,47 @@ function sortSampleCoaches(coaches: CoachWithOutreach[], sort: CoachSortKey) {
 
 export function CoachesTable({ initialCoaches, initialTotal, isSample }: Props) {
   const router = useRouter();
-  // The topbar search navigates here with ?search=…, so seed from the URL.
   const searchParams = useSearchParams();
+
+  // All filter state seeded from URL params so they survive navigation.
   const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
-  const [division, setDivision] = useState(ALL);
-  const [region, setRegion] = useState(ALL);
-  const [status, setStatus] = useState<CoachStatus>("all");
-  const [minUtr, setMinUtr] = useState("");
-  const [maxUtr, setMaxUtr] = useState("");
-  const [minWtn, setMinWtn] = useState("");
-  const [maxWtn, setMaxWtn] = useState("");
-  const [sort, setSort] = useState<CoachSortKey>("utr_desc");
+  const [division, setDivision] = useState(() => searchParams.get("division") ?? ALL);
+  const [region, setRegion] = useState(() => searchParams.get("region") ?? ALL);
+  const [status, setStatus] = useState<CoachStatus>(() => (searchParams.get("status") as CoachStatus) ?? "all");
+  const [minUtr, setMinUtr] = useState(() => searchParams.get("minUtr") ?? "");
+  const [maxUtr, setMaxUtr] = useState(() => searchParams.get("maxUtr") ?? "");
+  const [minWtn, setMinWtn] = useState(() => searchParams.get("minWtn") ?? "");
+  const [maxWtn, setMaxWtn] = useState(() => searchParams.get("maxWtn") ?? "");
+  const [sort, setSort] = useState<CoachSortKey>(() => (searchParams.get("sort") as CoachSortKey) ?? "utr_desc");
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [page, setPage] = useState(1);
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [page, setPage] = useState(() => Number(searchParams.get("page") ?? "1"));
+  const [showAdvanced, setShowAdvanced] = useState(
+    () => !!(searchParams.get("minUtr") || searchParams.get("maxUtr") || searchParams.get("minWtn") || searchParams.get("maxWtn"))
+  );
   const { favorites, toggle: toggleFav } = useFavoriteSchools();
 
   const [coaches, setCoaches] = useState(initialCoaches);
   const [total, setTotal] = useState(initialTotal);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+
+  // Keep URL in sync with filters so navigating away and back restores state.
+  useEffect(() => {
+    const p = new URLSearchParams();
+    if (search.trim()) p.set("search", search.trim());
+    if (division !== ALL) p.set("division", division);
+    if (region !== ALL) p.set("region", region);
+    if (status !== "all") p.set("status", status);
+    if (minUtr) p.set("minUtr", minUtr);
+    if (maxUtr) p.set("maxUtr", maxUtr);
+    if (minWtn) p.set("minWtn", minWtn);
+    if (maxWtn) p.set("maxWtn", maxWtn);
+    if (sort !== "utr_desc") p.set("sort", sort);
+    if (page > 1) p.set("page", String(page));
+    const qs = p.toString();
+    router.replace(qs ? `/coaches?${qs}` : "/coaches", { scroll: false });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, division, region, status, minUtr, maxUtr, minWtn, maxWtn, sort, page]);
 
   // The server already gave us page 1 with no filters via SSR — skip
   // re-fetching that exact same request on mount.
@@ -169,12 +190,17 @@ export function CoachesTable({ initialCoaches, initialTotal, isSample }: Props) 
     return () => clearTimeout(timer);
   }, [isSample, page, sort, search, division, region, status, minUtr, maxUtr, minWtn, maxWtn]);
 
-  // Searching again from the topbar changes ?search= without remounting this
-  // component, so mirror the param back into local state when it moves.
+  // Searching from the topbar navigates to ?search=… — mirror it into state
+  // only when the URL value actually differs from what we have (avoids a loop
+  // with the URL-sync effect above).
   const urlSearch = searchParams.get("search") ?? "";
+  const prevUrlSearch = useRef(urlSearch);
   useEffect(() => {
-    setSearch(urlSearch);
-    setPage(1);
+    if (urlSearch !== prevUrlSearch.current) {
+      prevUrlSearch.current = urlSearch;
+      setSearch(urlSearch);
+      setPage(1);
+    }
   }, [urlSearch]);
 
   function updateSearch(v: string) { setSearch(v); resetToFirstPage(); }

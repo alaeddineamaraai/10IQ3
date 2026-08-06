@@ -133,19 +133,20 @@ export function SchoolsGrid({
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // All filters seeded from URL params so they survive navigation.
   const [search, setSearch]           = useState(() => searchParams.get("search") ?? "");
-  const [division, setDivision]       = useState(ALL);
-  const [gender, setGender]           = useState(() => defaultGenderFilter(profileGender));
-  const [region, setRegion]           = useState(ALL);
-  const [conference, setConference]   = useState(ALL);
-  const [scholarships, setScholarships] = useState(ALL);
-  const [setting, setSetting]         = useState(ALL);
-  const [stateFilter, setStateFilter] = useState(ALL);
-  const [minWtn, setMinWtn]           = useState("");
-  const [maxWtn, setMaxWtn]           = useState("");
-  const [maxCost, setMaxCost]         = useState("");
-  const [sort, setSort]               = useState<SortKey>("div_asc");
-  const [showFavOnly, setShowFavOnly] = useState(false);
+  const [division, setDivision]       = useState(() => searchParams.get("division") ?? ALL);
+  const [gender, setGender]           = useState(() => searchParams.get("gender") ?? defaultGenderFilter(profileGender));
+  const [region, setRegion]           = useState(() => searchParams.get("region") ?? ALL);
+  const [conference, setConference]   = useState(() => searchParams.get("conference") ?? ALL);
+  const [scholarships, setScholarships] = useState(() => searchParams.get("scholarships") ?? ALL);
+  const [setting, setSetting]         = useState(() => searchParams.get("setting") ?? ALL);
+  const [stateFilter, setStateFilter] = useState(() => searchParams.get("state") ?? ALL);
+  const [minWtn, setMinWtn]           = useState(() => searchParams.get("minWtn") ?? "");
+  const [maxWtn, setMaxWtn]           = useState(() => searchParams.get("maxWtn") ?? "");
+  const [maxCost, setMaxCost]         = useState(() => searchParams.get("maxCost") ?? "");
+  const [sort, setSort]               = useState<SortKey>(() => (searchParams.get("sort") as SortKey) ?? "div_asc");
+  const [showFavOnly, setShowFavOnly] = useState(() => searchParams.get("favOnly") === "1");
   const [showFilters, setShowFilters] = useState(false);
   const [filterVisible, setFilterVisible] = useState(true);
   const barRef = useRef<HTMLDivElement>(null);
@@ -171,6 +172,27 @@ export function SchoolsGrid({
     scrollEl.addEventListener("scroll", onScroll, { passive: true });
     return () => scrollEl.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Keep URL in sync with filters so navigating away and back restores state.
+  useEffect(() => {
+    const p = new URLSearchParams();
+    if (search.trim()) p.set("search", search.trim());
+    if (division !== ALL) p.set("division", division);
+    if (gender !== defaultGenderFilter(profileGender)) p.set("gender", gender);
+    if (region !== ALL) p.set("region", region);
+    if (conference !== ALL) p.set("conference", conference);
+    if (scholarships !== ALL) p.set("scholarships", scholarships);
+    if (setting !== ALL) p.set("setting", setting);
+    if (stateFilter !== ALL) p.set("state", stateFilter);
+    if (minWtn) p.set("minWtn", minWtn);
+    if (maxWtn) p.set("maxWtn", maxWtn);
+    if (maxCost) p.set("maxCost", maxCost);
+    if (sort !== "div_asc") p.set("sort", sort);
+    if (showFavOnly) p.set("favOnly", "1");
+    const qs = p.toString();
+    router.replace(qs ? `/schools?${qs}` : "/schools", { scroll: false });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, division, gender, region, conference, scholarships, setting, stateFilter, minWtn, maxWtn, maxCost, sort, showFavOnly]);
 
   const { favorites, toggle: toggleFav } = useFavoriteSchools();
 
