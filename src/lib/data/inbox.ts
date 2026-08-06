@@ -131,7 +131,13 @@ export async function getInboxConversations(
 }
 
 export function getSampleInboxConversations(): InboxConversation[] {
-  const daysAgo = (n: number) => new Date(Date.now() - n * DAY_MS).toISOString();
+  const h = (n: number) => new Date(Date.now() - n * 60 * 60 * 1000).toISOString();
+  const d = (n: number) => new Date(Date.now() - n * DAY_MS).toISOString();
+  const sub = "2027 Recruit | Alex Player – WTN 6.2 / UTR 11.8";
+  const base: Omit<Outreach, "id" | "coach_email" | "sent_at" | "subject" | "body" | "opened" | "replied" | "opened_at" | "replied_at" | "reply_viewed_at" | "created_at"> = {
+    user_id: "sample", email_sent: true, resend_email_id: null,
+    scheduled_for: null, schedule_attempts: 0, schedule_failed: false,
+  };
 
   const raw: {
     outreach: Outreach;
@@ -139,114 +145,52 @@ export function getSampleInboxConversations(): InboxConversation[] {
     replies: OutreachReply[];
   }[] = [
     {
-      outreach: {
-        id: "sample-1",
-        user_id: "sample",
-        coach_email: "sarah.mitchell@duke.edu",
-        email_sent: true,
-        sent_at: daysAgo(1),
-        subject: "2027 Recruit | Alex Player - UTR 11.8",
-        body: "Dear Coach Mitchell,\n\nI'm excited about Duke's program...",
-        opened: true,
-        replied: true,
-        opened_at: daysAgo(1),
-        replied_at: daysAgo(0.3),
-        reply_viewed_at: null,
-        resend_email_id: null,
-        scheduled_for: null,
-        schedule_attempts: 0,
-        schedule_failed: false,
-        created_at: daysAgo(1),
-      },
+      outreach: { ...base, id: "si-1", coach_email: "sarah.mitchell@duke.edu", email_sent: true, sent_at: d(1), subject: sub, body: "Hi Coach Mitchell,\n\nMy name is Alex Player and I'm a 2027 student-athlete from San Jose, CA with a WTN of 6.2 and UTR of 11.8...", opened: true, replied: true, opened_at: h(20), replied_at: h(16), reply_viewed_at: h(15), created_at: d(1) },
       coach: { coach_name: "Sarah Mitchell", school_name: "Duke University", division: "D1" },
       replies: [
-        {
-          id: "reply-1",
-          outreach_id: "sample-1",
-          from_email: "sarah.mitchell@duke.edu",
-          subject: "Re: 2027 Recruit | Alex Player - UTR 11.8",
-          body: "Thanks for reaching out, Alex — your UTR and record stand out. Could you send over a highlight reel and your fall tournament schedule?",
-          received_at: daysAgo(0.3),
-        },
+        { id: "r-1a", outreach_id: "si-1", from_email: "sarah.mitchell@duke.edu", subject: "Re: " + sub, body: "Hi Alex,\n\nThanks for reaching out — your UTR and singles record definitely stand out. Could you send over a recent match video and your fall tournament schedule? We'll be evaluating recruits heavily this fall.\n\nBest,\nCoach Mitchell", received_at: h(16) },
       ],
     },
     {
-      outreach: {
-        id: "sample-2",
-        user_id: "sample",
-        coach_email: "james.park@berkeley.edu",
-        email_sent: true,
-        sent_at: daysAgo(2),
-        subject: "2027 Recruit | Alex Player - UTR 11.8",
-        body: "Dear Coach Park,\n\nI've been following UC Berkeley's program...",
-        opened: true,
-        replied: false,
-        opened_at: daysAgo(2),
-        replied_at: null,
-        reply_viewed_at: null,
-        resend_email_id: null,
-        scheduled_for: null,
-        schedule_attempts: 0,
-        schedule_failed: false,
-        created_at: daysAgo(2),
-      },
-      coach: { coach_name: "James Park", school_name: "UC Berkeley", division: "D2" },
-      replies: [],
-    },
-    {
-      outreach: {
-        id: "sample-3",
-        user_id: "sample",
-        coach_email: "elena.torres@umich.edu",
-        email_sent: true,
-        sent_at: daysAgo(8),
-        subject: "2027 Recruit | Alex Player - UTR 11.8",
-        body: "Dear Coach Torres,\n\nI'm reaching out to introduce myself...",
-        opened: false,
-        replied: false,
-        opened_at: null,
-        replied_at: null,
-        reply_viewed_at: null,
-        resend_email_id: null,
-        scheduled_for: null,
-        schedule_attempts: 0,
-        schedule_failed: false,
-        created_at: daysAgo(8),
-      },
-      coach: { coach_name: "Elena Torres", school_name: "University of Michigan", division: "D3" },
-      replies: [],
-    },
-    {
-      outreach: {
-        id: "sample-4",
-        user_id: "sample",
-        coach_email: "marcus.webb@emory.edu",
-        email_sent: true,
-        sent_at: daysAgo(6),
-        subject: "2027 Recruit | Alex Player - UTR 11.8",
-        body: "Dear Coach Webb,\n\nI'm very interested in Emory's program...",
-        opened: true,
-        replied: true,
-        opened_at: daysAgo(6),
-        replied_at: daysAgo(4),
-        reply_viewed_at: daysAgo(3),
-        resend_email_id: null,
-        scheduled_for: null,
-        schedule_attempts: 0,
-        schedule_failed: false,
-        created_at: daysAgo(6),
-      },
-      coach: { coach_name: "Marcus Webb", school_name: "Emory University", division: "D3" },
+      outreach: { ...base, id: "si-2", coach_email: "james.park@ucla.edu", email_sent: true, sent_at: d(2), subject: sub, body: "Hi Coach Park,\n\nI'm reaching out ahead of the recruiting season to introduce myself as a prospective 2027 student-athlete...", opened: true, replied: true, opened_at: h(44), replied_at: h(38), reply_viewed_at: h(37), created_at: d(2) },
+      coach: { coach_name: "James Park", school_name: "UCLA", division: "D1" },
       replies: [
-        {
-          id: "reply-4",
-          outreach_id: "sample-4",
-          from_email: "marcus.webb@emory.edu",
-          subject: "Re: 2027 Recruit | Alex Player - UTR 11.8",
-          body: "Great to hear from you! We'd love to learn more — are you able to visit campus this fall?",
-          received_at: daysAgo(4),
-        },
+        { id: "r-2a", outreach_id: "si-2", from_email: "james.park@ucla.edu", subject: "Re: " + sub, body: "Alex,\n\nAppreciate the note — we're actively building our 2027 class. Please fill out our official recruiting form on the UCLA Athletics site and send your UTR profile link when you get a chance.\n\nCoach Park", received_at: h(38) },
       ],
+    },
+    {
+      outreach: { ...base, id: "si-3", coach_email: "marcus.webb@virginia.edu", email_sent: true, sent_at: d(5), subject: sub, body: "Hi Coach Webb,\n\nI'm very interested in Virginia's tennis program...", opened: true, replied: true, opened_at: h(112), replied_at: h(96), reply_viewed_at: h(90), created_at: d(5) },
+      coach: { coach_name: "Marcus Webb", school_name: "University of Virginia", division: "D1" },
+      replies: [
+        { id: "r-3a", outreach_id: "si-3", from_email: "marcus.webb@virginia.edu", subject: "Re: " + sub, body: "Hi Alex — great timing. We have two roster spots available in the 2027 class. Would you be open to a campus visit sometime in October?\n\nCoach Webb", received_at: h(96) },
+      ],
+    },
+    {
+      outreach: { ...base, id: "si-4", coach_email: "aisha.johnson@ufl.edu", email_sent: true, sent_at: d(9), subject: sub, body: "Hi Coach Johnson,\n\nUF's track record in the SEC is exactly the competitive environment I'm looking for...", opened: true, replied: true, opened_at: h(208), replied_at: h(196), reply_viewed_at: h(195), created_at: d(9) },
+      coach: { coach_name: "Aisha Johnson", school_name: "University of Florida", division: "D1" },
+      replies: [
+        { id: "r-4a", outreach_id: "si-4", from_email: "aisha.johnson@ufl.edu", subject: "Re: " + sub, body: "Alex, your stats look strong for our program. Let's set up a call next week — I'll have my assistant reach out with some times.\n\nCoach Johnson", received_at: h(196) },
+      ],
+    },
+    {
+      outreach: { ...base, id: "si-5", coach_email: "elena.torres@stanford.edu", email_sent: true, sent_at: d(3), subject: sub, body: "Hi Coach Torres,\n\nI've long admired Stanford's academic and athletic reputation...", opened: true, replied: false, opened_at: h(64), replied_at: null, reply_viewed_at: null, created_at: d(3) },
+      coach: { coach_name: "Elena Torres", school_name: "Stanford University", division: "D1" },
+      replies: [],
+    },
+    {
+      outreach: { ...base, id: "si-6", coach_email: "priya.nair@vanderbilt.edu", email_sent: true, sent_at: d(6), subject: sub, body: "Hi Coach Nair,\n\nI've been following Vanderbilt's program closely and believe it's an ideal fit...", opened: true, replied: false, opened_at: h(134), replied_at: null, reply_viewed_at: null, created_at: d(6) },
+      coach: { coach_name: "Priya Nair", school_name: "Vanderbilt University", division: "D1" },
+      replies: [],
+    },
+    {
+      outreach: { ...base, id: "si-7", coach_email: "david.chen@unc.edu", email_sent: true, sent_at: d(8), subject: sub, body: "Hi Coach Chen,\n\nI'm reaching out to introduce myself...", opened: false, replied: false, opened_at: null, replied_at: null, reply_viewed_at: null, created_at: d(8) },
+      coach: { coach_name: "David Chen", school_name: "University of North Carolina", division: "D1" },
+      replies: [],
+    },
+    {
+      outreach: { ...base, id: "si-8", coach_email: "tyler.brooks@osu.edu", email_sent: true, sent_at: d(11), subject: sub, body: "Hi Coach Brooks,\n\nI'm a 2027 recruit with a strong interest in Ohio State's program...", opened: false, replied: false, opened_at: null, replied_at: null, reply_viewed_at: null, created_at: d(11) },
+      coach: { coach_name: "Tyler Brooks", school_name: "Ohio State University", division: "D1" },
+      replies: [],
     },
   ];
 

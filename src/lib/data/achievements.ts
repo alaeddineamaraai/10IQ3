@@ -45,5 +45,5 @@ export async function getAchievementStats(
  * sample dashboard (42 sent, 18 opened, 5 replied) so the story picker shows a
  * realistic mix of earned and still-locked achievements. */
 export function getSampleAchievementStats(): AchievementStats {
-  return { sent: 42, opened: 18, replied: 5, targetD1: true, hasRecord: true };
+  return { sent: 79, opened: 34, replied: 9, targetD1: true, hasRecord: true };
 }

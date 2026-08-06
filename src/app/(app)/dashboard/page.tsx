@@ -22,6 +22,15 @@ import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist
 import { CoachRecommendations, type RecommendedCoach } from "@/components/dashboard/coach-recommendations";
 import { EmailQuotaBar } from "@/components/dashboard/email-quota-bar";
 
+const DEMO_RECOMMENDATIONS: RecommendedCoach[] = [
+  { email: "c.hayes@northwestern.edu",  coach_name: "Christine Hayes",  school_name: "Northwestern University",   division: "NCAA Division I" },
+  { email: "r.santos@georgetown.edu",   coach_name: "Rafael Santos",    school_name: "Georgetown University",      division: "NCAA Division I" },
+  { email: "t.nguyen@rice.edu",         coach_name: "Tanya Nguyen",     school_name: "Rice University",            division: "NCAA Division I" },
+  { email: "m.okafor@tulane.edu",       coach_name: "Michael Okafor",   school_name: "Tulane University",          division: "NCAA Division I" },
+  { email: "s.brennan@pepperdine.edu",  coach_name: "Sean Brennan",     school_name: "Pepperdine University",      division: "NCAA Division I" },
+  { email: "l.kim@wakeforest.edu",      coach_name: "Lisa Kim",         school_name: "Wake Forest University",     division: "NCAA Division I" },
+];
+
 async function loadDashboardData() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     return {
@@ -88,10 +97,8 @@ async function loadDashboardData() {
 export default async function DashboardPage() {
   const { data, profileComplete, firstName, plan, emailsUsed, recommendations } = await loadDashboardData();
 
-  const heading = firstName && !data.isSample ? `Welcome back, ${firstName}` : "Dashboard";
-  const subtitle = data.isSample
-    ? "Sample data — sign in to see your real activity."
-    : "Track your outreach, monitor responses, and connect with coaches.";
+  const heading = data.isSample ? "Welcome back, Alex" : firstName ? `Welcome back, ${firstName}` : "Dashboard";
+  const subtitle = "Track your outreach, monitor responses, and connect with coaches.";
 
   return (
     <div className="flex flex-col gap-6">
@@ -107,7 +114,10 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {!data.isSample && (
+      {/* Onboarding checklist — always shown in demo (all steps complete), conditionally for real users */}
+      {data.isSample ? (
+        <OnboardingChecklist profileComplete emailsSent={data.stats.sent} replied={data.stats.replied} />
+      ) : (
         <OnboardingChecklist
           profileComplete={profileComplete}
           emailsSent={data.stats.sent}
@@ -225,12 +235,16 @@ export default async function DashboardPage() {
         </GlassCardContent>
       </GlassCard>
 
-      {!data.isSample && recommendations.length > 0 && (
+      {(data.isSample || recommendations.length > 0) && (
         <div className="flex flex-col gap-3">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
             Suggested Outreach
           </p>
-          <CoachRecommendations coaches={recommendations} />
+          {data.isSample ? (
+            <CoachRecommendations coaches={DEMO_RECOMMENDATIONS} />
+          ) : (
+            <CoachRecommendations coaches={recommendations} />
+          )}
         </div>
       )}
     </div>

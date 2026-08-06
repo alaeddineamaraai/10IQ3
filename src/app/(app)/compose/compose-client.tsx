@@ -609,7 +609,6 @@ export function ComposeClient({
               {/* Toolbar */}
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="text-xs text-muted-foreground">
-                  {isSampleMode && "Sample mode — Send won't deliver real email."}
                   {planLimitReached && (
                     <span className="text-destructive">
                       Free limit reached.{" "}
