@@ -33,12 +33,12 @@ export type RegionBreakdown = {
   sent: number;
 };
 
-export type SentEmailReply = {
+export type ThreadMessage = {
   id: string;
-  from_email: string;
+  from: "athlete" | "coach";
   subject: string | null;
   body: string | null;
-  received_at: string;
+  timestamp: string;
 };
 
 export type SentEmailRow = {
@@ -54,7 +54,7 @@ export type SentEmailRow = {
   opened_at: string | null;
   replied_at: string | null;
   reply_viewed_at: string | null;
-  replies: SentEmailReply[];
+  thread: ThreadMessage[];
 };
 
 export type DashboardData = {

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { fetchAllCoaches } from "@/lib/data/coaches";
-import type { Coach, Outreach, OutreachReply } from "@/lib/types/coach";
+import type { Coach, Outreach, OutreachFollowup, OutreachReply } from "@/lib/types/coach";
 import type { DashboardData } from "@/lib/types/dashboard";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -36,20 +36,37 @@ export async function getDashboardData(
   const rows = outreach ?? [];
   const sentRows = rows.filter((r) => r.email_sent);
 
-  const { data: replies } = sentRows.length
-    ? await supabase
-        .from("outreach_replies")
-        .select("*")
-        .in("outreach_id", sentRows.map((r) => r.id))
-        .order("received_at", { ascending: true })
-        .returns<OutreachReply[]>()
-    : { data: [] as OutreachReply[] };
+  const outreachIds = sentRows.map((r) => r.id);
+
+  const [{ data: replies }, { data: followups }] = sentRows.length
+    ? await Promise.all([
+        supabase
+          .from("outreach_replies")
+          .select("*")
+          .in("outreach_id", outreachIds)
+          .order("received_at", { ascending: true })
+          .returns<OutreachReply[]>(),
+        supabase
+          .from("outreach_followups")
+          .select("*")
+          .in("outreach_id", outreachIds)
+          .order("sent_at", { ascending: true })
+          .returns<OutreachFollowup[]>(),
+      ])
+    : [{ data: [] as OutreachReply[] }, { data: [] as OutreachFollowup[] }];
 
   const repliesByOutreachId = new Map<string, OutreachReply[]>();
   for (const reply of replies ?? []) {
     const list = repliesByOutreachId.get(reply.outreach_id) ?? [];
     list.push(reply);
     repliesByOutreachId.set(reply.outreach_id, list);
+  }
+
+  const followupsByOutreachId = new Map<string, OutreachFollowup[]>();
+  for (const fu of followups ?? []) {
+    const list = followupsByOutreachId.get(fu.outreach_id) ?? [];
+    list.push(fu);
+    followupsByOutreachId.set(fu.outreach_id, list);
   }
 
   const sent = sentRows.length;
@@ -121,13 +138,22 @@ export async function getDashboardData(
         opened_at: row.opened_at,
         replied_at: row.replied_at,
         reply_viewed_at: row.reply_viewed_at,
-        replies: (repliesByOutreachId.get(row.id) ?? []).map((reply) => ({
-          id: reply.id,
-          from_email: reply.from_email,
-          subject: reply.subject,
-          body: reply.body,
-          received_at: reply.received_at,
-        })),
+        thread: [
+          ...(repliesByOutreachId.get(row.id) ?? []).map((reply) => ({
+            id: reply.id,
+            from: "coach" as const,
+            subject: reply.subject,
+            body: reply.body,
+            timestamp: reply.received_at,
+          })),
+          ...(followupsByOutreachId.get(row.id) ?? []).map((fu) => ({
+            id: fu.id,
+            from: "athlete" as const,
+            subject: fu.subject,
+            body: fu.body,
+            timestamp: fu.sent_at,
+          })),
+        ].sort((a, b) => a.timestamp.localeCompare(b.timestamp)),
       };
     });
 
@@ -194,13 +220,20 @@ export function getSampleDashboardData(): DashboardData {
         opened_at: new Date(Date.now() - 22 * 60 * 60 * 1000).toISOString(),
         replied_at: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(),
         reply_viewed_at: null,
-        replies: [
+        thread: [
           {
             id: "r1",
-            from_email: "sarah.mitchell@duke.edu",
+            from: "coach" as const,
             subject: "Re: Introduction from a 2027 recruit",
             body: "Thanks for reaching out, Alex — your UTR and record stand out. Could you send over a highlight reel and your fall tournament schedule?",
-            received_at: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(),
+            timestamp: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(),
+          },
+          {
+            id: "f1",
+            from: "athlete" as const,
+            subject: "Re: Introduction from a 2027 recruit",
+            body: "Hi Coach Mitchell,\n\nThank you so much for getting back to me! I've attached my highlight reel. My fall tournament schedule starts in September — would love to connect.",
+            timestamp: new Date(Date.now() - 14 * 60 * 60 * 1000).toISOString(),
           },
         ],
       },
@@ -217,7 +250,7 @@ export function getSampleDashboardData(): DashboardData {
         opened_at: new Date(Date.now() - 40 * 60 * 60 * 1000).toISOString(),
         replied_at: null,
         reply_viewed_at: null,
-        replies: [],
+        thread: [],
       },
       {
         id: "3",
@@ -232,7 +265,7 @@ export function getSampleDashboardData(): DashboardData {
         opened_at: null,
         replied_at: null,
         reply_viewed_at: null,
-        replies: [],
+        thread: [],
       },
     ],
     isSample: true,

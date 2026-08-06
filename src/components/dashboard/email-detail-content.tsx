@@ -13,6 +13,8 @@ function formatDateTime(value: string) {
 }
 
 export function EmailDetailContent({ row }: { row: SentEmailRow }) {
+  const hasReplies = row.thread.some((m) => m.from === "coach");
+
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-3 gap-3 text-sm">
@@ -34,47 +36,61 @@ export function EmailDetailContent({ row }: { row: SentEmailRow }) {
         </div>
       </div>
 
+      {/* Initial email — always shown */}
       <GlassCard>
         <GlassCardHeader>
           <GlassCardTitle className="text-sm">{row.subject}</GlassCardTitle>
-          <div className="text-xs text-muted-foreground">To {row.coach_email}</div>
+          <div className="text-xs text-muted-foreground">
+            You → {row.coach_email} · {formatDateTime(row.sent_at)}
+          </div>
         </GlassCardHeader>
         <GlassCardContent>
           <p className="whitespace-pre-wrap text-sm text-foreground">{row.body}</p>
         </GlassCardContent>
       </GlassCard>
 
-      {row.replies.length > 0 ? (
+      {/* Full chronological thread */}
+      {row.thread.length > 0 && (
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-            Replies
-            <Badge>{row.replies.length}</Badge>
+            Thread
+            <Badge>{row.thread.length}</Badge>
           </div>
-          {row.replies.map((reply) => (
-            <GlassCard key={reply.id} strong>
+          {row.thread.map((msg) => (
+            <GlassCard key={msg.id} strong={msg.from === "coach"}>
               <GlassCardHeader>
                 <GlassCardTitle className="text-sm">
-                  {reply.subject ?? `Re: ${row.subject}`}
+                  {msg.subject ?? `Re: ${row.subject}`}
                 </GlassCardTitle>
                 <div className="text-xs text-muted-foreground">
-                  From {reply.from_email} · {formatDateTime(reply.received_at)}
+                  {msg.from === "coach"
+                    ? `${row.coach_email} → You`
+                    : `You → ${row.coach_email}`}
+                  {" · "}
+                  {formatDateTime(msg.timestamp)}
                 </div>
               </GlassCardHeader>
               <GlassCardContent>
                 <p className="whitespace-pre-wrap text-sm text-foreground">
-                  {reply.body ?? "(no content)"}
+                  {msg.body ?? "(no content)"}
                 </p>
               </GlassCardContent>
             </GlassCard>
           ))}
-          <FollowUpReplyComposer outreachId={row.id} coachEmail={row.coach_email} mode="reply" />
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          <p className="text-sm text-muted-foreground">No reply yet.</p>
-          <FollowUpReplyComposer outreachId={row.id} coachEmail={row.coach_email} mode="nudge" />
         </div>
       )}
+
+      {/* Compose area */}
+      <div className="flex flex-col gap-2">
+        {!hasReplies && (
+          <p className="text-sm text-muted-foreground">No reply yet.</p>
+        )}
+        <FollowUpReplyComposer
+          outreachId={row.id}
+          coachEmail={row.coach_email}
+          mode={hasReplies ? "reply" : "nudge"}
+        />
+      </div>
     </div>
   );
 }
