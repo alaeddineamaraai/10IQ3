@@ -108,6 +108,7 @@ export function getSampleProfile(): AthleteProfile {
     subscription_status: null,
     promo_plan: null,
     promo_expires_at: null,
+    limit_notified: false,
     created_at: new Date().toISOString(),
   };
 }

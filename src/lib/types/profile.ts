@@ -32,6 +32,7 @@ export type AthleteProfile = {
   subscription_status: string | null;
   promo_plan: string | null;
   promo_expires_at: string | null;
+  limit_notified: boolean;
   created_at: string;
 };
 

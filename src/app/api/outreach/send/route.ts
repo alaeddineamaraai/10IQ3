@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { rateLimit } from "@/lib/rate-limit";
 import { getEmailAllowance } from "@/lib/billing/email-allowance";
+import { FREE_PLAN_EMAIL_LIMIT } from "@/lib/stripe/plans";
+import { notifyPlanLimitReached } from "@/lib/email/notify";
 import type { AthleteProfile } from "@/lib/types/profile";
 
 // 50 sends per user per 24 hours (guards against runaway bulk sending)
@@ -136,6 +139,18 @@ export async function POST(request: Request) {
       daily_cap_reached: "Daily email cap reached — try again tomorrow",
       no_credits: "You're out of email credits — buy more to keep sending today",
     };
+
+    // Notify the athlete once when they first hit the free plan limit.
+    if (allowance.reason === "lifetime_limit_reached" && !profile.limit_notified && profile.email) {
+      const admin = createSupabaseAdminClient();
+      await admin.from("users").update({ limit_notified: true }).eq("id", auth.user.id);
+      notifyPlanLimitReached({
+        athleteEmail: profile.email,
+        athleteName: profile.name,
+        emailLimit: FREE_PLAN_EMAIL_LIMIT,
+      }).catch(() => {});
+    }
+
     return NextResponse.json(
       { error: messages[allowance.reason], code: allowance.reason.toUpperCase() },
       { status: 402 }

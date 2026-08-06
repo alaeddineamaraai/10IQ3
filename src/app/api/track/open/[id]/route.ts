@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { notifyCoachOpenedEmail } from "@/lib/email/notify";
 
 // 1x1 transparent GIF — the classic email open-tracking pixel.
 const PIXEL = Buffer.from(
@@ -41,11 +42,41 @@ export async function GET(
   if (id && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     try {
       const admin = createSupabaseAdminClient();
-      await admin
+
+      // Only fires when opened === false (first open). The returned count tells
+      // us whether this was genuinely the first open so we notify exactly once.
+      const { count } = await admin
         .from("outreach")
-        .update({ opened: true, opened_at: new Date().toISOString() })
+        .update({ opened: true, opened_at: new Date().toISOString() }, { count: "exact" })
         .eq("id", id)
         .eq("opened", false);
+
+      if (count && count > 0) {
+        // First open — look up athlete and coach to send notification.
+        const { data: row } = await admin
+          .from("outreach")
+          .select("user_id, coach_email")
+          .eq("id", id)
+          .single();
+
+        if (row) {
+          const [{ data: user }, { data: coach }] = await Promise.all([
+            admin.from("users").select("email, name").eq("id", row.user_id).single(),
+            admin.from("coaches").select("coach_name").eq("email", row.coach_email).maybeSingle(),
+          ]);
+
+          if (user?.email) {
+            // Fire-and-forget — notification failure must never affect pixel delivery.
+            notifyCoachOpenedEmail({
+              athleteEmail: user.email,
+              athleteName: user.name,
+              coachEmail: row.coach_email,
+              coachName: coach?.coach_name ?? null,
+              outreachId: id,
+            }).catch(() => {});
+          }
+        }
+      }
     } catch {
       // Swallow — pixel delivery must never fail because of this.
     }
