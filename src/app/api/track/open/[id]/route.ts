@@ -61,18 +61,22 @@ export async function GET(
 
         if (row) {
           const [{ data: user }, { data: coach }] = await Promise.all([
-            admin.from("users").select("email, name").eq("id", row.user_id).single(),
+            admin.from("users").select("email, name, plan, emails_used").eq("id", row.user_id).single(),
             admin.from("coaches").select("coach_name").eq("email", row.coach_email).maybeSingle(),
           ]);
 
           if (user?.email) {
-            // Fire-and-forget — notification failure must never affect pixel delivery.
+            const FREE_LIMIT = 5;
+            const emailsLeft =
+              user.plan === "free" ? Math.max(0, FREE_LIMIT - (user.emails_used ?? 0)) : undefined;
             notifyCoachOpenedEmail({
               athleteEmail: user.email,
               athleteName: user.name,
               coachEmail: row.coach_email,
               coachName: coach?.coach_name ?? null,
               outreachId: id,
+              emailsLeft,
+              plan: user.plan ?? undefined,
             }).catch(() => {});
           }
         }

@@ -109,6 +109,7 @@ export function getSampleProfile(): AthleteProfile {
     promo_plan: null,
     promo_expires_at: null,
     limit_notified: false,
+    onboarding_step: 0,
     created_at: new Date().toISOString(),
   };
 }

@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getDashboardData, getSampleDashboardData } from "@/lib/data/dashboard";
 import { getProfile } from "@/lib/data/profile";
+import { FREE_PLAN_EMAIL_LIMIT } from "@/lib/stripe/plans";
 import { buttonVariants } from "@/components/ui/button";
 import { StatCard } from "@/components/stat-card";
 import {
@@ -18,17 +19,33 @@ import { ProgressGauge } from "@/components/dashboard/progress-gauge";
 import { PerformanceMetrics } from "@/components/dashboard/performance-metrics";
 import { SentEmailsList } from "@/components/dashboard/sent-emails-list";
 import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
+import { CoachRecommendations, type RecommendedCoach } from "@/components/dashboard/coach-recommendations";
+import { EmailQuotaBar } from "@/components/dashboard/email-quota-bar";
 
 async function loadDashboardData() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    return { data: getSampleDashboardData(), profileComplete: false, firstName: null };
+    return {
+      data: getSampleDashboardData(),
+      profileComplete: false,
+      firstName: null,
+      plan: null as string | null,
+      emailsUsed: 0,
+      recommendations: [] as RecommendedCoach[],
+    };
   }
 
   const supabase = await createSupabaseServerClient();
   const { data: auth } = await supabase.auth.getUser();
 
   if (!auth.user) {
-    return { data: getSampleDashboardData(), profileComplete: false, firstName: null };
+    return {
+      data: getSampleDashboardData(),
+      profileComplete: false,
+      firstName: null,
+      plan: null as string | null,
+      emailsUsed: 0,
+      recommendations: [] as RecommendedCoach[],
+    };
   }
 
   const [dashData, profile] = await Promise.all([
@@ -36,16 +53,40 @@ async function loadDashboardData() {
     getProfile(supabase, auth.user.id),
   ]);
 
+  // Already-contacted coach emails for exclusion.
+  const contactedEmails = new Set(dashData.sentEmails.map((e) => e.coach_email));
+
+  // Find up to 6 coaches matching the user's target division and gender
+  // that they haven't contacted yet.
+  let recommendations: RecommendedCoach[] = [];
+  if (profile) {
+    let query = supabase
+      .from("coaches_database")
+      .select("email, coach_name, school_name, division")
+      .limit(50);
+
+    if (profile.target_div) query = query.eq("division", profile.target_div);
+    if (profile.gender) query = query.ilike("gender", `%${profile.gender}%`);
+
+    const { data: candidates } = await query;
+    recommendations = (candidates ?? [])
+      .filter((c) => !contactedEmails.has(c.email))
+      .slice(0, 6) as RecommendedCoach[];
+  }
+
   const firstName = profile?.name?.split(" ")[0] ?? null;
   return {
     data: dashData,
     profileComplete: profile?.profile_complete ?? false,
     firstName,
+    plan: profile?.plan ?? null,
+    emailsUsed: profile?.emails_used ?? 0,
+    recommendations,
   };
 }
 
 export default async function DashboardPage() {
-  const { data, profileComplete, firstName } = await loadDashboardData();
+  const { data, profileComplete, firstName, plan, emailsUsed, recommendations } = await loadDashboardData();
 
   const heading = firstName && !data.isSample ? `Welcome back, ${firstName}` : "Dashboard";
   const subtitle = data.isSample
@@ -72,6 +113,10 @@ export default async function DashboardPage() {
           emailsSent={data.stats.sent}
           replied={data.stats.replied}
         />
+      )}
+
+      {!data.isSample && plan === "free" && (
+        <EmailQuotaBar used={emailsUsed} limit={FREE_PLAN_EMAIL_LIMIT} />
       )}
 
       {/* KPI overview */}
@@ -179,6 +224,15 @@ export default async function DashboardPage() {
           <SentEmailsList rows={data.sentEmails} />
         </GlassCardContent>
       </GlassCard>
+
+      {!data.isSample && recommendations.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Suggested Outreach
+          </p>
+          <CoachRecommendations coaches={recommendations} />
+        </div>
+      )}
     </div>
   );
 }

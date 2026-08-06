@@ -33,6 +33,7 @@ export type AthleteProfile = {
   promo_plan: string | null;
   promo_expires_at: string | null;
   limit_notified: boolean;
+  onboarding_step: number;
   created_at: string;
 };
 
