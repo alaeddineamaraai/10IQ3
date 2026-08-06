@@ -6,7 +6,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { ProfileMenu } from "@/components/layout/profile-menu";
 import {
   Bell,
+  Gift,
   LayoutGrid,
+  List,
   LogOut,
   type LucideIcon,
   Mail,
@@ -32,11 +34,13 @@ const MENU: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutGrid },
   { title: "Contacts", href: "/contacts", icon: Users },
   { title: "Compose", href: "/compose", icon: PenSquare },
+  { title: "Lists", href: "/lists", icon: List },
   { title: "Inbox", href: "/inbox", icon: Mail, badge: true },
   { title: "AI Advisor", href: "/advisor", icon: Sparkles },
 ];
 
 const GENERAL: NavItem[] = [
+  { title: "Referrals", href: "/referrals", icon: Gift },
   { title: "Notifications", href: "/notifications", icon: Bell, badge: true },
   { title: "Settings", href: "/settings", icon: Settings },
 ];

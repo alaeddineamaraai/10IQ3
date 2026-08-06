@@ -47,6 +47,9 @@ export function AuthForm() {
     const params = new URLSearchParams(window.location.search);
     const urlError = params.get("error");
     if (urlError) setError(urlError);
+    // Persist referral code from URL so it survives the OAuth redirect
+    const ref = params.get("ref");
+    if (ref) localStorage.setItem("netset_ref", ref);
   }, []);
 
   async function handleOAuth(provider: "google" | "apple") {
@@ -99,6 +102,17 @@ export function AuthForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: data.user.id, email: data.user.email, marketing_consent: marketingConsent }),
       });
+
+      // Claim referral if a code was stored (from ?ref= on the auth page)
+      const storedRef = localStorage.getItem("netset_ref");
+      if (storedRef) {
+        await fetch("/api/referrals/claim", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: storedRef }),
+        }).catch(() => {});
+        localStorage.removeItem("netset_ref");
+      }
     }
 
     setPending(false);

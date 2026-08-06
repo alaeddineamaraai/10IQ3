@@ -92,10 +92,18 @@ async function sendViaResend(
 }
 
 export async function POST(request: Request) {
-  const { coach_email, subject, body } = await request.json();
+  const { coach_email, subject, body, scheduled_for } = await request.json();
 
   if (!coach_email || !subject || !body) {
     return NextResponse.json({ error: "Missing coach_email, subject, or body" }, { status: 400 });
+  }
+
+  // Validate scheduled_for if provided
+  if (scheduled_for) {
+    const scheduledDate = new Date(scheduled_for);
+    if (isNaN(scheduledDate.getTime()) || scheduledDate <= new Date()) {
+      return NextResponse.json({ error: "scheduled_for must be a future date" }, { status: 400 });
+    }
   }
 
   const supabase = await createSupabaseServerClient();
@@ -188,6 +196,26 @@ export async function POST(request: Request) {
 
   if (!outreachId) {
     return NextResponse.json({ error: "Could not resolve outreach row" }, { status: 500 });
+  }
+
+  // Scheduled email: store it for the cron to pick up, no Resend call now.
+  if (scheduled_for) {
+    const { error: scheduleError } = await supabase
+      .from("outreach")
+      .update({
+        subject,
+        body,
+        scheduled_for,
+        schedule_attempts: 0,
+        schedule_failed: false,
+      })
+      .eq("id", outreachId);
+
+    if (scheduleError) {
+      return NextResponse.json({ error: scheduleError.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ ok: true, delivered: false, scheduled: true });
   }
 
   const replyTo = process.env.RESEND_INBOUND_DOMAIN

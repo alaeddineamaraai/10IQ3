@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight, PartyPopper, Send, Sparkles, X } from "lucide-react";
+import { CalendarClock, ChevronRight, PartyPopper, Send, Sparkles, X } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -28,6 +28,7 @@ type Draft = {
   body: string;
   status: Status;
   error?: string;
+  scheduled_for?: string;
 };
 
 const ALL = "all";
@@ -332,7 +333,12 @@ export function ComposeClient({
       const res = await fetch("/api/outreach/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ coach_email: email, subject: draft.subject, body: draft.body }),
+        body: JSON.stringify({
+          coach_email: email,
+          subject: draft.subject,
+          body: draft.body,
+          ...(draft.scheduled_for ? { scheduled_for: draft.scheduled_for } : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -759,7 +765,14 @@ export function ComposeClient({
                     </div>
                   </GlassCardContent>
 
-                  <GlassCardFooter className="flex items-center justify-between gap-3 bg-transparent">
+                  <GlassCardFooter className="flex flex-col gap-3 bg-transparent">
+                    {/* Schedule picker */}
+                    <SchedulePicker
+                      value={draft.scheduled_for ?? ""}
+                      onChange={(v) => updateDraft(draft.coach.email, { scheduled_for: v || undefined })}
+                      disabled={draft.status === "sent" || draft.status === "sending"}
+                    />
+                    <div className="flex items-center justify-between gap-3">
                     <Button
                       variant="outline"
                       size="sm"
@@ -788,13 +801,14 @@ export function ComposeClient({
                       }
                       className="gap-1.5"
                     >
-                      <Send className="size-3.5" />
+                      {draft.scheduled_for ? <CalendarClock className="size-3.5" /> : <Send className="size-3.5" />}
                       {draft.status === "sending"
-                        ? "Sending…"
+                        ? "Scheduling…"
                         : draft.status === "sent"
-                          ? "Sent ✓"
-                          : "Send"}
+                          ? draft.scheduled_for ? "Scheduled ✓" : "Sent ✓"
+                          : draft.scheduled_for ? "Schedule" : "Send"}
                     </Button>
+                    </div>
                   </GlassCardFooter>
                 </GlassCard>
               ))}
@@ -816,4 +830,70 @@ function StatusLabel({ status }: { status: Status }) {
     case "error":     return <span className="text-xs text-destructive">Error</span>;
     default:          return null;
   }
+}
+
+function SchedulePicker({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  disabled: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  // Build min datetime (now + 1 min) in local ISO for the input
+  const minLocal = (() => {
+    const d = new Date(Date.now() + 60_000);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  })();
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        disabled={disabled}
+        className="flex items-center gap-1.5 self-start rounded-lg border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary disabled:opacity-40"
+      >
+        <CalendarClock className="size-3.5" />
+        {value ? `Scheduled: ${new Date(value).toLocaleString()}` : "Schedule for later"}
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        type="datetime-local"
+        min={minLocal}
+        value={value ? new Date(value).toLocaleString("sv-SE", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }).replace(" ", "T") : ""}
+        onChange={(e) => {
+          // Convert local datetime-local value to UTC ISO string
+          const local = new Date(e.target.value);
+          onChange(isNaN(local.getTime()) ? "" : local.toISOString());
+        }}
+        className="rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+        disabled={disabled}
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={() => { onChange(""); setOpen(false); }}
+          className="text-xs text-muted-foreground hover:text-destructive"
+        >
+          Clear
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={() => { if (!value) setOpen(false); }}
+        className="text-xs text-muted-foreground hover:text-foreground"
+      >
+        {value ? "Done" : "Cancel"}
+      </button>
+    </div>
+  );
 }
