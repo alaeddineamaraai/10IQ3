@@ -51,7 +51,25 @@ export type Outreach = {
   replied_at: string | null;
   reply_viewed_at: string | null;
   resend_email_id: string | null;
+  scheduled_for: string | null;
+  schedule_attempts: number;
+  schedule_failed: boolean;
   created_at: string;
+};
+
+export type CoachList = {
+  id: string;
+  user_id: string;
+  name: string;
+  created_at: string;
+  member_count?: number;
+};
+
+export type CoachListMember = {
+  id: string;
+  list_id: string;
+  coach_email: string;
+  added_at: string;
 };
 
 /** A reply received via Resend Inbound, threaded to one outreach row. */

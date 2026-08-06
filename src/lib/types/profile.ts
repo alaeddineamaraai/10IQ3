@@ -34,6 +34,8 @@ export type AthleteProfile = {
   promo_expires_at: string | null;
   limit_notified: boolean;
   onboarding_step: number;
+  referral_code: string | null;
+  referred_by: string | null;
   created_at: string;
 };
 

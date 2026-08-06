@@ -110,6 +110,8 @@ export function getSampleProfile(): AthleteProfile {
     promo_expires_at: null,
     limit_notified: false,
     onboarding_step: 0,
+    referral_code: null,
+    referred_by: null,
     created_at: new Date().toISOString(),
   };
 }
