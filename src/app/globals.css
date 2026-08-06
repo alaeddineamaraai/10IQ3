@@ -242,12 +242,27 @@ html[data-theme] {
   }
 }
 
+@layer utilities {
+  /* Safe-area-aware bottom padding: tab bar height (56px) + home-indicator clearance */
+  .pb-safe-4 {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom) + 1rem);
+  }
+}
+
 @layer components {
   /* The floating shell that holds the sidebar and content. */
   .shell-panel {
     background: var(--panel);
-    border-radius: var(--radius-3xl);
-    box-shadow: var(--shadow-panel);
+    /* Desktop: floating rounded card. Mobile: full-bleed, no rounding. */
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  @media (min-width: 1024px) {
+    .shell-panel {
+      border-radius: var(--radius-3xl);
+      box-shadow: var(--shadow-panel);
+    }
   }
 
   /* Flat card. Solid fill, hairline border, soft ambient shadow. */

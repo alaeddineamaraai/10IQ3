@@ -5,6 +5,7 @@ import { getProfile, getSampleProfile } from "@/lib/data/profile";
 import { getSampleNotifications } from "@/lib/data/notifications";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppTopbar } from "@/components/layout/app-topbar";
+import { MobileTabBar } from "@/components/layout/mobile-tab-bar";
 import { TourRoot } from "@/components/welcome/tour-root";
 
 async function loadProfile() {
@@ -66,7 +67,7 @@ export default async function AppLayout({
             <AppTopbar profile={profile} unreadCount={unreadCount} />
 
             <main className="flex-1 overflow-y-auto app-wave-bg">
-              <div className="p-4 sm:p-6">
+              <div className="p-4 sm:p-6 pb-safe-4 lg:pb-6">
                 <ViewTransition name="page-content">
                   <div className="mx-auto w-full max-w-6xl">{children}</div>
                 </ViewTransition>
@@ -74,6 +75,7 @@ export default async function AppLayout({
             </main>
           </div>
         </div>
+      <MobileTabBar profile={profile} unreadCount={unreadCount} />
     </TourRoot>
   );
 }
