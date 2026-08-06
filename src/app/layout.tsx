@@ -6,6 +6,7 @@ import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthHashHandlerLoader } from "@/components/auth/auth-hash-handler-loader";
+import { ServiceWorkerRegistrar } from "@/components/pwa/service-worker-registrar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,7 +36,7 @@ export const metadata: Metadata = {
   icons: {
     icon: "/logo-green.png",
     shortcut: "/logo-green.png",
-    apple: "/logo-green.png",
+    apple: "/apple-touch-icon.png",
   },
 };
 
@@ -61,6 +62,7 @@ export default function RootLayout({
       <body className="flex min-h-screen flex-col">
         <ThemeProvider>
           <AuthHashHandlerLoader />
+          <ServiceWorkerRegistrar />
           <TooltipProvider>{children}</TooltipProvider>
         </ThemeProvider>
         <Analytics />

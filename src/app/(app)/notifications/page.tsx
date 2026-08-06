@@ -3,6 +3,7 @@ import { getNotifications, getSampleNotifications } from "@/lib/data/notificatio
 import { getProfile, getSampleProfile } from "@/lib/data/profile";
 import { getAchievementStats, getSampleAchievementStats } from "@/lib/data/achievements";
 import { NotificationsClient } from "./notifications-client";
+import { PushNotificationToggle } from "@/components/pwa/push-notification-toggle";
 import type { AthleteProfile } from "@/lib/types/profile";
 
 async function loadNotifications() {
@@ -47,6 +48,8 @@ export default async function NotificationsPage() {
           </p>
         </div>
       </div>
+
+      {!isSample && <PushNotificationToggle />}
 
       <NotificationsClient notifications={notifications} isSample={isSample} profile={profile} stats={stats} />
     </div>

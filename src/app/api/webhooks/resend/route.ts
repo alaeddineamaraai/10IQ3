@@ -1,7 +1,16 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import webpush from "web-push";
 
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+
+if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    "mailto:hello@netset.pro",
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+}
 
 const REPLY_ADDRESS_RE = /^reply\+([0-9a-f-]{36})@/i;
 
@@ -67,6 +76,55 @@ async function notifyAthleteOfReply({
   });
 }
 
+async function sendPushNotificationsForReply({
+  admin,
+  outreachId,
+  coachEmail,
+  subject,
+}: {
+  admin: ReturnType<typeof import("@/lib/supabase/admin").createSupabaseAdminClient>;
+  outreachId: string;
+  coachEmail: string;
+  subject: string;
+}) {
+  if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return;
+
+  const { data: outreach } = await admin
+    .from("outreach")
+    .select("user_id")
+    .eq("id", outreachId)
+    .single();
+
+  if (!outreach) return;
+
+  const { data: subs } = await admin
+    .from("push_subscriptions")
+    .select("endpoint, keys")
+    .eq("user_id", outreach.user_id);
+
+  if (!subs?.length) return;
+
+  const payload = JSON.stringify({
+    title: "Coach replied!",
+    body: subject ? `Re: ${subject}` : `${coachEmail} sent you a reply`,
+    icon: "/icon-192x192.png",
+    url: `${APP_BASE_URL}/inbox`,
+  });
+
+  await Promise.allSettled(
+    subs.map((sub) =>
+      webpush
+        .sendNotification({ endpoint: sub.endpoint, keys: sub.keys as { p256dh: string; auth: string } }, payload)
+        .catch((err) => {
+          // 410 Gone = subscription expired; clean it up
+          if (err.statusCode === 410) {
+            admin.from("push_subscriptions").delete().eq("endpoint", sub.endpoint).then(() => {});
+          }
+        })
+    )
+  );
+}
+
 export async function POST(request: Request) {
   if (!process.env.RESEND_API_KEY || !process.env.RESEND_WEBHOOK_SECRET) {
     return NextResponse.json({ error: "Webhook not configured" }, { status: 400 });
@@ -124,15 +182,23 @@ export async function POST(request: Request) {
         .update({ replied: true, replied_at: event.created_at })
         .eq("id", outreachId);
 
-      // Notify the athlete that a coach replied
-      await notifyAthleteOfReply({
-        resend,
-        admin,
-        outreachId,
-        coachEmail: event.data.from,
-        subject: event.data.subject ?? "",
-        snippet: (full?.text ?? "").slice(0, 300),
-      });
+      // Notify the athlete via email and push notification
+      await Promise.all([
+        notifyAthleteOfReply({
+          resend,
+          admin,
+          outreachId,
+          coachEmail: event.data.from,
+          subject: event.data.subject ?? "",
+          snippet: (full?.text ?? "").slice(0, 300),
+        }),
+        sendPushNotificationsForReply({
+          admin,
+          outreachId,
+          coachEmail: event.data.from,
+          subject: event.data.subject ?? "",
+        }),
+      ]);
     }
   }
 
